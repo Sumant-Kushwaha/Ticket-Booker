@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "165832355862",
+    "project_id": "ticketbooker2808",
+    "storage_bucket": "ticketbooker2808.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165832355862:android:0fd1d2ed8c9e2a82630537",
+        "android_client_info": {
+          "package_name": "com.amigo.ticketbooker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVbKMOvCi80mpgs7uPpdWu6Z7MMzpeL6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
