@@ -5,9 +5,13 @@ import com.amigo.ticketbooker.navigation.Routes
 import com.amigo.ticketbooker.auth.AuthViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import com.amigo.ticketbooker.home.cards.ElevatedColorCard
+import com.amigo.ticketbooker.home.cards.ModernGradientCard
+import com.amigo.ticketbooker.home.cards.OutlinedIconCard
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -176,6 +180,8 @@ fun HomeAppBar(
 
 @Composable
 fun MainContent() {
+    val navController = LocalNavController.current
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -208,19 +214,22 @@ fun MainContent() {
                 title = "Automatic Booking",
                 icon = R.drawable.ic_automatic_booking,
                 modifier = Modifier.weight(1f),
-                index = 0 // Modern gradient design
+                index = 0, // Modern gradient design
+                onClick = { navController.navigate(Routes.AUTOMATIC_BOOKING) }
             )
             ServiceCard(
                 title = "Manual Booking",
                 icon = R.drawable.ic_manual_booking,
                 modifier = Modifier.weight(1f),
-                index = 1 // Outlined design
+                index = 1, // Outlined design
+                onClick = { navController.navigate(Routes.MANUAL_BOOKING) }
             )
             ServiceCard(
                 title = "Order Food",
                 icon = R.drawable.ic_food,
                 modifier = Modifier.weight(1f),
-                index = 2 // Elevated color design
+                index = 2, // Elevated color design
+                onClick = { navController.navigate(Routes.ORDER_FOOD) }
             )
         }
 
@@ -235,19 +244,22 @@ fun MainContent() {
                 title = "Running Status",
                 icon = R.drawable.ic_running_status,
                 modifier = Modifier.weight(1f),
-                index = 2 // Elevated color design
+                index = 2, // Elevated color design
+                onClick = { navController.navigate(Routes.RUNNING_STATUS) }
             )
             ServiceCard(
                 title = "PNR Status",
                 icon = R.drawable.ic_pnr_status,
                 modifier = Modifier.weight(1f),
-                index = 0 // Modern gradient design
+                index = 0, // Modern gradient design
+                onClick = { navController.navigate(Routes.PNR_STATUS) }
             )
             ServiceCard(
                 title = "Coach Position",
                 icon = R.drawable.ic_coach_position,
                 modifier = Modifier.weight(1f),
-                index = 1 // Outlined design
+                index = 1, // Outlined design
+                onClick = { navController.navigate(Routes.COACH_POSITION) }
             )
         }
 
@@ -262,19 +274,22 @@ fun MainContent() {
                 title = "Platform Locator",
                 icon = R.drawable.ic_platform_locator,
                 modifier = Modifier.weight(1f),
-                index = 1 // Outlined design
+                index = 1, // Outlined design
+                onClick = { navController.navigate(Routes.PLATFORM_LOCATOR) }
             )
             ServiceCard(
                 title = "Train on Map",
                 icon = R.drawable.ic_train_map,
                 modifier = Modifier.weight(1f),
-                index = 2 // Elevated color design
+                index = 2, // Elevated color design
+                onClick = { navController.navigate(Routes.TRAIN_MAP) }
             )
             ServiceCard(
                 title = "Master List",
                 icon = R.drawable.ic_master_list,
                 modifier = Modifier.weight(1f),
-                index = 0 // Modern gradient design
+                index = 0, // Modern gradient design
+                onClick = { navController.navigate(Routes.MASTER_LIST) }
             )
         }
 
@@ -400,15 +415,16 @@ fun ServiceCard(
     title: String,
     icon: Int,
     modifier: Modifier = Modifier,
-    index: Int = 0 // Use index to create different design variations
+    index: Int = 0, // Use index to create different design variations
+    onClick: () -> Unit = {}
 ) {
     // Different design variations based on index
     val designType = index % 3
 
     when (designType) {
-        0 -> ModernGradientCard(title, icon, modifier)
-        1 -> OutlinedIconCard(title, icon, modifier)
-        2 -> ElevatedColorCard(title, icon, modifier)
+        0 -> ModernGradientCard(title, icon, modifier, onClick)
+        1 -> OutlinedIconCard(title, icon, modifier, onClick)
+        2 -> ElevatedColorCard(title, icon, modifier, onClick)
     }
 }
 

@@ -34,7 +34,8 @@ import kotlinx.coroutines.delay
 fun ModernGradientCard(
     title: String,
     icon: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -61,7 +62,7 @@ fun ModernGradientCard(
     Card(
         modifier = modifier
             .aspectRatio(1f)
-            .clickable { },
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {

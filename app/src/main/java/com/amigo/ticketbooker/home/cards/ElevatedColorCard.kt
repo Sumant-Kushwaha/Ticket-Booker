@@ -37,7 +37,8 @@ import kotlinx.coroutines.delay
 fun ElevatedColorCard(
     title: String,
     icon: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -64,7 +65,7 @@ fun ElevatedColorCard(
     Card(
         modifier = modifier
             .aspectRatio(1f)
-            .clickable { /* TODO */ },
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

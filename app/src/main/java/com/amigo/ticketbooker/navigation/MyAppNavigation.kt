@@ -14,6 +14,15 @@ import com.amigo.ticketbooker.auth.OtpLoginScreen
 import com.amigo.ticketbooker.help.HelpAndSupportScreen
 import com.amigo.ticketbooker.home.HomeScreen
 import com.amigo.ticketbooker.profile.ProfileScreen
+import com.amigo.ticketbooker.services.AutomaticBookingScreen
+import com.amigo.ticketbooker.services.CoachPositionScreen
+import com.amigo.ticketbooker.services.ManualBookingScreen
+import com.amigo.ticketbooker.services.MasterListScreen
+import com.amigo.ticketbooker.services.OrderFoodScreen
+import com.amigo.ticketbooker.services.PlatformLocatorScreen
+import com.amigo.ticketbooker.services.PnrStatusScreen
+import com.amigo.ticketbooker.services.RunningStatusScreen
+import com.amigo.ticketbooker.services.TrainMapScreen
 import com.amigo.ticketbooker.token.FreeTokenScreen
 
 // Define navigation routes as constants for easier access
@@ -26,7 +35,18 @@ object Routes {
     const val SETTINGS = "settings"
     const val HELP_SUPPORT = "help_support"
     const val FREE_TOKEN = "free_token"
-    const val Logout = "logout"
+    const val COMMON = "common"
+    
+    // Service card routes
+    const val AUTOMATIC_BOOKING = "automatic_booking"
+    const val MANUAL_BOOKING = "manual_booking"
+    const val ORDER_FOOD = "order_food"
+    const val RUNNING_STATUS = "running_status"
+    const val PNR_STATUS = "pnr_status"
+    const val COACH_POSITION = "coach_position"
+    const val PLATFORM_LOCATOR = "platform_locator"
+    const val TRAIN_MAP = "train_map"
+    const val MASTER_LIST = "master_list"
 }
 
 @Composable
@@ -75,6 +95,43 @@ fun MyAppNavigation(
             
             composable(Routes.FREE_TOKEN) {
                 FreeTokenScreen()
+            }
+            
+            // Service screen routes
+            composable(Routes.AUTOMATIC_BOOKING) {
+                AutomaticBookingScreen()
+            }
+            
+            composable(Routes.MANUAL_BOOKING) {
+                ManualBookingScreen()
+            }
+            
+            composable(Routes.ORDER_FOOD) {
+                OrderFoodScreen()
+            }
+            
+            composable(Routes.RUNNING_STATUS) {
+                RunningStatusScreen()
+            }
+            
+            composable(Routes.PNR_STATUS) {
+                PnrStatusScreen()
+            }
+            
+            composable(Routes.COACH_POSITION) {
+                CoachPositionScreen()
+            }
+            
+            composable(Routes.PLATFORM_LOCATOR) {
+                PlatformLocatorScreen()
+            }
+            
+            composable(Routes.TRAIN_MAP) {
+                TrainMapScreen()
+            }
+            
+            composable(Routes.MASTER_LIST) {
+                MasterListScreen()
             }
         }
     }

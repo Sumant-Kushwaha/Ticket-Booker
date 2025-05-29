@@ -28,13 +28,14 @@ import androidx.compose.ui.unit.dp
 fun OutlinedIconCard(
     title: String,
     icon: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     // Design 2: Outlined card with large centered icon
     Card(
         modifier = modifier
             .aspectRatio(1f)
-            .clickable { /* TODO */ },
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
