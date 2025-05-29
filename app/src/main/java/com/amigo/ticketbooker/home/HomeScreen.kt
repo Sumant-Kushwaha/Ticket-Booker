@@ -608,10 +608,12 @@ fun BottomSection(navController : NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 AccountOption(
-                    title = "Free Tickets",
+                    title = "Free Token",
                     icon = R.drawable.ic_ticket,
                     modifier = Modifier.weight(1f),
-                    onClick = {}
+                    onClick = {
+                        navController.navigate(Routes.FREE_TOKEN)
+                    }
                 )
 
                 AccountOption(

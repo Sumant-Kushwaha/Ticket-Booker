@@ -210,7 +210,10 @@ fun ProfileOptions() {
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_person,
                     title = "Free Token",
-                    subtitle = "Watch ads to get free token"
+                    subtitle = "Watch ads to get free tokens",
+                    onClick = {
+                        navController.navigate(Routes.FREE_TOKEN)
+                    }
                 )
                 
                 HorizontalDivider(

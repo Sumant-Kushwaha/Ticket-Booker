@@ -14,6 +14,7 @@ import com.amigo.ticketbooker.auth.OtpLoginScreen
 import com.amigo.ticketbooker.help.HelpAndSupportScreen
 import com.amigo.ticketbooker.home.HomeScreen
 import com.amigo.ticketbooker.profile.ProfileScreen
+import com.amigo.ticketbooker.token.FreeTokenScreen
 
 // Define navigation routes as constants for easier access
 object Routes {
@@ -24,6 +25,7 @@ object Routes {
     const val BOOKING_HISTORY = "booking_history"
     const val SETTINGS = "settings"
     const val HELP_SUPPORT = "help_support"
+    const val FREE_TOKEN = "free_token"
     const val Logout = "logout"
 }
 
@@ -69,6 +71,10 @@ fun MyAppNavigation(
             
             composable(Routes.HELP_SUPPORT) {
                 HelpAndSupportScreen()
+            }
+            
+            composable(Routes.FREE_TOKEN) {
+                FreeTokenScreen()
             }
         }
     }
