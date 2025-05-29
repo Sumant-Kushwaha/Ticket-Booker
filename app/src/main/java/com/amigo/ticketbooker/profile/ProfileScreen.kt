@@ -210,7 +210,7 @@ fun ProfileOptions() {
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_person,
                     title = "Free Token",
-                    subtitle = "Watch add to get free token"
+                    subtitle = "Watch ads to get free token"
                 )
                 
                 HorizontalDivider(
@@ -232,7 +232,10 @@ fun ProfileOptions() {
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_phone,
                     title = "Help & Support",
-                    subtitle = "Contact us for assistance"
+                    subtitle = "Contact us for assistance",
+                    onClick = {
+                        navController.navigate(Routes.HELP_SUPPORT)
+                    }
                 )
 
                 HorizontalDivider(

@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import com.amigo.ticketbooker.auth.AuthScreen
 import com.amigo.ticketbooker.auth.AuthViewModel
 import com.amigo.ticketbooker.auth.OtpLoginScreen
+import com.amigo.ticketbooker.help.HelpAndSupportScreen
 import com.amigo.ticketbooker.home.HomeScreen
 import com.amigo.ticketbooker.profile.ProfileScreen
 
@@ -22,6 +23,7 @@ object Routes {
     const val PROFILE = "profile"
     const val BOOKING_HISTORY = "booking_history"
     const val SETTINGS = "settings"
+    const val HELP_SUPPORT = "help_support"
     const val Logout = "logout"
 }
 
@@ -63,6 +65,10 @@ fun MyAppNavigation(
 
             composable(Routes.PROFILE) {
                 ProfileScreen()
+            }
+            
+            composable(Routes.HELP_SUPPORT) {
+                HelpAndSupportScreen()
             }
         }
     }

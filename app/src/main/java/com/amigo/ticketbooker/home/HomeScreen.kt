@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.fontFamily
@@ -56,11 +57,7 @@ fun HomeScreen() {
             )
         },
         bottomBar = { 
-            BottomSection(
-                onNavigateToProfile = { 
-                    navController.navigate(Routes.PROFILE) 
-                }
-            )
+            BottomSection(navController = navController)
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -595,7 +592,7 @@ fun OffersSection() {
 }
 
 @Composable
-fun BottomSection(onNavigateToProfile: () -> Unit = {}) {
+fun BottomSection(navController : NavController) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
@@ -621,14 +618,18 @@ fun BottomSection(onNavigateToProfile: () -> Unit = {}) {
                     title = "Profile",
                     icon = R.drawable.ic_profile,
                     modifier = Modifier.weight(1f),
-                    onClick = onNavigateToProfile
+                    onClick = {
+                        navController.navigate(Routes.PROFILE)
+                    }
                 )
 
                 AccountOption(
                     title = "Help & Support",
                     icon = R.drawable.ic_help,
                     modifier = Modifier.weight(1f),
-                    onClick = {}
+                    onClick = {
+                        navController.navigate(Routes.HELP_SUPPORT)
+                    }
                 )
             }
         }
