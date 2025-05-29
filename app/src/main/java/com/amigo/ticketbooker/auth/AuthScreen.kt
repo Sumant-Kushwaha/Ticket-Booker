@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,46 +29,53 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amigo.ticketbooker.R
+import com.amigo.ticketbooker.fontFamily
+import com.amigo.ticketbooker.navigation.LocalNavController
+import com.amigo.ticketbooker.navigation.Routes
 import com.amigo.ticketbooker.ui.theme.*
 
 @Composable
-fun AuthScreen(
-    onAuthSuccess: () -> Unit = {},
-    onNavigateToOtp: () -> Unit = {}
-) {
+fun AuthScreen() {
+    val navController = LocalNavController.current
     val authViewModel: AuthViewModel = viewModel()
     val context = LocalContext.current
     var isLogin by remember { mutableStateOf(true) }
-    
+
     // Observe auth state
     val authState by authViewModel.authState.collectAsState()
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    
+
     // Check if user is already logged in
     LaunchedEffect(key1 = Unit) {
         if (authViewModel.isUserLoggedIn()) {
-            onAuthSuccess()
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.AUTH) { inclusive = true }
+            }
         }
     }
-    
+
     // Handle auth state changes
     LaunchedEffect(key1 = authState) {
         when (authState) {
             is AuthState.Success -> {
-                Toast.makeText(context, "Authentication successful!", Toast.LENGTH_SHORT).show()
-                onAuthSuccess()
+                Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.AUTH) { inclusive = true }
+                }
             }
+
             is AuthState.Error -> {
                 errorMessage = (authState as AuthState.Error).message
                 showError = true
             }
+
             else -> {}
         }
     }
-    
+
     // OTP screen is now handled by navigation
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -88,30 +96,30 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
-            
+
             // App Logo and Title
             Image(
                 painter = painterResource(id = R.drawable.ic_train),
                 contentDescription = "Train Logo",
                 modifier = Modifier.size(80.dp)
             )
-            
+
             Text(
                 text = "Indian Railways",
                 color = Color.White,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Text(
                 text = "Ticket Booking",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
-            
+
             Spacer(modifier = Modifier.height(48.dp))
-            
+
             // Auth Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -141,8 +149,8 @@ fun AuthScreen(
                                 .weight(1f)
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(if (isLogin) Color(0xFF3949AB) else Color.Transparent)
-                                .clickable { 
-                                    isLogin = true 
+                                .clickable {
+                                    isLogin = true
                                     authViewModel.resetState()
                                 }
                                 .padding(vertical = 12.dp),
@@ -154,14 +162,14 @@ fun AuthScreen(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(if (!isLogin) Color(0xFF3949AB) else Color.Transparent)
-                                .clickable { 
-                                    isLogin = false 
+                                .clickable {
+                                    isLogin = false
                                     authViewModel.resetState()
                                 }
                                 .padding(vertical = 12.dp),
@@ -174,14 +182,13 @@ fun AuthScreen(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
+
                     if (isLogin) {
                         LoginContent(
                             authViewModel = authViewModel,
-                            isLoading = authState is AuthState.Loading,
-                            onLoginWithOtp = onNavigateToOtp
+                            isLoading = authState is AuthState.Loading
                         )
                     } else {
                         SignUpContent(
@@ -191,10 +198,10 @@ fun AuthScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
         }
-        
+
         // Bottom Text
         Text(
             text = "© 2025 Indian Railways",
@@ -204,7 +211,7 @@ fun AuthScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         )
-        
+
         // Error Dialog
         if (showError) {
             AlertDialog(
@@ -218,7 +225,7 @@ fun AuthScreen(
                 }
             )
         }
-        
+
         // Loading Indicator
         if (authState is AuthState.Loading) {
             Box(
@@ -236,13 +243,13 @@ fun AuthScreen(
 @Composable
 fun LoginContent(
     authViewModel: AuthViewModel,
-    isLoading: Boolean = false,
-    onLoginWithOtp: () -> Unit = {}
+    isLoading: Boolean = false
 ) {
+    val navController = LocalNavController.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Welcome Back",
@@ -250,21 +257,22 @@ fun LoginContent(
             fontWeight = FontWeight.Bold,
             color = Color(0xFF333333)
         )
-        
+
         Text(
             text = "Login to book your train tickets",
             fontSize = 14.sp,
             color = Color.Gray
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Email Field
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -284,15 +292,16 @@ fun LoginContent(
             },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Password Field
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -324,9 +333,9 @@ fun LoginContent(
             },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Forgot Password
         Text(
             text = "Forgot Password?",
@@ -336,12 +345,12 @@ fun LoginContent(
                 .align(Alignment.End)
                 .clickable(enabled = !isLoading) { /* Handle forgot password */ }
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Login Button
         Button(
-            onClick = { 
+            onClick = {
                 if (email.isNotEmpty() && password.isNotEmpty()) {
                     authViewModel.loginWithEmailPassword(email, password)
                 }
@@ -361,9 +370,9 @@ fun LoginContent(
                 fontWeight = FontWeight.Bold
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Or divider
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -383,12 +392,12 @@ fun LoginContent(
                 color = Color.LightGray
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Login with OTP Button
         OutlinedButton(
-            onClick = onLoginWithOtp,
+            onClick = { navController.navigate(Routes.OTP_LOGIN) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -426,7 +435,7 @@ fun SignUpContent(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var isChecked by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf("") }
-    
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Create Account",
@@ -434,21 +443,22 @@ fun SignUpContent(
             fontWeight = FontWeight.Bold,
             color = Color(0xFF333333)
         )
-        
+
         Text(
             text = "Sign up to book tatkal and normal tickets",
             fontSize = 14.sp,
             color = Color.Gray
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Full Name Field
         OutlinedTextField(
             value = fullName,
             onValueChange = { fullName = it },
             label = { Text("Full Name") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -468,13 +478,13 @@ fun SignUpContent(
             },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Mobile Number Field
         OutlinedTextField(
             value = mobileNumber,
-            onValueChange = { 
+            onValueChange = {
                 // Only allow digits and limit to 10 characters
                 if (it.length <= 10 && it.all { char -> char.isDigit() }) {
                     mobileNumber = it
@@ -482,6 +492,7 @@ fun SignUpContent(
             },
             label = { Text("Mobile Number") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -502,15 +513,16 @@ fun SignUpContent(
             prefix = { Text("+91 ") },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Email Field
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email Address") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -530,14 +542,14 @@ fun SignUpContent(
             },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Password Field
         OutlinedTextField(
             value = password,
-            onValueChange = { 
-                password = it 
+            onValueChange = {
+                password = it
                 // Validate password match
                 passwordError = if (confirmPassword.isNotEmpty() && it != confirmPassword) {
                     "Passwords do not match"
@@ -547,6 +559,7 @@ fun SignUpContent(
             },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -578,14 +591,14 @@ fun SignUpContent(
             },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Confirm Password Field
         OutlinedTextField(
             value = confirmPassword,
-            onValueChange = { 
-                confirmPassword = it 
+            onValueChange = {
+                confirmPassword = it
                 // Validate password match
                 passwordError = if (it.isNotEmpty() && it != password) {
                     "Passwords do not match"
@@ -595,6 +608,7 @@ fun SignUpContent(
             },
             label = { Text("Confirm Password") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -627,7 +641,7 @@ fun SignUpContent(
             isError = passwordError.isNotEmpty(),
             enabled = !isLoading
         )
-        
+
         // Password error message
         if (passwordError.isNotEmpty()) {
             Text(
@@ -637,9 +651,9 @@ fun SignUpContent(
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Terms and Conditions
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -653,7 +667,7 @@ fun SignUpContent(
                 ),
                 enabled = !isLoading
             )
-            
+
             Text(
                 text = "I agree to the Terms & Conditions and Privacy Policy",
                 fontSize = 12.sp,
@@ -661,12 +675,12 @@ fun SignUpContent(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Sign Up Button
         Button(
-            onClick = { 
+            onClick = {
                 if (validateSignUpForm(email, password, confirmPassword, isChecked)) {
                     authViewModel.signUpWithEmailPassword(email, password)
                 }
@@ -689,12 +703,17 @@ fun SignUpContent(
     }
 }
 
-private fun validateSignUpForm(email: String, password: String, confirmPassword: String, termsAccepted: Boolean): Boolean {
-    return email.isNotEmpty() && 
-           password.isNotEmpty() && 
-           password == confirmPassword && 
-           password.length >= 6 && 
-           termsAccepted
+private fun validateSignUpForm(
+    email: String,
+    password: String,
+    confirmPassword: String,
+    termsAccepted: Boolean
+): Boolean {
+    return email.isNotEmpty() &&
+            password.isNotEmpty() &&
+            password == confirmPassword &&
+            password.length >= 6 &&
+            termsAccepted
 }
 
 // Solid color brush for button border

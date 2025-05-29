@@ -1,5 +1,10 @@
 package com.amigo.ticketbooker.home
 
+import com.amigo.ticketbooker.navigation.LocalNavController
+import com.amigo.ticketbooker.navigation.Routes
+import com.amigo.ticketbooker.auth.AuthViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,14 +37,31 @@ import com.amigo.ticketbooker.home.cards.OutlinedIconCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onNavigateToProfile: () -> Unit = {},
-    onSignOut: () -> Unit = {}
-) {
+fun HomeScreen() {
+    val navController = LocalNavController.current
+    val authViewModel: AuthViewModel = viewModel()
     // Use TicketBookerTheme to match authentication screens
     Scaffold(
-        topBar = { HomeAppBar(onProfileClick = onNavigateToProfile, onSignOut = onSignOut) },
-        bottomBar = { BottomSection(onNavigateToProfile = onNavigateToProfile) },
+        topBar = { 
+            HomeAppBar(
+                onProfileClick = { 
+                    navController.navigate(Routes.PROFILE) 
+                },
+                onSignOut = { 
+                    authViewModel.signOut()
+                    navController.navigate(Routes.AUTH) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                }
+            )
+        },
+        bottomBar = { 
+            BottomSection(
+                onNavigateToProfile = { 
+                    navController.navigate(Routes.PROFILE) 
+                }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(

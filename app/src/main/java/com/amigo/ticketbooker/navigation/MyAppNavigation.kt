@@ -1,15 +1,12 @@
 package com.amigo.ticketbooker.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.amigo.ticketbooker.auth.AuthScreen
 import com.amigo.ticketbooker.auth.AuthViewModel
@@ -17,86 +14,56 @@ import com.amigo.ticketbooker.auth.OtpLoginScreen
 import com.amigo.ticketbooker.home.HomeScreen
 import com.amigo.ticketbooker.profile.ProfileScreen
 
-// Define navigation routes
-sealed class Screen(val route: String) {
-    object Auth : Screen("auth")
-    object OtpLogin : Screen("otp_login")
-    object Home : Screen("home")
-    object Profile : Screen("profile")
-    object BookingHistory : Screen("booking_history")
-    object Settings : Screen("settings")
+// Define navigation routes as constants for easier access
+object Routes {
+    const val AUTH = "auth"
+    const val OTP_LOGIN = "otp_login"
+    const val HOME = "home"
+    const val PROFILE = "profile"
+    const val BOOKING_HISTORY = "booking_history"
+    const val SETTINGS = "settings"
+    const val Logout = "logout"
 }
 
 @Composable
 fun MyAppNavigation(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = viewModel(),
-    startDestination: String = Screen.Auth.route
+    startDestination: String = Routes.AUTH
 ) {
     val navController = rememberNavController()
-    
+
     // Check if user is already logged in
     LaunchedEffect(key1 = Unit) {
         if (authViewModel.isUserLoggedIn()) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Auth.route) { inclusive = true }
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.AUTH) { inclusive = true }
             }
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = modifier
-    ) {
-        composable(Screen.Auth.route) {
-            AuthScreen(
-                onAuthSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Auth.route) { inclusive = true }
-                    }
-                },
-                onNavigateToOtp = {
-                    navController.navigate(Screen.OtpLogin.route)
-                }
-            )
-        }
-        
-        composable(Screen.OtpLogin.route) {
-            OtpLoginScreen(
-                onBackToLogin = {
-                    navController.popBackStack()
-                },
-                onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Auth.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-        
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                },
-                onSignOut = {
-                    authViewModel.signOut()
-                    navController.navigate(Screen.Auth.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-        
-        composable(Screen.Profile.route) {
-            ProfileScreen(
-                name = authViewModel.getCurrentUserName() ?: "User",
-                phone = authViewModel.getCurrentUserPhone() ?: 0,
-                onBackPressed = {
-                    navController.popBackStack()
-                }
-            )
+    // Provide the NavController to the composition tree
+    CompositionLocalProvider(LocalNavController provides navController) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = modifier
+        ) {
+            composable(Routes.AUTH) {
+                AuthScreen()
+            }
+
+            composable(Routes.OTP_LOGIN) {
+                OtpLoginScreen()
+            }
+
+            composable(Routes.HOME) {
+                HomeScreen()
+            }
+
+            composable(Routes.PROFILE) {
+                ProfileScreen()
+            }
         }
     }
 }

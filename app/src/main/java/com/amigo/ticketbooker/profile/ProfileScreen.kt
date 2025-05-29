@@ -1,7 +1,14 @@
 package com.amigo.ticketbooker.profile
 
+import com.amigo.ticketbooker.navigation.LocalNavController
+import com.amigo.ticketbooker.navigation.Routes
+import com.amigo.ticketbooker.auth.AuthViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,14 +32,14 @@ import com.amigo.ticketbooker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    name: String = "User",
-    phone: Long = 0,
-    onBackPressed: () -> Unit = {}
-) {
+fun ProfileScreen() {
+    val navController = LocalNavController.current
+    val authViewModel: AuthViewModel = viewModel()
+    val name = authViewModel.getCurrentUserName() ?: "User"
+    val phone = authViewModel.getCurrentUserPhone() ?: 0L
     Scaffold(
         topBar = {
-            ProfileTopBar(onBackPressed = onBackPressed)
+            ProfileTopBar(onBackPressed = { navController.navigateUp() })
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -172,6 +179,8 @@ fun StatItem(count: String, label: String) {
 
 @Composable
 fun ProfileOptions() {
+    val navController = LocalNavController.current
+    val authViewModel: AuthViewModel = viewModel()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,8 +198,8 @@ fun ProfileOptions() {
             ) {
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_train,
-                    title = "Booking History",
-                    subtitle = "View all your past bookings"
+                    title = "Get Membership",
+                    subtitle = "Remove ads and get unlimited token"
                 )
                 
                 HorizontalDivider(
@@ -200,8 +209,8 @@ fun ProfileOptions() {
                 
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_person,
-                    title = "Payment Methods",
-                    subtitle = "Add or manage your payment options"
+                    title = "Free Token",
+                    subtitle = "Watch add to get free token"
                 )
                 
                 HorizontalDivider(
@@ -211,8 +220,8 @@ fun ProfileOptions() {
                 
                 ProfileOptionItem(
                     iconRes = R.drawable.ic_lock,
-                    title = "Saved Addresses",
-                    subtitle = "Manage your saved addresses"
+                    title = "Master List",
+                    subtitle = "Manage your List of passengers"
                 )
                 
                 HorizontalDivider(
@@ -221,20 +230,56 @@ fun ProfileOptions() {
                 )
                 
                 ProfileOptionItem(
+                    iconRes = R.drawable.ic_phone,
+                    title = "Help & Support",
+                    subtitle = "Contact us for assistance"
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+
+                ProfileOptionItem(
                     iconRes = R.drawable.ic_sms,
+                    title = "Referral",
+                    subtitle = "Refer and earn free token"
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+
+                ProfileOptionItem(
+                    iconRes = R.drawable.ic_setting,
                     title = "Settings",
                     subtitle = "App preferences and notifications"
                 )
-                
+
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                 )
-                
+
                 ProfileOptionItem(
-                    iconRes = R.drawable.ic_person,
-                    title = "Help & Support",
-                    subtitle = "Contact us for assistance"
+                    iconRes = R.drawable.ic_logout,
+                    title = "Logout",
+                    subtitle = "Logout or Change Account",
+                    onClick = {
+                        authViewModel.signOut()
+                        navController.navigate(Routes.AUTH) {
+                            // Clear the back stack completely
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = false
+                                inclusive = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when reselecting a previously selected item
+                            restoreState = false
+                        }
+                    }
                 )
             }
         }
@@ -245,12 +290,14 @@ fun ProfileOptions() {
 fun ProfileOptionItem(
     iconRes: Int,
     title: String,
-    subtitle: String
+    subtitle: String,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(

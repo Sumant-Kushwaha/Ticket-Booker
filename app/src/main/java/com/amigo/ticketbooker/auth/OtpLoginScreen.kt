@@ -1,5 +1,9 @@
 package com.amigo.ticketbooker.auth
 
+import androidx.navigation.compose.rememberNavController
+import com.amigo.ticketbooker.navigation.LocalNavController
+import com.amigo.ticketbooker.navigation.Routes
+
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -52,6 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -60,14 +65,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amigo.ticketbooker.R
+import com.amigo.ticketbooker.fontFamily
 import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
 import kotlinx.coroutines.delay
 
 @Composable
-fun OtpLoginScreen(
-    onBackToLogin: () -> Unit = {},
-    onLoginSuccess: () -> Unit = {}
-) {
+fun OtpLoginScreen() {
+    val navController = LocalNavController.current
     val authViewModel: AuthViewModel = viewModel()
     val context = LocalContext.current
     var currentStep by remember { mutableStateOf(OtpStep.ENTER_MOBILE) }
@@ -75,12 +79,12 @@ fun OtpLoginScreen(
     var otpCode by remember { mutableStateOf("") }
     var isResendEnabled by remember { mutableStateOf(false) }
     var remainingSeconds by remember { mutableStateOf(30) }
-    
+
     // Observe OTP state
     val otpState by authViewModel.otpState.collectAsState()
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    
+
     // Handle OTP state changes
     LaunchedEffect(key1 = otpState) {
         when (otpState) {
@@ -90,18 +94,23 @@ fun OtpLoginScreen(
                 isResendEnabled = false
                 Toast.makeText(context, "OTP sent successfully!", Toast.LENGTH_SHORT).show()
             }
+
             is OtpState.Success -> {
                 Toast.makeText(context, "Authentication successful!", Toast.LENGTH_SHORT).show()
-                onLoginSuccess()
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.AUTH) { inclusive = true }
+                }
             }
+
             is OtpState.Error -> {
                 errorMessage = (otpState as OtpState.Error).message
                 showError = true
             }
+
             else -> {}
         }
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -122,30 +131,30 @@ fun OtpLoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
-            
+
             // App Logo and Title
             Image(
                 painter = painterResource(id = R.drawable.ic_train),
                 contentDescription = "Train Logo",
                 modifier = Modifier.size(80.dp)
             )
-            
+
             Text(
                 text = "Indian Railways",
                 color = Color.White,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Text(
                 text = "Ticket Booking",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
-            
+
             Spacer(modifier = Modifier.height(48.dp))
-            
+
             // Auth Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -169,7 +178,7 @@ fun OtpLoginScreen(
                     ) {
                         IconButton(onClick = {
                             authViewModel.resetState()
-                            onBackToLogin()
+                            navController.popBackStack()
                         }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_back),
@@ -177,7 +186,7 @@ fun OtpLoginScreen(
                                 tint = Color(0xFF3949AB)
                             )
                         }
-                        
+
                         Text(
                             text = "Login with OTP",
                             fontSize = 20.sp,
@@ -185,14 +194,14 @@ fun OtpLoginScreen(
                             color = Color(0xFF333333)
                         )
                     }
-                    
+
                     HorizontalDivider(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp),
                         color = Color.LightGray
                     )
-                    
+
                     // Mobile Number Entry
                     AnimatedVisibility(
                         visible = currentStep == OtpStep.ENTER_MOBILE,
@@ -211,7 +220,7 @@ fun OtpLoginScreen(
                             }
                         )
                     }
-                    
+
                     // OTP Entry
                     AnimatedVisibility(
                         visible = currentStep == OtpStep.ENTER_OTP,
@@ -243,10 +252,10 @@ fun OtpLoginScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
         }
-        
+
         // Bottom Text
         Text(
             text = "© 2025 Indian Railways",
@@ -256,7 +265,7 @@ fun OtpLoginScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         )
-        
+
         // Error Dialog
         if (showError) {
             AlertDialog(
@@ -270,7 +279,7 @@ fun OtpLoginScreen(
                 }
             )
         }
-        
+
         // Loading Indicator
         if (otpState is OtpState.Loading) {
             Box(
@@ -283,7 +292,7 @@ fun OtpLoginScreen(
             }
         }
     }
-    
+
     // Timer for OTP resend
     LaunchedEffect(key1 = currentStep, key2 = remainingSeconds) {
         if (currentStep == OtpStep.ENTER_OTP && !isResendEnabled) {
@@ -309,13 +318,13 @@ fun MobileNumberEntryContent(
             fontSize = 16.sp,
             color = Color.Gray
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Mobile Number Field
         OutlinedTextField(
             value = mobileNumber,
-            onValueChange = { 
+            onValueChange = {
                 // Only allow digits and limit to 10 characters
                 if (it.length <= 10 && it.all { char -> char.isDigit() }) {
                     onMobileNumberChange(it)
@@ -323,6 +332,7 @@ fun MobileNumberEntryContent(
             },
             label = { Text("Mobile Number") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 16.sp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -340,20 +350,27 @@ fun MobileNumberEntryContent(
                     tint = Color.Gray
                 )
             },
-            prefix = { Text("+91 ") },
+            prefix = {
+                Text(
+                    "+91 ",
+                    color = Color.Black,
+                    fontFamily = fontFamily,
+                    fontSize = 16.sp
+                )
+            },
             enabled = !isLoading
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
             text = "We'll send a 6-digit OTP to verify this number",
             fontSize = 12.sp,
             color = Color.Gray
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Continue Button
         Button(
             onClick = onContinue,
@@ -396,11 +413,11 @@ fun OtpEntryContent(
     onEditMobile: () -> Unit
 ) {
     val otpFocusRequester = remember { FocusRequester() }
-    
+
     LaunchedEffect(key1 = Unit) {
         otpFocusRequester.requestFocus()
     }
-    
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -412,7 +429,7 @@ fun OtpEntryContent(
                 color = Color.Gray,
                 modifier = Modifier.weight(1f)
             )
-            
+
             Text(
                 text = "Edit",
                 color = Color(0xFF3949AB),
@@ -420,13 +437,13 @@ fun OtpEntryContent(
                 modifier = Modifier.clickable(onClick = onEditMobile)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // OTP Entry Field
         OutlinedTextField(
             value = otpCode,
-            onValueChange = { 
+            onValueChange = {
                 // Only allow digits and limit to 6 characters
                 if (it.length <= 6 && it.all { char -> char.isDigit() }) {
                     onOtpChange(it)
@@ -436,6 +453,7 @@ fun OtpEntryContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(otpFocusRequester),
+            textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF3949AB),
                 focusedLabelColor = Color(0xFF3949AB),
@@ -454,9 +472,9 @@ fun OtpEntryContent(
                 )
             }
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Resend OTP
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -468,7 +486,7 @@ fun OtpEntryContent(
                 fontSize = 12.sp,
                 color = Color.Gray
             )
-            
+
             if (isResendEnabled) {
                 Text(
                     text = "Resend OTP",
@@ -485,9 +503,9 @@ fun OtpEntryContent(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Verify Button
         Button(
             onClick = onVerifyClick,
