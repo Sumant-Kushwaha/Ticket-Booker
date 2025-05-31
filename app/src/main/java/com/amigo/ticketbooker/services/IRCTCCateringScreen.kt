@@ -36,6 +36,9 @@ fun IRCTCCateringScreen() {
     // URL for IRCTC e-catering
     val irctcCateringUrl = "https://www.ecatering.irctc.co.in"
     
+    // State variables for WebView
+    var showRefreshButton by remember { mutableStateOf(false) }
+    
     // Handle back navigation within WebView
     BackHandler {
         if (webView?.canGoBack() == true) {
@@ -124,28 +127,47 @@ fun IRCTCCateringScreen() {
                                 super.onPageStarted(view, url, favicon)
                                 isLoading = true
                                 hasError = false
+                                showRefreshButton = false
                             }
                             
                             override fun onPageFinished(view: WebView?, url: String?) {
                                 super.onPageFinished(view, url)
-                                // Add a small delay to ensure the page is fully rendered
-                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                    isLoading = false
-                                }, 300)
+                                
+                                // Check if the page might be blank
+                                view?.evaluateJavascript("(function() { return {bodyLength: document.body.innerHTML.trim().length, hasContent: document.body.querySelector('div, p, img, form') !== null}; })();") { result ->
+                                    try {
+                                        // Extract values from the JavaScript result
+                                        val bodyLength = result.substringAfter("bodyLength").substringAfter(":").substringBefore(",").trim().toIntOrNull() ?: 0
+                                        val hasContent = result.contains("hasContent:true")
+                                        
+                                        // If page appears blank, show refresh button instead of auto-refreshing
+                                        showRefreshButton = bodyLength <= 10 && !hasContent
+                                        
+                                        // Always complete loading after checking
+                                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                            isLoading = false
+                                        }, 300)
+                                    } catch (e: Exception) {
+                                        // If there's an error parsing the result, just finish loading
+                                        isLoading = false
+                                    }
+                                }
                             }
                             
                             // Additional check for when the page is actually ready
                             override fun onPageCommitVisible(view: WebView?, url: String?) {
                                 super.onPageCommitVisible(view, url)
                                 loadingProgress = 100
+                                
+                                // No automatic reload for suspiciously fast loads
                             }
                             
                             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                                 super.onReceivedError(view, request, error)
                                 if (request?.isForMainFrame == true) {
                                     hasError = true
-                                    errorMessage = "Error loading page: ${error?.description}"
                                     isLoading = false
+                                    errorMessage = "Failed to load IRCTC e-Catering. Please check your internet connection and try again."
                                 }
                             }
                             
@@ -166,7 +188,7 @@ fun IRCTCCateringScreen() {
                                 if (newProgress >= 100) {
                                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                                         isLoading = false
-                                    }, 500)
+                                    }, 300)
                                 }
                             }
                         }
@@ -223,6 +245,56 @@ fun IRCTCCateringScreen() {
                 }
             }
             
+            // Show refresh button if we detected a blank page
+            if (showRefreshButton && !isLoading && !hasError) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "The page appears to be blank",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Button(
+                            onClick = {
+                                showRefreshButton = false
+                                isLoading = true
+                                webView?.apply {
+                                    clearCache(true)
+                                    clearHistory()
+                                    reload()
+                                }
+                            }
+                        ) {
+                            Text("Refresh Page")
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedButton(
+                            onClick = {
+                                showRefreshButton = false
+                                isLoading = true
+                                webView?.apply {
+                                    clearCache(true)
+                                    clearHistory()
+                                    loadUrl("https://www.ecatering.irctc.co.in/mobile")
+                                }
+                            }
+                        ) {
+                            Text("Try Mobile Version")
+                        }
+                    }
+                }
+            }
+            
             // Error message
             if (hasError) {
                 Column(
@@ -239,10 +311,32 @@ fun IRCTCCateringScreen() {
                     Button(
                         onClick = {
                             hasError = false
-                            webView?.reload()
+                            isLoading = true
+                            webView?.apply {
+                                clearCache(true)
+                                clearHistory()
+                                reload()
+                            }
                         }
                     ) {
                         Text("Retry")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Alternative loading option
+                    OutlinedButton(
+                        onClick = {
+                            hasError = false
+                            isLoading = true
+                            webView?.apply {
+                                clearCache(true)
+                                clearHistory()
+                                loadUrl("https://www.ecatering.irctc.co.in/mobile")
+                            }
+                        }
+                    ) {
+                        Text("Try Mobile Version")
                     }
                 }
             }

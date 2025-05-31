@@ -24,7 +24,6 @@ import com.amigo.ticketbooker.services.PlatformLocatorScreen
 import com.amigo.ticketbooker.services.PnrStatusScreen
 import com.amigo.ticketbooker.services.RunningStatusScreen
 import com.amigo.ticketbooker.services.TrainMapScreen
-import com.amigo.ticketbooker.services.ZomatoTrainFoodScreen
 import com.amigo.ticketbooker.token.FreeTokenScreen
 
 // Define navigation routes as constants for easier access
@@ -44,7 +43,6 @@ object Routes {
     const val MANUAL_BOOKING = "manual_booking"
     const val ORDER_FOOD = "order_food"
     const val IRCTC_CATERING = "irctc_catering"
-    const val ZOMATO_TRAIN_FOOD = "zomato_train_food"
     const val RUNNING_STATUS = "running_status"
     const val PNR_STATUS = "pnr_status"
     const val COACH_POSITION = "coach_position"
@@ -113,10 +111,6 @@ fun MyAppNavigation(
         
         composable(Routes.IRCTC_CATERING) {
             IRCTCCateringScreen()
-        }
-        
-        composable(Routes.ZOMATO_TRAIN_FOOD) {
-            ZomatoTrainFoodScreen()
         }
 
         composable(Routes.RUNNING_STATUS) {

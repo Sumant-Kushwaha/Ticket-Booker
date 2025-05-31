@@ -32,16 +32,12 @@ import com.amigo.ticketbooker.navigation.Routes
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.*
-import android.widget.Toast
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -53,23 +49,9 @@ import com.amigo.ticketbooker.ui.ServiceTopBar
 @Composable
 fun OrderFoodScreen() {
     val navController = LocalNavController.current
-    // No longer need context since we're using web approach
 
     // State for tracking which option is selected
     var selectedOption by remember { mutableStateOf<FoodServiceOption?>(null) }
-    
-    // State for showing Zomato install card
-    var showZomatoInstallCard by remember { mutableStateOf(false) }
-    
-    // We no longer need to check if Zomato is installed
-    // We'll use our web-based approach instead
-    
-    // Reset installation card when selection changes
-    LaunchedEffect(selectedOption) {
-        if (selectedOption != FoodServiceOption.ZOMATO) {
-            showZomatoInstallCard = false
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -172,8 +154,8 @@ fun OrderFoodScreen() {
                         // Navigate to the appropriate food ordering flow
                         when (selectedOption) {
                             FoodServiceOption.ZOMATO -> {
-                                // Navigate to our new Zomato web screen which handles deep linking
-                                navController.navigate(Routes.ZOMATO_TRAIN_FOOD)
+                                // Navigate to Zomato ordering flow
+                                // For now, just show a toast or message
                             }
                             FoodServiceOption.IRCTC -> {
                                 // Navigate to IRCTC catering screen
@@ -202,12 +184,8 @@ fun OrderFoodScreen() {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
-                // No installation card needed anymore as we use web approach
 
-                // No debug indicator needed anymore
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -345,19 +323,6 @@ fun FoodServiceCard(
 
 enum class FoodServiceOption {
     ZOMATO, IRCTC
-}
-
-// Function to check if an app is installed - more robust with error handling
-fun isAppInstalled(context: Context, packageName: String): Boolean {
-    return try {
-        // Check if package exists AND can be launched (has activities)
-        val packageInfo = context.packageManager.getPackageInfo(packageName, 0)
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
-        packageInfo != null && launchIntent != null
-    } catch (e: Exception) {
-        // Handle any exceptions that might occur
-        false
-    }
 }
 
 
