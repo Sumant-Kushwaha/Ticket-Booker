@@ -64,4 +64,13 @@ dependencies {
     // Navigation
     var navVersion = "2.9.0"
     implementation("androidx.navigation:navigation-compose:$navVersion")
+    
+    // Gson for JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // OkHttp for network requests
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+
+    // Extra icons
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 }

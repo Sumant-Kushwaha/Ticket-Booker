@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.amigo.ticketbooker.navigation.MyAppNavigation
+import com.amigo.ticketbooker.ui.AppRoot
 import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +21,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         
         // Ensure the status bar is visible and properly themed
-        window.statusBarColor = getColor(R.color.purple_700)
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
@@ -32,8 +31,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Use our new navigation system
-                    MyAppNavigation()
+                    // Single composable call that handles everything
+                    AppRoot(onExitApp = { finish() })
                 }
             }
         }

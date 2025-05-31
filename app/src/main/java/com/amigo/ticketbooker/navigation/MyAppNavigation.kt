@@ -1,13 +1,13 @@
 package com.amigo.ticketbooker.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.amigo.ticketbooker.auth.AuthScreen
 import com.amigo.ticketbooker.auth.AuthViewModel
 import com.amigo.ticketbooker.auth.OtpLoginScreen
@@ -35,8 +35,8 @@ object Routes {
     const val SETTINGS = "settings"
     const val HELP_SUPPORT = "help_support"
     const val FREE_TOKEN = "free_token"
-    const val COMMON = "common"
-    
+    const val COMMON = "order_food"
+
     // Service card routes
     const val AUTOMATIC_BOOKING = "automatic_booking"
     const val MANUAL_BOOKING = "manual_booking"
@@ -53,10 +53,9 @@ object Routes {
 fun MyAppNavigation(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = viewModel(),
-    startDestination: String = Routes.AUTH
+    startDestination: String = Routes.AUTH,
+    navController: NavHostController
 ) {
-    val navController = rememberNavController()
-
     // Check if user is already logged in
     LaunchedEffect(key1 = Unit) {
         if (authViewModel.isUserLoggedIn()) {
@@ -66,73 +65,71 @@ fun MyAppNavigation(
         }
     }
 
-    // Provide the NavController to the composition tree
-    CompositionLocalProvider(LocalNavController provides navController) {
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = modifier
-        ) {
-            composable(Routes.AUTH) {
-                AuthScreen()
-            }
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
+        composable(Routes.AUTH) {
+            AuthScreen()
+        }
 
-            composable(Routes.OTP_LOGIN) {
-                OtpLoginScreen()
-            }
+        composable(Routes.OTP_LOGIN) {
+            OtpLoginScreen()
+        }
 
-            composable(Routes.HOME) {
-                HomeScreen()
-            }
+        composable(Routes.HOME) {
+            HomeScreen()
+        }
 
-            composable(Routes.PROFILE) {
-                ProfileScreen()
-            }
-            
-            composable(Routes.HELP_SUPPORT) {
-                HelpAndSupportScreen()
-            }
-            
-            composable(Routes.FREE_TOKEN) {
-                FreeTokenScreen()
-            }
-            
-            // Service screen routes
-            composable(Routes.AUTOMATIC_BOOKING) {
-                AutomaticBookingScreen()
-            }
-            
-            composable(Routes.MANUAL_BOOKING) {
-                ManualBookingScreen()
-            }
-            
-            composable(Routes.ORDER_FOOD) {
-                OrderFoodScreen()
-            }
-            
-            composable(Routes.RUNNING_STATUS) {
-                RunningStatusScreen()
-            }
-            
-            composable(Routes.PNR_STATUS) {
-                PnrStatusScreen()
-            }
-            
-            composable(Routes.COACH_POSITION) {
-                CoachPositionScreen()
-            }
-            
-            composable(Routes.PLATFORM_LOCATOR) {
-                PlatformLocatorScreen()
-            }
-            
-            composable(Routes.TRAIN_MAP) {
-                TrainMapScreen()
-            }
-            
-            composable(Routes.MASTER_LIST) {
-                MasterListScreen()
-            }
+        composable(Routes.PROFILE) {
+            ProfileScreen()
+        }
+
+        composable(Routes.HELP_SUPPORT) {
+            HelpAndSupportScreen()
+        }
+
+        composable(Routes.FREE_TOKEN) {
+            FreeTokenScreen()
+        }
+
+        // Service screen routes
+        composable(Routes.AUTOMATIC_BOOKING) {
+            AutomaticBookingScreen()
+        }
+
+        composable(Routes.MANUAL_BOOKING) {
+            ManualBookingScreen()
+        }
+
+        composable(Routes.ORDER_FOOD) {
+            OrderFoodScreen()
+        }
+
+        composable(Routes.RUNNING_STATUS) {
+            RunningStatusScreen()
+        }
+
+        composable(Routes.PNR_STATUS) {
+            PnrStatusScreen()
+        }
+
+        composable(Routes.COACH_POSITION) {
+            CoachPositionScreen()
+        }
+
+        composable(Routes.PLATFORM_LOCATOR) {
+            PlatformLocatorScreen()
+        }
+
+        composable(Routes.TRAIN_MAP) {
+            TrainMapScreen()
+        }
+
+        composable(Routes.MASTER_LIST) {
+            MasterListScreen()
         }
     }
 }
+
