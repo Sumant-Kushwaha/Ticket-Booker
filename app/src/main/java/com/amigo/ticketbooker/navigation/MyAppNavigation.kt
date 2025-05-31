@@ -17,12 +17,14 @@ import com.amigo.ticketbooker.profile.ProfileScreen
 import com.amigo.ticketbooker.services.AutomaticBookingScreen
 import com.amigo.ticketbooker.services.CoachPositionScreen
 import com.amigo.ticketbooker.services.ManualBookingScreen
+import com.amigo.ticketbooker.services.IRCTCCateringScreen
 import com.amigo.ticketbooker.services.MasterListScreen
 import com.amigo.ticketbooker.services.OrderFoodScreen
 import com.amigo.ticketbooker.services.PlatformLocatorScreen
 import com.amigo.ticketbooker.services.PnrStatusScreen
 import com.amigo.ticketbooker.services.RunningStatusScreen
 import com.amigo.ticketbooker.services.TrainMapScreen
+import com.amigo.ticketbooker.services.ZomatoTrainFoodScreen
 import com.amigo.ticketbooker.token.FreeTokenScreen
 
 // Define navigation routes as constants for easier access
@@ -41,6 +43,8 @@ object Routes {
     const val AUTOMATIC_BOOKING = "automatic_booking"
     const val MANUAL_BOOKING = "manual_booking"
     const val ORDER_FOOD = "order_food"
+    const val IRCTC_CATERING = "irctc_catering"
+    const val ZOMATO_TRAIN_FOOD = "zomato_train_food"
     const val RUNNING_STATUS = "running_status"
     const val PNR_STATUS = "pnr_status"
     const val COACH_POSITION = "coach_position"
@@ -105,6 +109,14 @@ fun MyAppNavigation(
 
         composable(Routes.ORDER_FOOD) {
             OrderFoodScreen()
+        }
+        
+        composable(Routes.IRCTC_CATERING) {
+            IRCTCCateringScreen()
+        }
+        
+        composable(Routes.ZOMATO_TRAIN_FOOD) {
+            ZomatoTrainFoodScreen()
         }
 
         composable(Routes.RUNNING_STATUS) {

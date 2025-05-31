@@ -73,4 +73,10 @@ dependencies {
 
     // Extra icons
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    
+    // Browser for Custom Chrome Tabs
+    implementation("androidx.browser:browser:1.7.0")
+    
+    // Activity Compose for BackHandler
+    implementation("androidx.activity:activity-compose:1.8.2")
 }

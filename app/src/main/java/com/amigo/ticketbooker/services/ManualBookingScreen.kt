@@ -33,14 +33,14 @@ fun ManualBookingScreen() {
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            OptimizedWebView("https://www.irctc.co.in/")
+            OptimizedWebViewForManualBooking("https://www.irctc.co.in/")
         }
     }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun OptimizedWebView(url: String) {
+fun OptimizedWebViewForManualBooking(url: String) {
     var isLoading by remember { mutableStateOf(true) }
     var loadingProgress by remember { mutableStateOf(0) }
     
@@ -54,13 +54,19 @@ fun OptimizedWebView(url: String) {
                         javaScriptEnabled = true
                         domStorageEnabled = true
                         loadsImagesAutomatically = true
+                        databaseEnabled = true
+                        useWideViewPort = true
+                        loadWithOverviewMode = true
+                        builtInZoomControls = false
+                        displayZoomControls = false
                         mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+//                        cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+                        cacheMode = WebSettings.LOAD_DEFAULT
                         setGeolocationEnabled(true)
                         // Enable hardware acceleration
                         setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
                     }
-                    
+
                     // Configure WebViewClient
                     webViewClient = object : WebViewClient() {
                         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
