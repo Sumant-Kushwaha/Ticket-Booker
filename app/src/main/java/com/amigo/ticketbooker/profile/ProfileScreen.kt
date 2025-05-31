@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun ProfileScreen() {
     val navController = LocalNavController.current
@@ -296,11 +295,11 @@ fun ProfileHeaderCard(name: String, phone: Long) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    EnhancedStatItem(count = "12", label = "Bookings", iconRes = R.drawable.ic_train)
+                    EnhancedStatItem(count = "12", label = "Bookings")
                     Spacer(modifier = Modifier.width(8.dp))
-                    EnhancedStatItem(count = "4", label = "Upcoming", iconRes = R.drawable.ic_setting)
+                    EnhancedStatItem(count = "4", label = "Upcoming")
                     Spacer(modifier = Modifier.width(8.dp))
-                    EnhancedStatItem(count = "8", label = "Completed", iconRes = R.drawable.ic_person)
+                    EnhancedStatItem(count = "8", label = "Completed")
                 }
             }
         }
@@ -308,7 +307,7 @@ fun ProfileHeaderCard(name: String, phone: Long) {
 }
 
 @Composable
-fun EnhancedStatItem(count: String, label: String, iconRes: Int) {
+fun EnhancedStatItem(count: String, label: String) {
     Surface(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
@@ -324,15 +323,7 @@ fun EnhancedStatItem(count: String, label: String, iconRes: Int) {
                 .padding(horizontal = 12.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = count,
                 fontSize = 20.sp,
@@ -452,7 +443,10 @@ fun ProfileOptions() {
                 EnhancedProfileOptionItem(
                     iconRes = R.drawable.ic_lock,
                     title = "Master List",
-                    subtitle = "Manage your List of passengers"
+                    subtitle = "Manage your List of passengers",
+                    onClick = {
+                        navController.navigate(Routes.MASTER_LIST)
+                    }
                 )
             }
         }
@@ -660,5 +654,3 @@ fun EnhancedProfileOptionItem(
         )
     }
 }
-
-// Old ProfileOptionItem has been replaced with EnhancedProfileOptionItem

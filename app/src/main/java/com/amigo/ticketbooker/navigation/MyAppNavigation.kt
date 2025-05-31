@@ -1,5 +1,7 @@
 package com.amigo.ticketbooker.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -51,6 +53,7 @@ object Routes {
     const val MASTER_LIST = "master_list"
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyAppNavigation(
     modifier: Modifier = Modifier,

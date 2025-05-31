@@ -112,3 +112,45 @@ fun ConfirmationDialog(
         }
     }
 }
+
+
+
+/**
+ * A confirmation dialog for deleting items
+ * @param onConfirm Called when the user confirms the deletion
+ * @param onDismiss Called when the user dismisses the dialog
+ * @param title The title of the dialog
+ * @param message The message displayed in the dialog
+ */
+@Composable
+fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    title: String = "Delete Passenger",
+    message: String = "Are you sure you want to delete this passenger from your master list? This action cannot be undone."
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
