@@ -240,6 +240,7 @@ fun AuthScreen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginContent(
     authViewModel: AuthViewModel,

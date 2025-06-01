@@ -141,7 +141,7 @@ fun HomeAppBar(
                     modifier = Modifier.background(Color.White)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("My Profile") },
+                        text = { Text("My Profile", color = Color.Black) },
                         onClick = {
                             showMenu = false
                             onProfileClick()
@@ -149,12 +149,13 @@ fun HomeAppBar(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                contentDescription = "Profile"
+                                contentDescription = "Profile",
+                                tint = Color.Black
                             )
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Sign Out") },
+                        text = { Text("Sign Out", color = Color.Black) },
                         onClick = {
                             showMenu = false
                             onSignOut()
@@ -162,7 +163,8 @@ fun HomeAppBar(
                         leadingIcon = {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_back),
-                                contentDescription = "Sign Out"
+                                contentDescription = "Sign Out",
+                                tint = Color.Black
                             )
                         }
                     )
@@ -428,6 +430,7 @@ fun ServiceCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentBookingsSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
