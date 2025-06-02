@@ -79,4 +79,7 @@ dependencies {
     
     // Activity Compose for BackHandler
     implementation("androidx.activity:activity-compose:1.8.2")
+
+    // Firebase Auth
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.1")
 }

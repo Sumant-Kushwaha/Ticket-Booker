@@ -1,7 +1,10 @@
 package com.amigo.ticketbooker.services
 
+import android.app.Activity
+import android.app.Application
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -9,25 +12,72 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Man
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Woman
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,15 +89,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amigo.ticketbooker.navigation.LocalNavController
+import com.amigo.ticketbooker.services.storage.PassengerFileStorage
+import com.amigo.ticketbooker.services.storage.StoragePermissionHandler
 import com.amigo.ticketbooker.ui.DeleteConfirmationDialog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.viewModelScope
+import java.util.UUID
 
 // Enum class for passenger gender options
 enum class Gender {
@@ -89,11 +145,90 @@ data class Passenger(
 )
 
 // ViewModel for managing the master list of passengers
-class MasterListViewModel : ViewModel() {
-    // Sample data for demonstration
-    private val _passengers = MutableStateFlow<List<Passenger>>(
-        listOf(
+class MasterListViewModel(application: android.app.Application) : androidx.lifecycle.AndroidViewModel(application) {
+    private val context = application.applicationContext
+    private val fileStorage = com.amigo.ticketbooker.services.storage.PassengerFileStorage(context)
+    
+    // State for storage permission status
+    private val _storagePermissionGranted = MutableStateFlow(false)
+    val storagePermissionGranted: StateFlow<Boolean> = _storagePermissionGranted.asStateFlow()
+    
+    // State for storage locations
+    private val _storageLocations = MutableStateFlow<List<String>>(emptyList())
+    val storageLocations: StateFlow<List<String>> = _storageLocations
+    
+    // State for passengers list
+    private val _passengers = MutableStateFlow<List<Passenger>>(emptyList())
+    val passengers: StateFlow<List<Passenger>> = _passengers.asStateFlow()
+    
+    init {
+        // Check if we have storage permission and load data if available
+        checkStoragePermission()
+        
+        // Get all possible storage locations
+        _storageLocations.value = PassengerFileStorage.getAllPossibleFileLocations(getApplication())
+    }
+    
+    /**
+     * Check if we have storage permission and update state
+     */
+    fun checkStoragePermission() {
+        val hasPermission = StoragePermissionHandler.hasStoragePermission(getApplication())
+        _storagePermissionGranted.value = hasPermission
+        
+        if (hasPermission) {
+            // If we have permission, load passengers from file
+            loadPassengersFromFile()
+        }
+    }
+    
+    /**
+     * Set storage permission granted and load/save data
+     */
+    fun onStoragePermissionResult(granted: Boolean) {
+        _storagePermissionGranted.value = granted
+        
+        // Update storage locations
+        _storageLocations.value = PassengerFileStorage.getAllPossibleFileLocations(getApplication())
+        
+        if (granted) {
+            // If permission was just granted, load passengers from file
+            loadPassengersFromFile()
+            // And save current passengers to file
+            savePassengersToFile(_passengers.value)
+        }
+    }
+    
+    /**
+     * Load passengers from file
+     */
+    private fun loadPassengersFromFile() {
+        viewModelScope.launch {
+            val loadedPassengers = fileStorage.loadPassengers()
+            if (loadedPassengers.isNotEmpty()) {
+                _passengers.value = loadedPassengers
+            }
+            
+            // Update storage locations after load attempt
+            _storageLocations.value = PassengerFileStorage.getAllPossibleFileLocations(getApplication())
+        }
+    }
+    
+    /**
+     * Save passengers to file
+     */
+    private fun savePassengersToFile(passengerList: List<Passenger>) {
+        fileStorage.savePassengers(passengerList)
+    }
+    
+    /**
+     * Get sample passenger data
+     * @return List of sample passengers
+     */
+    private fun loadSampleData(): List<Passenger> {
+        val samplePassengers = listOf(
             Passenger(
+                id = UUID.randomUUID().toString(),
                 name = "Raj Kumar",
                 age = 35,
                 gender = Gender.MALE,
@@ -101,6 +236,7 @@ class MasterListViewModel : ViewModel() {
                 berthPreference = BerthPreference.LOWER
             ),
             Passenger(
+                id = UUID.randomUUID().toString(),
                 name = "Priya Singh",
                 age = 28,
                 gender = Gender.FEMALE,
@@ -108,6 +244,7 @@ class MasterListViewModel : ViewModel() {
                 berthPreference = BerthPreference.SIDE_LOWER
             ),
             Passenger(
+                id = UUID.randomUUID().toString(),
                 name = "Anil Sharma",
                 age = 42,
                 gender = Gender.MALE,
@@ -115,8 +252,12 @@ class MasterListViewModel : ViewModel() {
                 berthPreference = BerthPreference.UPPER
             )
         )
-    )
-    val passengers: StateFlow<List<Passenger>> = _passengers.asStateFlow()
+        
+        // Also update the state
+        _passengers.value = samplePassengers
+        
+        return samplePassengers
+    }
     
     // State for currently edited passenger (null when not editing)
     private val _currentPassenger = MutableStateFlow<Passenger?>(null)
@@ -148,13 +289,20 @@ class MasterListViewModel : ViewModel() {
     fun savePassenger(passenger: Passenger) {
         _passengers.update { currentList ->
             val isEdit = currentList.any { it.id == passenger.id }
-            if (isEdit) {
+            val updatedList = if (isEdit) {
                 // Update existing passenger
                 currentList.map { if (it.id == passenger.id) passenger else it }
             } else {
                 // Add new passenger
                 currentList + passenger
             }
+            
+            // Save to file if permission granted
+            if (_storagePermissionGranted.value) {
+                savePassengersToFile(updatedList)
+            }
+            
+            updatedList
         }
         _isFormVisible.value = false
         _currentPassenger.value = null
@@ -172,7 +320,14 @@ class MasterListViewModel : ViewModel() {
     fun confirmDeletePassenger() {
         val idToDelete = _showDeleteConfirmation.value ?: return
         _passengers.update { currentList ->
-            currentList.filter { it.id != idToDelete }
+            val updatedList = currentList.filter { it.id != idToDelete }
+            
+            // Save to file if permission granted
+            if (_storagePermissionGranted.value) {
+                savePassengersToFile(updatedList)
+            }
+            
+            updatedList
         }
         _showDeleteConfirmation.value = null // Hide confirmation dialog
     }
@@ -183,6 +338,7 @@ class MasterListViewModel : ViewModel() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MasterListScreen(viewModel: MasterListViewModel = viewModel()) {
@@ -191,11 +347,47 @@ fun MasterListScreen(viewModel: MasterListViewModel = viewModel()) {
     val isFormVisible by viewModel.isFormVisible.collectAsState()
     val currentPassenger by viewModel.currentPassenger.collectAsState()
     val showDeleteConfirmation by viewModel.showDeleteConfirmation.collectAsState()
+    var showPermissionRequest by remember { mutableStateOf(false) }
+    var showStorageLocationsDialog by remember { mutableStateOf(false) }
+    
+    if (showPermissionRequest) {
+        StoragePermissionHandler.RequestStoragePermission(
+            onPermissionGranted = {
+                showPermissionRequest = false
+                viewModel.onStoragePermissionResult(true)
+            },
+            onPermissionDenied = {
+                showPermissionRequest = false
+                viewModel.onStoragePermissionResult(false)
+            }
+        )
+    }
+    
+    // Dialog to show storage locations
+    if (showStorageLocationsDialog) {
+        AlertDialog(
+            onDismissRequest = { showStorageLocationsDialog = false },
+            title = { Text("Passenger Data Storage Location") },
+            text = { 
+                Column {
+                    Text(
+                        "Your passenger data is stored at Android/media/com.amigo.ticketbooker",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showStorageLocationsDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
+                title = { 
                     Text(
                         text = "Master List of Passengers",
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -214,8 +406,38 @@ fun MasterListScreen(viewModel: MasterListViewModel = viewModel()) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                actions = {
+                    // Storage permission icon
+                    val permissionGranted by viewModel.storagePermissionGranted.collectAsState()
+                    if (permissionGranted) {
+                        // Show save icon if permission is granted
+                        IconButton(onClick = {
+                            // Show storage locations dialog
+                            showStorageLocationsDialog = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Save,
+                                contentDescription = "Storage Permission Granted (Tap for locations)",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    } else {
+                        // Show error icon if permission is not granted
+                        IconButton(onClick = {
+                            // Request storage permission
+                            showPermissionRequest = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.ErrorOutline,
+                                contentDescription = "Storage Permission Required",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -473,6 +695,7 @@ fun PassengerCard(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PassengerForm(
@@ -491,7 +714,6 @@ fun PassengerForm(
     
     // Calendar dialog state
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf<Long?>(null) }
     
     // Country dropdown state
     var isCountryMenuExpanded by remember { mutableStateOf(false) }
@@ -549,7 +771,7 @@ fun PassengerForm(
             fontWeight = FontWeight.Bold
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
         // Name field
         OutlinedTextField(
@@ -569,7 +791,7 @@ fun PassengerForm(
             modifier = Modifier.fillMaxWidth()
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         
         // Age field with calendar picker button
         OutlinedTextField(
@@ -631,15 +853,16 @@ fun PassengerForm(
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         
         // Gender selection
         Text(
             text = "Gender",
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -667,18 +890,15 @@ fun PassengerForm(
         // Country dropdown
         ExposedDropdownMenuBox(
             expanded = isCountryMenuExpanded,
-            onExpandedChange = { isCountryMenuExpanded = it },
-            modifier = Modifier.fillMaxWidth()
+            onExpandedChange = { isCountryMenuExpanded = it }
         ) {
             OutlinedTextField(
                 value = country,
                 onValueChange = { country = it },
                 label = { Text("Country") },
-                placeholder = { Text("Enter or select country") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCountryMenuExpanded) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
             
             ExposedDropdownMenu(
@@ -703,6 +923,7 @@ fun PassengerForm(
         Text(
             text = "Berth Preference",
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -715,7 +936,7 @@ fun PassengerForm(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(12.dp)
                 )
-                .padding(16.dp),
+                .padding(1.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BerthPreference.values().forEach { preference ->
@@ -735,7 +956,7 @@ fun PassengerForm(
             }
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // Action buttons
         Row(

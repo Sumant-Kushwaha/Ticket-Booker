@@ -1,6 +1,9 @@
 package com.amigo.ticketbooker.auth
 
 import android.app.Activity
+import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +29,8 @@ import java.util.concurrent.TimeUnit
 
 
 class AuthViewModel : ViewModel() {
+    // TAG for logging
+    private val TAG = "AuthViewModel"
     private val auth = FirebaseAuth.getInstance()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -213,13 +218,109 @@ class AuthViewModel : ViewModel() {
         return auth.currentUser != null
     }
     
-    fun getCurrentUserName(): String? {
-        return auth.currentUser?.displayName ?: auth.currentUser?.email?.substringBefore('@')
+    companion object {
+        // Static context reference for SharedPreferences
+        private var appContext: Context? = null
+        
+        // Shared preferences key constants
+        private const val PREF_NAME = "user_prefs"
+        private const val KEY_USER_NAME = "user_name"
+        private const val KEY_USER_PHONE = "user_phone"
+        
+        // Initialize context - call this from MainActivity or Application class
+        fun initialize(context: Context) {
+            if (appContext == null) {
+                appContext = context.applicationContext
+            }
+        }
+        
+        // Get shared preferences
+        private fun getPrefs(): SharedPreferences? {
+            return appContext?.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        }
     }
     
-    fun getCurrentUserPhone(): Long? {
+    /**
+     * Get the current user's name from SharedPreferences or Firebase Auth
+     * Returns a default name if neither is available
+     */
+    fun getCurrentUserName(): String {
+        val prefs = getPrefs()
+        
+        // First try to get from SharedPreferences
+        val savedName = prefs?.getString(KEY_USER_NAME, null)
+        if (!savedName.isNullOrBlank()) {
+            Log.d(TAG, "Using name from SharedPreferences: $savedName")
+            return savedName
+        }
+        
+        // Then try Firebase Auth sources
+        val authName = auth.currentUser?.displayName 
+            ?: auth.currentUser?.email?.substringBefore('@')
+        
+        if (!authName.isNullOrBlank()) {
+            Log.d(TAG, "Using name from Firebase Auth: $authName")
+            // Save to preferences for future use
+            prefs?.edit()?.putString(KEY_USER_NAME, authName)?.apply()
+            return authName
+        }
+        
+        // Default fallback
+        Log.d(TAG, "Using default name: IRCTC User")
+        return "IRCTC User"
+    }
+    
+    /**
+     * Get the current user's phone number from SharedPreferences or Firebase Auth
+     * Returns a default number if neither is available
+     */
+    fun getCurrentUserPhone(): Long {
+        val prefs = getPrefs()
+        
+        // First try to get from SharedPreferences
+        val savedPhone = prefs?.getLong(KEY_USER_PHONE, 0L) ?: 0L
+        if (savedPhone > 0) {
+            Log.d(TAG, "Using phone from SharedPreferences: $savedPhone")
+            return savedPhone
+        }
+        
+        // Then try to get from Firebase Auth
         val phoneNumber = auth.currentUser?.phoneNumber
-        return phoneNumber?.replace("+91", "")?.toLongOrNull()
+        Log.d(TAG, "Firebase phone number: $phoneNumber")
+        
+        if (!phoneNumber.isNullOrBlank()) {
+            try {
+                // Remove country code and convert to Long
+                val parsedPhone = phoneNumber.replace("+91", "").toLongOrNull() ?: 0L
+                if (parsedPhone > 0) {
+                    Log.d(TAG, "Using phone from Firebase Auth: $parsedPhone")
+                    // Save to preferences for future use
+                    prefs?.edit()?.putLong(KEY_USER_PHONE, parsedPhone)?.apply()
+                    return parsedPhone
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error parsing phone number: ${e.message}")
+                // Log error but continue to fallback
+            }
+        }
+        
+        // Default fallback
+        Log.d(TAG, "Using default phone: 9876543210")
+        return 9876543210L
+    }
+    
+    /**
+     * Save user profile information to SharedPreferences
+     * Call this method after successful login/signup
+     */
+    fun saveUserInfo(name: String, phone: Long) {
+        val prefs = getPrefs()
+        prefs?.edit()
+            ?.putString(KEY_USER_NAME, name)
+            ?.putLong(KEY_USER_PHONE, phone)
+            ?.apply()
+        
+        Log.d(TAG, "Saved user info - Name: $name, Phone: $phone")
     }
 }
 
