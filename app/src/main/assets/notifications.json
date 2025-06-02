@@ -1,0 +1,128 @@
+{
+  "bookingNotifications": [
+    {
+      "title": "Booking Confirmed!",
+      "body": "Your ticket has been confirmed. Have a safe journey!",
+      "deepLink": "ticketbooker://booking/details"
+    },
+    {
+      "title": "Booking Update",
+      "body": "Your ticket status has been updated to RAC. Check your booking for details.",
+      "deepLink": "ticketbooker://booking/details"
+    },
+    {
+      "title": "Booking Reminder",
+      "body": "Your journey to Mumbai starts tomorrow. Don't forget to pack!",
+      "deepLink": "ticketbooker://booking/details"
+    },
+    {
+      "title": "Booking Waitlisted",
+      "body": "Your ticket is currently waitlisted at position WL5. We'll notify you of any changes.",
+      "deepLink": "ticketbooker://booking/details"
+    },
+    {
+      "title": "Payment Successful",
+      "body": "Your payment of ₹1,250 for booking ID IRCTC12345 has been received.",
+      "deepLink": "ticketbooker://booking/payment"
+    },
+    {
+      "title": "Tatkal Booking Open",
+      "body": "Tatkal booking for tomorrow is now open. Book quickly to secure your seat!",
+      "deepLink": "ticketbooker://booking/tatkal"
+    },
+    {
+      "title": "E-Ticket Generated",
+      "body": "Your e-ticket has been generated. You can download it from your bookings.",
+      "deepLink": "ticketbooker://booking/eticket"
+    },
+    {
+      "title": "Booking Cancelled",
+      "body": "Your booking has been cancelled as requested. Refund will be processed in 5-7 days.",
+      "deepLink": "ticketbooker://booking/refunds"
+    }
+  ],
+  "offerNotifications": [
+    {
+      "title": "Special Discount!",
+      "body": "Use code TRAIN20 to get 20% off on your next booking!",
+      "deepLink": "ticketbooker://offers/discount"
+    },
+    {
+      "title": "Weekend Offer",
+      "body": "Book tickets for weekend travel and get 10% cashback!",
+      "deepLink": "ticketbooker://offers/weekend"
+    },
+    {
+      "title": "New User Offer",
+      "body": "First time booking? Use WELCOME15 for a special discount!",
+      "deepLink": "ticketbooker://offers/newuser"
+    },
+    {
+      "title": "Premium Membership",
+      "body": "Upgrade to premium and get priority bookings and exclusive offers!",
+      "deepLink": "ticketbooker://profile/premium"
+    },
+    {
+      "title": "Refer & Earn",
+      "body": "Refer a friend and both get 50 tokens for free bookings!",
+      "deepLink": "ticketbooker://profile/refer"
+    },
+    {
+      "title": "Festival Discount",
+      "body": "Celebrate Diwali with special 25% off on all bookings!",
+      "deepLink": "ticketbooker://offers/festival"
+    },
+    {
+      "title": "Credit Card Offer",
+      "body": "Pay with HDFC credit card and get 5% instant discount!",
+      "deepLink": "ticketbooker://offers/cards"
+    },
+    {
+      "title": "Free Food Voucher",
+      "body": "Book AC tickets and get a free food voucher worth ₹150!",
+      "deepLink": "ticketbooker://offers/food"
+    }
+  ],
+  "trainUpdateNotifications": [
+    {
+      "title": "Train Delayed",
+      "body": "Rajdhani Express (12301) is running 30 minutes late.",
+      "deepLink": "ticketbooker://services/running_status"
+    },
+    {
+      "title": "Platform Change",
+      "body": "Your train will now depart from Platform 5 instead of Platform 3.",
+      "deepLink": "ticketbooker://services/platform_locator"
+    },
+    {
+      "title": "Train Arriving Soon",
+      "body": "Your train is arriving in 15 minutes. Please proceed to the platform.",
+      "deepLink": "ticketbooker://services/running_status"
+    },
+    {
+      "title": "PNR Status Update",
+      "body": "Your PNR status has changed from WL3 to Confirmed. Check details.",
+      "deepLink": "ticketbooker://services/pnr_status"
+    },
+    {
+      "title": "Train Cancelled",
+      "body": "Due to maintenance, train number 12345 has been cancelled today.",
+      "deepLink": "ticketbooker://services/running_status"
+    },
+    {
+      "title": "Coach Position Updated",
+      "body": "Your coach B1 will be at the front of the train. Check coach position for details.",
+      "deepLink": "ticketbooker://services/coach_position"
+    },
+    {
+      "title": "Train Rescheduled",
+      "body": "Your train has been rescheduled to depart at 15:30 instead of 14:45.",
+      "deepLink": "ticketbooker://services/running_status"
+    },
+    {
+      "title": "Food Order Window",
+      "body": "Food ordering is now available for your journey tomorrow. Order now for best selection!",
+      "deepLink": "ticketbooker://services/order_food"
+    }
+  ]
+}

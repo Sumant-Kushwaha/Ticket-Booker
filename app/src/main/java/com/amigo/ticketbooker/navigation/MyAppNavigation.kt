@@ -16,6 +16,7 @@ import com.amigo.ticketbooker.auth.OtpLoginScreen
 import com.amigo.ticketbooker.help.HelpAndSupportScreen
 import com.amigo.ticketbooker.home.HomeScreen
 import com.amigo.ticketbooker.profile.ProfileScreen
+import com.amigo.ticketbooker.profile.SettingsScreen
 import com.amigo.ticketbooker.services.AutomaticBookingScreen
 import com.amigo.ticketbooker.services.CoachPositionScreen
 import com.amigo.ticketbooker.services.ManualBookingScreen
@@ -138,6 +139,10 @@ fun MyAppNavigation(
 
         composable(Routes.MASTER_LIST) {
             MasterListScreen()
+        }
+        
+        composable(Routes.SETTINGS) {
+            SettingsScreen()
         }
     }
 }

@@ -506,7 +506,10 @@ fun ProfileOptions() {
                 EnhancedProfileOptionItem(
                     iconRes = R.drawable.ic_setting,
                     title = "Settings",
-                    subtitle = "App preferences and notifications"
+                    subtitle = "App preferences and notifications",
+                    onClick = {
+                        navController.navigate(Routes.SETTINGS)
+                    }
                 )
             }
         }
