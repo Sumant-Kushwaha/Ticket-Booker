@@ -104,45 +104,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import androidx.lifecycle.viewModelScope
 import java.util.UUID
+import com.amigo.ticketbooker.model.Passenger
+import com.amigo.ticketbooker.model.Gender
+import com.amigo.ticketbooker.model.BerthPreference
 
-// Enum class for passenger gender options
-enum class Gender {
-    MALE, FEMALE, OTHER;
-    
-    override fun toString(): String {
-        return when (this) {
-            MALE -> "Male"
-            FEMALE -> "Female"
-            OTHER -> "Other"
-        }
-    }
-}
-
-// Enum class for berth preferences
-enum class BerthPreference {
-    LOWER, MIDDLE, UPPER, SIDE_LOWER, SIDE_UPPER, NO_PREFERENCE;
-    
-    override fun toString(): String {
-        return when (this) {
-            LOWER -> "Lower Berth"
-            MIDDLE -> "Middle Berth"
-            UPPER -> "Upper Berth"
-            SIDE_LOWER -> "Side Lower"
-            SIDE_UPPER -> "Side Upper"
-            NO_PREFERENCE -> "No Preference"
-        }
-    }
-}
-
-// Data class representing a passenger
-data class Passenger(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val name: String,
-    val age: Int,
-    val gender: Gender,
-    val country: String,
-    val berthPreference: BerthPreference
-)
+typealias Passenger = com.amigo.ticketbooker.model.Passenger
+typealias Gender = com.amigo.ticketbooker.model.Gender
+typealias BerthPreference = com.amigo.ticketbooker.model.BerthPreference
 
 // ViewModel for managing the master list of passengers
 class MasterListViewModel(application: android.app.Application) : androidx.lifecycle.AndroidViewModel(application) {
