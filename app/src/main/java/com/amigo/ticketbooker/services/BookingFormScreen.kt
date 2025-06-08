@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -156,6 +155,8 @@ fun BookingFormScreen(
     // Form state
     var passwordVisible by remember { mutableStateOf(false) }
     var quotaExpanded by remember { mutableStateOf(false) }
+    // Expanded state for class dropdown
+    var classExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
     var showAddPassengerDialog by remember { mutableStateOf(false) }
@@ -183,6 +184,25 @@ fun BookingFormScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            Surface(
+                tonalElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Button(
+                        onClick = { /* TODO: Start booking action */ },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Start Booking")
+                    }
+                }
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -228,128 +248,232 @@ fun BookingFormScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Form Fields
-            OutlinedTextField(
-                value = formState.name,
-                onValueChange = { formState = formState.copy(name = it) },
-                label = { Text("Form Name") },
-                leadingIcon = { Icon(Icons.Default.Description, null) },
+            // Group: Form Name
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
-                singleLine = true,
-                isError = formState.name.isBlank()
-            )
-
-            // Username and Password
-            OutlinedTextField(
-                value = formState.username,
-                onValueChange = { formState = formState.copy(username = it) },
-                label = { Text("IRCTC Username") },
-                leadingIcon = { Icon(Icons.Default.Person, null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                singleLine = true,
-                isError = formState.username.isBlank()
-            )
-
-            OutlinedTextField(
-                value = formState.password,
-                onValueChange = { formState = formState.copy(password = it) },
-                label = { Text("IRCTC Password") },
-                leadingIcon = { Icon(Icons.Default.Lock, null) },
-                trailingIcon = {
-                    val image = if (passwordVisible) Icons.Outlined.Visibility
-                    else Icons.Outlined.VisibilityOff
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        androidx.compose.material3.Icon(
-                            image,
-                            if (passwordVisible) "Hide password" else "Show password"
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None
-                else PasswordVisualTransformation(),
-                isError = formState.password.isBlank()
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 OutlinedTextField(
-                    value = formState.fromStation,
-                    onValueChange = { formState = formState.copy(fromStation = it.uppercase()) },
-                    label = { Text("From") },
-                    leadingIcon = { Icon(Icons.Default.Train, null) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    isError = formState.fromStation.isBlank()
-                )
-
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = "Swap stations",
+                    value = formState.name,
+                    onValueChange = { formState = formState.copy(name = it) },
+                    label = { Text("Form Name") },
+                    leadingIcon = { Icon(Icons.Default.Description, null) },
                     modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .padding(8.dp)
-                        .clickable {
-                            val temp = formState.fromStation
-                            formState = formState.copy(
-                                fromStation = formState.toStation,
-                                toStation = temp
-                            )
-                        }
-                )
-
-                OutlinedTextField(
-                    value = formState.toStation,
-                    onValueChange = { formState = formState.copy(toStation = it.uppercase()) },
-                    label = { Text("To") },
-                    modifier = Modifier.weight(1f),
+                        .fillMaxWidth()
+                        .padding(8.dp),
                     singleLine = true,
-                    isError = formState.toStation.isBlank()
+                    isError = formState.name.isBlank()
                 )
             }
 
-            // Date Picker Field
-            Box(
+            // Group: Credentials
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                OutlinedTextField(
-                    value = formState.date,
-                    onValueChange = {},
-                    label = { Text("Date of Journey") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Select Date"
+                Column(modifier = Modifier.padding(8.dp)) {
+                    OutlinedTextField(
+                        value = formState.username,
+                        onValueChange = { formState = formState.copy(username = it) },
+                        label = { Text("IRCTC Username") },
+                        leadingIcon = { Icon(Icons.Default.Person, null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        singleLine = true,
+                        isError = formState.username.isBlank()
+                    )
+                    OutlinedTextField(
+                        value = formState.password,
+                        onValueChange = { formState = formState.copy(password = it) },
+                        label = { Text("IRCTC Password") },
+                        leadingIcon = { Icon(Icons.Default.Lock, null) },
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Outlined.Visibility
+                            else Icons.Outlined.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(image, if (passwordVisible) "Hide password" else "Show password")
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (passwordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
+                        isError = formState.password.isBlank()
+                    )
+                }
+            }
+
+            // Group: Journey Details
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    // Date of Journey
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = formState.date,
+                            onValueChange = {},
+                            label = { Text("Date of Journey") },
+                            leadingIcon = {
+                                Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            readOnly = true,
+                            isError = formState.date.isBlank(),
+                            trailingIcon = {
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Date")
+                            }
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    readOnly = true,
-                    isError = formState.date.isBlank(),
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select Date"
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .alpha(0f)
+                                .clickable { showDatePicker = true }
                         )
                     }
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .alpha(0f)
-                        .clickable { showDatePicker = true }
-                )
+
+                    // Stations
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = formState.fromStation,
+                            onValueChange = { formState = formState.copy(fromStation = it.uppercase()) },
+                            label = { Text("From") },
+                            leadingIcon = { Icon(Icons.Default.Train, null) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            isError = formState.fromStation.isBlank()
+                        )
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "Swap stations",
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(8.dp)
+                                .clickable {
+                                    val temp = formState.fromStation
+                                    formState = formState.copy(
+                                        fromStation = formState.toStation,
+                                        toStation = temp
+                                    )
+                                }
+                        )
+                        OutlinedTextField(
+                            value = formState.toStation,
+                            onValueChange = { formState = formState.copy(toStation = it.uppercase()) },
+                            label = { Text("To") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            isError = formState.toStation.isBlank()
+                        )
+                    }
+
+                    // Train Number
+                    OutlinedTextField(
+                        value = formState.trainNumber,
+                        onValueChange = { formState = formState.copy(trainNumber = it) },
+                        label = { Text("Train Number (Optional)") },
+                        leadingIcon = { Icon(Icons.Default.DirectionsRailway, null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        singleLine = true
+                    )
+
+                    // Class Dropdown
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = formState.classType,
+                            onValueChange = {},
+                            label = { Text("Class") },
+                            leadingIcon = { Icon(Icons.Default.Class, null) },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    if (classExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                                    "Class dropdown"
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                        Box(
+                            modifier = Modifier.matchParentSize().alpha(0f).clickable { classExpanded = true }
+                        )
+                        DropdownMenu(
+                            expanded = classExpanded,
+                            onDismissRequest = { classExpanded = false },
+                            properties = PopupProperties(focusable = true)
+                        ) {
+                            classOptions.forEach { option ->
+                                DropdownMenuItem(text = { Text(option) }, onClick = {
+                                    formState = formState.copy(classType = option)
+                                    classExpanded = false
+                                })
+                            }
+                        }
+                    }
+
+                    // Quota Dropdown
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = quotaOptions.find { it.first == formState.quota }?.second
+                                ?: "Select Quota",
+                            onValueChange = {},
+                            label = { Text("Quota") },
+                            leadingIcon = { Icon(Icons.Default.ConfirmationNumber, null) },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    if (quotaExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                                    "Quota dropdown"
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                        Box(
+                            modifier = Modifier.matchParentSize().alpha(0f).clickable { quotaExpanded = true }
+                        )
+                        DropdownMenu(
+                            expanded = quotaExpanded,
+                            onDismissRequest = { quotaExpanded = false },
+                            properties = PopupProperties(focusable = true)
+                        ) {
+                            quotaOptions.forEach { (value, label) ->
+                                DropdownMenuItem(text = { Text(label) }, onClick = {
+                                    formState = formState.copy(quota = value)
+                                    quotaExpanded = false
+                                })
+                            }
+                        }
+                    }
+                }
             }
 
             // Date Picker Dialog
@@ -393,7 +517,7 @@ fun BookingFormScreen(
                     confirmButton = {
                         TextButton(
                             enabled = datePickerState.selectedDateMillis?.let { isDateValid(it) }
-                                ?: false,
+                                    ?: false,
                             onClick = {
                                 datePickerState.selectedDateMillis?.let { millis ->
                                     if (isDateValid(millis)) {
@@ -430,124 +554,6 @@ fun BookingFormScreen(
                         DatePicker(
                             state = datePickerState,
                             showModeToggle = false
-                        )
-                    }
-                }
-            }
-
-            OutlinedTextField(
-                value = formState.trainNumber,
-                onValueChange = { formState = formState.copy(trainNumber = it) },
-                label = { Text("Train Number (Optional)") },
-                leadingIcon = { Icon(Icons.Default.DirectionsRailway, null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                singleLine = true
-            )
-
-            var classExpanded by remember { mutableStateOf(false) }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                OutlinedTextField(
-                    value = formState.classType,
-                    onValueChange = {},
-                    label = { Text("Class") },
-                    leadingIcon = { Icon(Icons.Default.Class, null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            if (classExpanded) Icons.Filled.ArrowDropUp
-                            else Icons.Filled.ArrowDropDown,
-                            "Class dropdown"
-                        )
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                // Invisible clickable surface to handle dropdown
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .alpha(0f)
-                        .clickable { classExpanded = true }
-                )
-
-                // Class dropdown menu
-                DropdownMenu(
-                    expanded = classExpanded,
-                    onDismissRequest = { classExpanded = false },
-                    properties = PopupProperties(focusable = true)
-                ) {
-                    classOptions.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = {
-                                formState = formState.copy(classType = option)
-                                classExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-
-            // Quota Dropdown
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                OutlinedTextField(
-                    value = quotaOptions.find { it.first == formState.quota }?.second ?: "Select Quota",
-                    onValueChange = {},
-                    label = { Text("Quota") },
-                    leadingIcon = { Icon(Icons.Default.ConfirmationNumber, null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            if (quotaExpanded) Icons.Filled.ArrowDropUp
-                            else Icons.Filled.ArrowDropDown,
-                            "Quota dropdown"
-                        )
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-
-                // Invisible clickable surface to handle dropdown
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .alpha(0f)
-                        .clickable { quotaExpanded = true }
-                )
-
-                // Quota dropdown menu
-                DropdownMenu(
-                    expanded = quotaExpanded,
-                    onDismissRequest = { quotaExpanded = false },
-                    properties = PopupProperties(focusable = true)
-                ) {
-                    quotaOptions.forEach { (value, displayName) ->
-                        DropdownMenuItem(
-                            text = { Text(displayName) },
-                            onClick = {
-                                formState = formState.copy(quota = value)
-                                quotaExpanded = false
-                            }
                         )
                     }
                 }

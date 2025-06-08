@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.fontFamily
 import com.amigo.ticketbooker.home.cards.ElevatedColorCard
@@ -192,7 +191,7 @@ fun MainContent() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Featured banner
-        FeaturedBanner()
+        FeaturedBanner(navController)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -310,7 +309,9 @@ fun MainContent() {
 }
 
 @Composable
-fun FeaturedBanner() {
+fun FeaturedBanner(
+    navController: NavController
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -389,7 +390,7 @@ fun FeaturedBanner() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = { navController.navigate(Routes.AUTOMATIC_BOOKING) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White
                     ),
