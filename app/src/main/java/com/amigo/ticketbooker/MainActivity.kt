@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.amigo.ticketbooker.auth.AuthViewModel
+import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
 import com.amigo.ticketbooker.ui.AppRoot
 import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
 

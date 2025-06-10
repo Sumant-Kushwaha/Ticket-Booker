@@ -5,10 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.amigo.ticketbooker.auth.AuthViewModel
+import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
 import com.amigo.ticketbooker.navigation.LocalNavController
 import com.amigo.ticketbooker.navigation.MyAppNavigation
 import com.amigo.ticketbooker.navigation.Routes
