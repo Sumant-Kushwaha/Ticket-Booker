@@ -25,12 +25,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.amigo.ticketbooker.navigation.LocalNavController
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
+import com.amigo.ticketbooker.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTopBar(onBackPressed: () -> Unit) {
+    val navController = LocalNavController.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,7 +76,7 @@ fun ProfileTopBar(onBackPressed: () -> Unit) {
             },
             actions = {
                 IconButton(
-                    onClick = { /* TODO: Add settings action */ },
+                    onClick = { navController.navigate(Routes.SETTINGS) },
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.2f))
