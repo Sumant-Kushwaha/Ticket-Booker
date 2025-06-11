@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.amigo.ticketbooker.fontFamily
+import com.amigo.ticketbooker.font.fontFamily
 import com.amigo.ticketbooker.navigation.LocalNavController
 import com.amigo.ticketbooker.ui.ServiceTopBar
 

@@ -59,15 +59,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
 import com.amigo.ticketbooker.authPage.authViewModel.OtpState
-import com.amigo.ticketbooker.fontFamily
-import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
+import com.amigo.ticketbooker.font.fontFamily
 import kotlinx.coroutines.delay
 
 @Composable

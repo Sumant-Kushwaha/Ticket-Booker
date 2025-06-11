@@ -22,7 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
-import com.amigo.ticketbooker.fontFamily
+import com.amigo.ticketbooker.font.fontFamily
 
 @Composable
 fun PasswordFieldSignup(

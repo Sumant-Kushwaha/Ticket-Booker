@@ -13,7 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.amigo.ticketbooker.fontFamily
+import com.amigo.ticketbooker.font.fontFamily
 import com.amigo.ticketbooker.home.serviceCard.FirstRow
 import com.amigo.ticketbooker.home.serviceCard.SecondRow
 import com.amigo.ticketbooker.home.serviceCard.ThirdRow

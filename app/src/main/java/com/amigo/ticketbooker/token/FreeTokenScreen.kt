@@ -23,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
-import com.amigo.ticketbooker.fontFamily
 import com.amigo.ticketbooker.navigation.LocalNavController
 
 @OptIn(ExperimentalMaterial3Api::class)

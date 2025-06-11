@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.amigo.ticketbooker.fontFamily
+import com.amigo.ticketbooker.font.fontFamily
 import com.amigo.ticketbooker.navigation.LocalNavController
 import com.amigo.ticketbooker.ui.ServiceTopBar
 import java.util.*
