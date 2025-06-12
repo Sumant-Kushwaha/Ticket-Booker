@@ -37,19 +37,19 @@ enum class ClassType(val displayName: String) {
 }
 
 data class BookingForm(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
+    val id: String? = null,
+    val name: String = "",
     val username: String = "",
     val password: String = "",
-    val fromStation: String,
-    val toStation: String,
-    val date: String,
+    val fromStation: String = "",
+    val toStation: String = "",
+    val date: String = "",
     val trainNumber: String = "",
-    val classType: String = ClassType.SL.name,
-    val quota: String = "GENERAL",
-    val passengers: Int = 1,
-    val lastModified: Long = System.currentTimeMillis(),
-    val passengerDetails: List<Passenger> = emptyList()
+    val classType: String = "",
+    val quota: String = "",
+    val passengers: Int = 0,
+    val passengerDetails: List<Passenger> = emptyList(),
+    val boardingStation: String? = null // Added boardingStation property
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

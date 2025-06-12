@@ -19,9 +19,9 @@ import com.amigo.ticketbooker.settingUi.SettingsScreen
 import com.amigo.ticketbooker.services.automaticBooking.AutomaticBookingScreen
 import com.amigo.ticketbooker.services.coachPositionUi.CoachPositionScreen
 import com.amigo.ticketbooker.services.manualBookingUi.ManualBookingScreen
-import com.amigo.ticketbooker.services.foodBookingUi.IRCTCCateringScreen
+import com.amigo.ticketbooker.services.foodBookingUi.irctcCatering.IRCTCCateringScreen
 import com.amigo.ticketbooker.services.masterListUi.MasterListScreen
-import com.amigo.ticketbooker.services.foodBookingUi.OrderFoodScreen
+import com.amigo.ticketbooker.services.foodBookingUi.orderFoodScreen.OrderFoodScreen
 import com.amigo.ticketbooker.services.plateformLocator.PlatformLocatorScreen
 import com.amigo.ticketbooker.services.pnrStatusCheckerUi.PnrStatusScreen
 import com.amigo.ticketbooker.services.runningStatusUi.RunningStatusScreen

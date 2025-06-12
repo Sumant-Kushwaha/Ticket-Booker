@@ -98,6 +98,18 @@ fun JourneyDetailsSection(
             singleLine = true
         )
 
+        // Boarding Station
+        OutlinedTextField(
+            value = formState.boardingStation ?: "",
+            onValueChange = { onFormStateChange(formState.copy(boardingStation = it)) },
+            label = { Text("Boarding Station (Optional)") },
+            leadingIcon = { Icon(Icons.Default.LocationOn, null) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            singleLine = true
+        )
+
         // Class Dropdown
         DropdownField(
             label = "Class",

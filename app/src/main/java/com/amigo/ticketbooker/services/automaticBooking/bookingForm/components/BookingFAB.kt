@@ -27,6 +27,6 @@ fun BookingFAB(isFormValid: Boolean, onSave: () -> Unit) {
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         },
-        text = { Text("Save Booking") }
+        text = { Text("") }
     )
 }
