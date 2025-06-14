@@ -3,7 +3,6 @@ package com.amigo.ticketbooker.authPage.mainLoginScreen.signUpPage
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -29,18 +28,11 @@ fun EmailFieldSignup(
         onValueChange = onValueChange,
         label = { Text("Email Address") },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = TextStyle(
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = fontFamily,
-            fontSize = 18.sp
-        ),
+        textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            cursorColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedBorderColor = Color(0xFF3949AB),
+            focusedLabelColor = Color(0xFF3949AB),
+            cursorColor = Color(0xFF3949AB)
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,

@@ -22,21 +22,21 @@ fun TabSelector(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(Color(0xFFEEEEEE))
             .padding(4.dp)
     ) {
         Box(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(6.dp))
-                .background(if (isLogin) MaterialTheme.colorScheme.primary else Color.Transparent)
+                .background(if (isLogin) Color(0xFF3949AB) else Color.Transparent)
                 .clickable { onTabSelected(true) }
                 .padding(vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Login",
-                color = if (isLogin) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isLogin) Color.White else Color.Gray,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -45,14 +45,14 @@ fun TabSelector(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(6.dp))
-                .background(if (!isLogin) MaterialTheme.colorScheme.primary else Color.Transparent)
+                .background(if (!isLogin) Color(0xFF3949AB) else Color.Transparent)
                 .clickable { onTabSelected(false) }
                 .padding(vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Sign Up",
-                color = if (!isLogin) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (!isLogin) Color.White else Color.Gray,
                 fontWeight = FontWeight.Bold
             )
         }

@@ -16,7 +16,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.font.fontFamily
-import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun EmailFieldLogin(
@@ -31,16 +30,11 @@ fun EmailFieldLogin(
         onValueChange = onEmailChange,
         label = { Text("Email") },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = TextStyle(
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = fontFamily, 
-            fontSize = 18.sp
-        ),
+        textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            cursorColor = MaterialTheme.colorScheme.primary,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+            focusedBorderColor = Color(0xFF3949AB),
+            focusedLabelColor = Color(0xFF3949AB),
+            cursorColor = Color(0xFF3949AB)
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,

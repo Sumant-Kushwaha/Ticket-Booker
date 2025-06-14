@@ -67,8 +67,8 @@ fun AuthScreen() {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primaryContainer
+                        Color(0xFF3949AB), // Indian Railways Blue
+                        Color(0xFF1A237E)
                     )
                 )
             )
