@@ -59,5 +59,11 @@ fun PassengerDetailsSection(
             onProviderSelected = { selectedProvider = it },
             modifier = Modifier.padding(vertical = 8.dp)
         )
+
+        // Add payment details form
+        PaymentDetailsForm(
+            selectedMode = selectedPaymentMode,
+            selectedProvider = selectedProvider
+        )
     }
 }
