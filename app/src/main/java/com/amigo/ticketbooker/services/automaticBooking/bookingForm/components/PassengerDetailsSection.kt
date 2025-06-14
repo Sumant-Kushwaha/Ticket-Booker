@@ -29,6 +29,7 @@ fun PassengerDetailsSection(
             }
         }
 
+        // Add passengers cards
         passengers.forEachIndexed { index, passenger ->
             PassengerCard(
                 passenger = passenger,
@@ -38,5 +39,18 @@ fun PassengerDetailsSection(
             )
         }
 
+        // Add payment mode card after passenger cards
+        var selectedPaymentMode by remember { mutableStateOf<PaymentMode?>(null) }
+
+        Text(
+            "Payment Mode",
+            Modifier.padding(top = 10.dp, start = 10.dp),
+            style = MaterialTheme.typography.titleMedium
+        )
+        PaymentModeCard(
+            selectedMode = selectedPaymentMode,
+            onPaymentModeSelected = { selectedPaymentMode = it },
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
     }
 }
