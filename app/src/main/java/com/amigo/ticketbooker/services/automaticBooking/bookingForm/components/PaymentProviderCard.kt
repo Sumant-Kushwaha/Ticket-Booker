@@ -18,7 +18,7 @@ data class PaymentProvider(
 
 object PaymentProviders {
     val upiProviders = listOf(
-        "IRCTC ipay", "Payment", "PayU", "RazorPay", "PhonePay", "Amazon Pay"
+        "IRCTC ipay", "Paytm", "PayU", "RazorPay", "PhonePay", "Amazon Pay"
     ).map { PaymentProvider(it, PaymentMode.UPI) }
 
     val cardProviders = listOf(

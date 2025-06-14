@@ -21,6 +21,7 @@ import com.amigo.ticketbooker.authPage.authViewModel.AuthState
 import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
 import com.amigo.ticketbooker.authPage.mainLoginScreen.loginPage.LoginMainScreen
 import com.amigo.ticketbooker.authPage.mainLoginScreen.signUpPage.SignupMainScreen
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun AuthCard(
@@ -35,7 +36,7 @@ fun AuthCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 8.dp
