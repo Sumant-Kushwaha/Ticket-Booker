@@ -6,6 +6,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -40,14 +42,23 @@ fun PaymentDetailsForm(
 @Composable
 private fun UPIForm() {
     var upiId by remember { mutableStateOf("") }
-    OutlinedTextField(
-        value = upiId,
-        onValueChange = { upiId = it },
-        label = { Text("Enter UPI ID") },
-        placeholder = { Text("username@upi") },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
-    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "We Don't Store Any Payment Details",
+            Modifier.padding(bottom = 10.dp),
+            color = Color.Red,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        OutlinedTextField(
+            value = upiId,
+            onValueChange = { upiId = it },
+            label = { Text("Enter UPI ID") },
+            placeholder = { Text("username@upi") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+    }
 }
 
 @Composable
@@ -58,72 +69,90 @@ private fun CardForm() {
     var autoFillOtp by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = cardNumber,
-            onValueChange = { if (it.length <= 16) cardNumber = it },
-            label = { Text("Card Number") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = expiryDate,
-                onValueChange = { if (it.length <= 5) expiryDate = it },
-                label = { Text("MM/YY") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                "We Don't Store Any Payment Details",
+                Modifier.padding(bottom = 10.dp),
+                color = Color.Red,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
-
             OutlinedTextField(
-                value = cvv,
-                onValueChange = { if (it.length <= 3) cvv = it },
-                label = { Text("CVV") },
-                modifier = Modifier.weight(1f),
+                value = cardNumber,
+                onValueChange = { if (it.length <= 16) cardNumber = it },
+                label = { Text("Card Number") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-        }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Checkbox(
-                checked = autoFillOtp,
-                onCheckedChange = { autoFillOtp = it }
-            )
-            Text("Enable automatic OTP filling")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = expiryDate,
+                    onValueChange = { if (it.length <= 5) expiryDate = it },
+                    label = { Text("MM/YY") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = cvv,
+                    onValueChange = { if (it.length <= 3) cvv = it },
+                    label = { Text("CVV") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = autoFillOtp,
+                    onCheckedChange = { autoFillOtp = it }
+                )
+                Text("Enable automatic OTP filling")
+            }
         }
     }
 }
-
 @Composable
 private fun NetBankingForm() {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "We Don't Store Any Payment Details",
+            Modifier.padding(bottom = 10.dp),
+            color = Color.Red,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Username") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+        }
     }
 }
 
@@ -132,24 +161,34 @@ private fun WalletForm() {
     var mobileNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = mobileNumber,
-            onValueChange = { if (it.length <= 10) mobileNumber = it },
-            label = { Text("Mobile Number") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password/PIN") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "We Don't Store Any Payment Details",
+            Modifier.padding(bottom = 10.dp),
+            color = Color.Red,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = mobileNumber,
+                onValueChange = { if (it.length <= 10) mobileNumber = it },
+                label = { Text("Mobile Number") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password/PIN") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
     }
 }
