@@ -18,15 +18,6 @@ fun PassengerDetailsSection(
     onDeletePassengerClick: (Int) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        passengers.forEachIndexed { index, passenger ->
-            PassengerCard(
-                passenger = passenger,
-                index = index,
-                onEditClick = { onEditPassengerClick(index) },
-                onDeleteClick = { onDeletePassengerClick(index) }
-            )
-        }
-
         if (passengers.size < 6) {
             OutlinedButton(
                 onClick = onAddPassengerClick,
@@ -37,5 +28,15 @@ fun PassengerDetailsSection(
                 Text("Add Passenger")
             }
         }
+
+        passengers.forEachIndexed { index, passenger ->
+            PassengerCard(
+                passenger = passenger,
+                index = index,
+                onEditClick = { onEditPassengerClick(index) },
+                onDeleteClick = { onDeletePassengerClick(index) }
+            )
+        }
+
     }
 }
