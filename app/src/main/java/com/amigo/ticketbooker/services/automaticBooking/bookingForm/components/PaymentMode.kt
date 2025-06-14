@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 
 enum class PaymentMode {
     UPI,
@@ -53,33 +55,65 @@ fun PaymentModeCard(
         Column(
             modifier = Modifier.padding(6.dp)
         ) {
-            PaymentMode.values().forEach { mode ->
+            Text(
+                "Payment Mode",
+                Modifier.padding(10.dp),
+                color = Color.Red,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            // Convert array to list before using chunked
+            PaymentMode.values().toList().chunked(2).forEach { rowModes ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .selectable(
-                            selected = mode == selectedMode,
-                            onClick = { onPaymentModeSelected(mode) }
-                        )
                         .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    RadioButton(
-                        selected = mode == selectedMode,
-                        onClick = { onPaymentModeSelected(mode) }
-                    )
+                    rowModes.forEach { mode ->
+                        Card(
+                            modifier = Modifier
+                                .weight(1f)
+                                .selectable(
+                                    selected = mode == selectedMode,
+                                    onClick = { onPaymentModeSelected(mode) }
+                                )
+                                .padding(2.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (mode == selectedMode)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Start
+                                ) {
+                                    RadioButton(
+                                        selected = mode == selectedMode,
+                                        onClick = { onPaymentModeSelected(mode) }
+                                    )
+                                    
+                                    Text(
+                                        text = PaymentMode.getDisplayText(mode),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+
+                            }
+                        }
+                    }
                     
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Column {
-                        Text(
-                            text = PaymentMode.getDisplayText(mode),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = PaymentMode.getDescription(mode),
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    // If odd number of modes in row, add empty weight
+                    if (rowModes.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

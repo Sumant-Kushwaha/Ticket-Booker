@@ -77,11 +77,6 @@ fun BookingFormScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Form Name Card
-            Text(
-                "Form name",
-                Modifier.padding(top = 10.dp, start = 10.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,11 +93,6 @@ fun BookingFormScreen(
             }
 
             // User ID and Password Card
-            Text(
-                "Credentials",
-                Modifier.padding(top = 10.dp, start = 10.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,11 +109,6 @@ fun BookingFormScreen(
             }
 
             // Journey Details Card
-            Text(
-                "Journey details",
-                Modifier.padding(top = 10.dp, start = 10.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

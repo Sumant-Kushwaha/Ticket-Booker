@@ -41,15 +41,22 @@ fun PassengerDetailsSection(
 
         // Add payment mode card after passenger cards
         var selectedPaymentMode by remember { mutableStateOf<PaymentMode?>(null) }
+        var selectedProvider by remember { mutableStateOf<PaymentProvider?>(null) }
 
-        Text(
-            "Payment Mode",
-            Modifier.padding(top = 10.dp, start = 10.dp),
-            style = MaterialTheme.typography.titleMedium
-        )
         PaymentModeCard(
             selectedMode = selectedPaymentMode,
-            onPaymentModeSelected = { selectedPaymentMode = it },
+            onPaymentModeSelected = {
+                selectedPaymentMode = it
+                selectedProvider = null // Reset provider when mode changes
+            },
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        // Add the payment provider card
+        PaymentProviderCard(
+            selectedMode = selectedPaymentMode,
+            selectedProvider = selectedProvider,
+            onProviderSelected = { selectedProvider = it },
             modifier = Modifier.padding(vertical = 8.dp)
         )
     }

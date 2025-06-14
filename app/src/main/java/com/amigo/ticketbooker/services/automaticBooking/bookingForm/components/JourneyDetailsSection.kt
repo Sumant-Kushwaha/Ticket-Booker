@@ -15,6 +15,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun JourneyDetailsSection(
@@ -27,6 +29,13 @@ fun JourneyDetailsSection(
     val spaceBetween= 8.dp
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Payment Provider",
+            Modifier.padding(bottom = 10.dp),
+            color = Color.Red,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
 
         // Date of Journey
         Box(
