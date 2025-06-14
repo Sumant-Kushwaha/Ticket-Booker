@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.font.fontFamily
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun ConfirmPasswordFieldSignup(
@@ -36,11 +37,18 @@ fun ConfirmPasswordFieldSignup(
         onValueChange = onValueChange,
         label = { Text("Confirm Password") },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
+        textStyle = TextStyle(
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = fontFamily, 
+            fontSize = 18.sp
+        ),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF3949AB),
-            focusedLabelColor = Color(0xFF3949AB),
-            cursorColor = Color(0xFF3949AB)
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
         ),
         visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(
@@ -52,7 +60,7 @@ fun ConfirmPasswordFieldSignup(
             Icon(
                 painter = painterResource(id = R.drawable.ic_lock),
                 contentDescription = "Confirm Password",
-                tint = Color.Gray
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
@@ -62,7 +70,7 @@ fun ConfirmPasswordFieldSignup(
                         id = if (confirmPasswordVisible) R.drawable.ic_visibility_off else R.drawable.ic_visibility
                     ),
                     contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },

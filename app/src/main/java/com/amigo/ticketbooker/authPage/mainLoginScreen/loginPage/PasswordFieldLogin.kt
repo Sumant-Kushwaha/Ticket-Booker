@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -39,11 +40,16 @@ fun PasswordFieldLogin(
         onValueChange = onPasswordChange,
         label = { Text("Password") },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = TextStyle(color = Color.Black, fontFamily = fontFamily, fontSize = 18.sp),
+        textStyle = TextStyle(
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = fontFamily,
+            fontSize = 18.sp
+        ),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF3949AB),
-            focusedLabelColor = Color(0xFF3949AB),
-            cursorColor = Color(0xFF3949AB)
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         ),
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(

@@ -65,7 +65,7 @@ fun SignupMainScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Mobile Number Field
-        MobileNumberField(
+        MobileNumberFieldSignup(
             mobileNumber = mobileNumber,
             onValueChange = { mobileNumber = it },
             isLoading = isLoading
