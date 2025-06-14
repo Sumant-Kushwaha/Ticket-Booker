@@ -1,11 +1,13 @@
 package com.amigo.ticketbooker.services.automaticBooking.bookingForm
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
@@ -51,6 +53,7 @@ fun BookingFormScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddPassengerDialog by remember { mutableStateOf(false) }
     var editingPassengerIndex by remember { mutableStateOf<Int?>(null) }
+    var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
     val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
 
     val isFormValid = formState.name.isNotBlank() &&
@@ -74,6 +77,11 @@ fun BookingFormScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Form Name Card
+            Text(
+                "Form name",
+                Modifier.padding(top = 10.dp, start = 10.dp),
+                style = MaterialTheme.typography.titleMedium
+            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -90,6 +98,11 @@ fun BookingFormScreen(
             }
 
             // User ID and Password Card
+            Text(
+                "Credentials",
+                Modifier.padding(top = 10.dp, start = 10.dp),
+                style = MaterialTheme.typography.titleMedium
+            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,6 +119,11 @@ fun BookingFormScreen(
             }
 
             // Journey Details Card
+            Text(
+                "Journey details",
+                Modifier.padding(top = 10.dp, start = 10.dp),
+                style = MaterialTheme.typography.titleMedium
+            )
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,7 +131,11 @@ fun BookingFormScreen(
                 shape = MaterialTheme.shapes.medium,
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Box(modifier = Modifier.padding(16.dp)) {
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .background(Color.Transparent)
+                ) {
                     JourneyDetailsSection(
                         formState = formState,
                         onFormStateChange = { formState = it },
@@ -137,6 +159,9 @@ fun BookingFormScreen(
                 onEditPassengerClick = { index ->
                     editingPassengerIndex = index
                     showAddPassengerDialog = true
+                },
+                onDeletePassengerClick = { index ->
+                    showDeleteConfirmation = index
                 }
             )
         }
@@ -170,6 +195,37 @@ fun BookingFormScreen(
                 showAddPassengerDialog = false
             },
             onDismiss = { showAddPassengerDialog = false }
+        )
+    }
+
+    // Delete Confirmation Dialog
+    showDeleteConfirmation?.let { index ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = null },
+            title = { Text("Delete Passenger") },
+            text = { Text("Are you sure you want to delete this passenger?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val updatedPassengers = formState.passengerDetails.toMutableList()
+                        updatedPassengers.removeAt(index)
+                        formState = formState.copy(
+                            passengerDetails = updatedPassengers,
+                            passengers = updatedPassengers.size
+                        )
+                        showDeleteConfirmation = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteConfirmation = null }
+                ) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }

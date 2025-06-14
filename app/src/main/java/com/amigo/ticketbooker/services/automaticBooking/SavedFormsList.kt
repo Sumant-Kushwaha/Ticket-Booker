@@ -1,6 +1,7 @@
 package com.amigo.ticketbooker.services.automaticBooking
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -35,7 +36,11 @@ fun SavedFormsList(
                 )
             }
 
-            items(forms, key = { it.id ?: "" }) { form ->
+            items(
+                count = forms.size,
+                key = { index -> forms[index].id ?: index.toString() }
+            ) { index ->
+                val form = forms[index]
                 BookingFormCard(
                     form = form,
                     onClick = { onFormClick(form) },

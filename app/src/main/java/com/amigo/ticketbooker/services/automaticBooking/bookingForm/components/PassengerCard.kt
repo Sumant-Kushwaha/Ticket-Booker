@@ -1,12 +1,16 @@
 package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.model.Passenger
@@ -16,63 +20,109 @@ import com.amigo.ticketbooker.model.BerthPreference
 fun PassengerCard(
     passenger: Passenger,
     index: Int,
-    onEditClick: (Int) -> Unit
+    onEditClick: (Int) -> Unit,
+    onDeleteClick: ((Int) -> Unit)? = null
 ) {
     Card(
-        onClick = { onEditClick(index) },
         modifier = Modifier
-            .width(220.dp)
-            .padding(4.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .padding(12.dp)
                 .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Passenger number and details
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             ) {
+                // Passenger number badge
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Passenger details
                 Text(
-                    "Passenger ${index + 1}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    text = passenger.name.ifEmpty { "Passenger ${index + 1}" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (passenger.name.isBlank())
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+
+                Text(" | ", fontWeight = FontWeight.Bold)
+
                 if (passenger.name.isNotBlank()) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit Passenger",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
+                    Text(
+                        text = "${passenger.age} • ${
+                            passenger.gender.name.lowercase().replaceFirstChar { it.uppercase() }
+                        }",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                passenger.name.ifEmpty { "Tap to add details" },
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = if (passenger.name.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface
-            )
-
-            if (passenger.name.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "${passenger.age} • ${passenger.gender}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (passenger.berthPreference != BerthPreference.NO_PREFERENCE) {
-                    Text(
-                        "Berth: ${passenger.berthPreference}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            // Actions
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Edit button
+                IconButton(
+                    onClick = { onEditClick(index) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Passenger",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
+                }
+
+                // Vertical separator
+                if (onDeleteClick != null && passenger.name.isNotBlank()) {
+                    Text(
+                        "|",
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+
+
+                // Delete button (only show if onDeleteClick is provided and passenger has a name)
+                if (onDeleteClick != null && passenger.name.isNotBlank()) {
+                    IconButton(
+                        onClick = { onDeleteClick(index) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete Passenger",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

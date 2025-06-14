@@ -32,7 +32,7 @@ fun IRCTCLoadingIndicator(loadingProgress: Int) {
         Spacer(modifier = Modifier.height(8.dp))
 
         LinearProgressIndicator(
-            progress = loadingProgress / 100f,
+            progress = { loadingProgress / 100f },
             modifier = Modifier
                 .fillMaxWidth(0.8f)
                 .height(8.dp),

@@ -10,7 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.input.KeyboardType
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 
 @Composable
 fun JourneyDetailsSection(
@@ -20,13 +24,13 @@ fun JourneyDetailsSection(
 ) {
     var classExpanded by remember { mutableStateOf(false) }
     var quotaExpanded by remember { mutableStateOf(false) }
+    val spaceBetween= 8.dp
 
     Column(modifier = Modifier.fillMaxWidth()) {
+
         // Date of Journey
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = formState.date,
@@ -46,6 +50,8 @@ fun JourneyDetailsSection(
             )
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Stations
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -55,7 +61,6 @@ fun JourneyDetailsSection(
                 value = formState.fromStation,
                 onValueChange = { onFormStateChange(formState.copy(fromStation = it.uppercase())) },
                 label = { Text("From") },
-                leadingIcon = { Icon(Icons.Default.Train, null) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 isError = formState.fromStation.isBlank()
@@ -65,7 +70,6 @@ fun JourneyDetailsSection(
                 contentDescription = "Swap stations",
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .padding(8.dp)
                     .clickable {
                         val temp = formState.fromStation
                         onFormStateChange(
@@ -86,29 +90,75 @@ fun JourneyDetailsSection(
             )
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Train Number
         OutlinedTextField(
             value = formState.trainNumber,
             onValueChange = { onFormStateChange(formState.copy(trainNumber = it)) },
-            label = { Text("Train Number (Optional)") },
+            label = { Text("Train Number") },
             leadingIcon = { Icon(Icons.Default.DirectionsRailway, null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Boarding Station
         OutlinedTextField(
             value = formState.boardingStation ?: "",
-            onValueChange = { onFormStateChange(formState.copy(boardingStation = it)) },
+            onValueChange = {
+                onFormStateChange(formState.copy(boardingStation = it.ifBlank { null }))
+            },
             label = { Text("Boarding Station (Optional)") },
-            leadingIcon = { Icon(Icons.Default.LocationOn, null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            singleLine = true
+            leadingIcon = { Icon(Icons.Default.Train, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            placeholder = { Text(formState.fromStation, fontSize = 12.sp) },
+            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Mobile Number
+        OutlinedTextField(
+            value = formState.mobileNumber,
+            onValueChange = {
+                // Only allow digits and limit to 10 characters
+                if (it.length <= 10 && (it.isEmpty() || it.all { char -> char.isDigit() })) {
+                    onFormStateChange(formState.copy(mobileNumber = it))
+                }
+            },
+            label = { Text("Mobile Number") },
+            leadingIcon = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(start = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "+91",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+            ,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = formState.mobileNumber.isNotEmpty() && formState.mobileNumber.length != 10,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = androidx.compose.ui.text.input.ImeAction.Done
+            ),
+            supportingText = {
+                if (formState.mobileNumber.isNotEmpty() && formState.mobileNumber.length != 10) {
+                    Text("Please enter a valid 10-digit mobile number")
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Class Dropdown
         DropdownField(
@@ -119,6 +169,8 @@ fun JourneyDetailsSection(
             onExpandedChange = { classExpanded = it },
             onOptionSelected = { onFormStateChange(formState.copy(classType = it)) }
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Quota Dropdown
         DropdownField(

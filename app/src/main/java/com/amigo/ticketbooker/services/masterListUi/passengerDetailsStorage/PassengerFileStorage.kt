@@ -124,7 +124,7 @@ class PassengerFileStorage(private val context: Context) {
                     put("age", passenger.age)
                     put("gender", passenger.gender.name)
                     put("country", passenger.country)
-                    put("berthPreference", passenger.berthPreference.name)
+                    put("berthPreference", passenger.berthPreference?.name)
                 }
                 jsonArray.put(jsonObject)
             }

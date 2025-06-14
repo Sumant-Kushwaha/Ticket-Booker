@@ -7,18 +7,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.amigo.ticketbooker.font.fontFamily
 import com.amigo.ticketbooker.navigation.LocalNavController
 import com.amigo.ticketbooker.ui.ServiceTopBar
 import java.util.*
@@ -36,6 +28,7 @@ enum class ClassType(val displayName: String) {
     override fun toString() = displayName
 }
 
+
 data class BookingForm(
     val id: String? = null,
     val name: String = "",
@@ -49,7 +42,8 @@ data class BookingForm(
     val quota: String = "",
     val passengers: Int = 0,
     val passengerDetails: List<Passenger> = emptyList(),
-    val boardingStation: String? = null // Added boardingStation property
+    val boardingStation: String? = null, // Added boardingStation property
+    val mobileNumber: String = "", // Added mobile number field for journey details
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +112,10 @@ fun AutomaticBookingScreen() {
                     },
                     onCloneClick = { form ->
                         showFormScreen = form.copy(id = UUID.randomUUID().toString())
+                    },
+                    onAutomationClick = {
+                        // TODO: Implement automation logic here
+                        // This will be called when the Start Automation button is clicked
                     }
                 )
             }

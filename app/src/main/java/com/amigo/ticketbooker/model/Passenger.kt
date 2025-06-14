@@ -24,5 +24,16 @@ data class Passenger(
     val gender: Gender = Gender.MALE,
     val country: String = "India",
     val berthPreference: BerthPreference = BerthPreference.NO_PREFERENCE,
-    val mealPreference: String = "Vegetarian"
+    val mealPreference: MealPreference = MealPreference.VEGETARIAN,
+    val hasValidConcession: Boolean = false,
+    val isChild: Boolean = false, // true = child, false = adult
+    val childAge: String = "" // Only used when isChild is true
 )
+
+enum class MealPreference {
+    VEGETARIAN,
+    NON_VEGETARIAN,
+    JAIN,
+    VEGAN,
+    NO_MEAL
+}
