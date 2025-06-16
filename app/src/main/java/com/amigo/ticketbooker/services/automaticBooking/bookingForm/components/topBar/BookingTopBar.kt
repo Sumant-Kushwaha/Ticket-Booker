@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.topbar
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

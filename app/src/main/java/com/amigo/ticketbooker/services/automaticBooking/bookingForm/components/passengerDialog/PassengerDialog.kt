@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode
 
 data class PaymentProvider(
     val name: String,

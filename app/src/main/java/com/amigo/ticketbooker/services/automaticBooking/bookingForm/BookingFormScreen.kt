@@ -11,7 +11,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
-import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.*
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.BookingFAB
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.bottombar.BookingBottomBar
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.credentials.CredentialsSection
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.formname.BookingDetailsSection
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.journeydetails.JourneyDetailsSection
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdetailsection.PassengerDetailsSection
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdialog.PassengerDialog
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.topbar.BookingTopBar
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdialog.datepicker.DatePickerDialogComponent
 import java.text.SimpleDateFormat
 import java.util.*
 

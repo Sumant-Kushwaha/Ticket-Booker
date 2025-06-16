@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.journeydetails
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,10 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.KeyboardType
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.dropdown.DropdownField
 
 @Composable
 fun JourneyDetailsSection(
@@ -158,7 +159,7 @@ fun JourneyDetailsSection(
             isError = formState.mobileNumber.isNotEmpty() && formState.mobileNumber.length != 10,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                imeAction = ImeAction.Done
             ),
             supportingText = {
                 if (formState.mobileNumber.isNotEmpty() && formState.mobileNumber.length != 10) {

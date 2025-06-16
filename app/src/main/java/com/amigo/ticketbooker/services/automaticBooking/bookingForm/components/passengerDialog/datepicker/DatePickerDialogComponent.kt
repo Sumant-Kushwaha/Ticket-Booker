@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdialog.datepicker
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable

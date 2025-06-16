@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerdetailsection
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -8,6 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.model.Passenger
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.PaymentDetailsForm
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentModeCard
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProvider
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProviderCard
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengercard.PassengerCard
 
 @Composable
 fun PassengerDetailsSection(

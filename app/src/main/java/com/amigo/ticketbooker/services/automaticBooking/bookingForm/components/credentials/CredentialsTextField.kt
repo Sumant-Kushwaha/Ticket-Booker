@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.credentials
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
