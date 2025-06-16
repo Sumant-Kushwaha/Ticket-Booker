@@ -50,54 +50,5 @@ fun SavedFormsList(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                isAutomating = true
-                onAutomationClick()
-            },
-            enabled = !isAutomating,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text("Start Automation")
-        }
-
-        if (isAutomating) {
-            Text(
-                text = automationStatus,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-
-            Button(
-                onClick = {
-                    isAutomating = false
-                    automationStatus = "Automation Cancelled"
-                },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("Cancel Automation")
-            }
-        }
-
-        LaunchedEffect(isAutomating) {
-            if (isAutomating) {
-                automationStatus = "Automation in Progress..."
-                // Simulate automation completion
-                kotlinx.coroutines.delay(3000)
-                isAutomating = false
-                automationStatus = "Automation Completed"
-            }
-        }
-
-        if (isAutomating) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxSize()
-            )
-        }
     }
 }

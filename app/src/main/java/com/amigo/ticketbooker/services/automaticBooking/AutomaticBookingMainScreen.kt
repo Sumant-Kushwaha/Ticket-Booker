@@ -1,6 +1,7 @@
 package com.amigo.ticketbooker.services.automaticBooking
 
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import kotlinx.serialization.Serializable
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,7 @@ enum class ClassType(val displayName: String) {
 // Extended to include payment details
  data class BookingForm(
     val id: String? = null,
+    val formName: String = "", // <-- Add this line
     val username: String = "",
     val password: String = "",
     val fromStation: String = "",
@@ -90,7 +92,12 @@ fun AutomaticBookingScreen() {
                     form.date.isNotBlank() &&
                     form.passengerDetails.size == form.passengers
                 if (isFormValid) {
-                    saveBookingFormToStorage(context, form, pendingFormName)
+                    // If form name changed, delete old file
+                    if (pendingFormName != form.formName && pendingFormName.isNotBlank()) {
+                        val oldFile = getBookingFormFile(context, pendingFormName)
+                        if (oldFile.exists()) oldFile.delete()
+                    }
+                    saveBookingFormToStorage(context, form, form.formName)
                     savedForms = loadAllBookingFormsFromStorage(context)
                     showFormScreen = null
                     pendingFormName = ""
@@ -138,7 +145,7 @@ fun AutomaticBookingScreen() {
                         Button(
                             onClick = {
                                 if (pendingFormName.isNotBlank()) {
-                                    showFormScreen = BookingForm()
+                                    showFormScreen = BookingForm(formName = pendingFormName)
                                     showFormNameDialog = false
                                 }
                             },
@@ -198,7 +205,10 @@ fun AutomaticBookingScreen() {
                 SavedFormsList(
                     forms = savedForms,
                     onFormClick = { _ -> /* Handle form click */ },
-                    onEditClick = { form -> showFormScreen = form },
+                    onEditClick = { form ->
+    showFormScreen = form
+    pendingFormName = form.formName // Track the original name for editing
+},
                     onDeleteClick = { form ->
                         // Remove file from storage
                         deleteBookingFormFromStorage(context, form)
@@ -227,10 +237,11 @@ fun getBookingFormFile(context: android.content.Context, formName: String): java
     return java.io.File(mediaDir, "$formName.json")
 }
 
-fun saveBookingFormToStorage(context: android.content.Context, form: BookingForm, formName: String) {
+fun saveBookingFormToStorage(context: Context, form: BookingForm, formName: String) {
     try {
         val file = getBookingFormFile(context, formName)
-        val json = Json.encodeToString(form)
+        val formWithName = form.copy(formName = formName)
+        val json = Json.encodeToString(formWithName)
         file.writeText(json)
     } catch (e: Exception) {
         e.printStackTrace()

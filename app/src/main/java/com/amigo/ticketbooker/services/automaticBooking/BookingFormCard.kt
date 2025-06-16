@@ -50,12 +50,18 @@ fun BookingFormCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            Text(
+                text = form.formName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "${form.fromStation} → ${form.toStation} (${form.date})",
+                    text = "Last Modifier",
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = fontFamily,
                     fontWeight = FontWeight.SemiBold,
