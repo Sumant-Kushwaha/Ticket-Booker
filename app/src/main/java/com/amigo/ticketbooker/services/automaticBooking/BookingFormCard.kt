@@ -55,7 +55,7 @@ fun BookingFormCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = form.name,
+                    text = "${form.fromStation} → ${form.toStation} (${form.date})",
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = fontFamily,
                     fontWeight = FontWeight.SemiBold,

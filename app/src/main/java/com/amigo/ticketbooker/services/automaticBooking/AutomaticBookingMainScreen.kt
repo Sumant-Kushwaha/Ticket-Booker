@@ -2,9 +2,7 @@ package com.amigo.ticketbooker.services.automaticBooking
 
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import kotlinx.serialization.Serializable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,6 +14,11 @@ import com.amigo.ticketbooker.ui.ServiceTopBar
 import java.util.*
 import com.amigo.ticketbooker.model.Passenger
 import com.amigo.ticketbooker.services.automaticBooking.bookingForm.BookingFormScreen
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import android.os.Environment
+import java.io.File
 
 enum class ClassType(val displayName: String) {
     SL("SL"),
@@ -29,9 +32,11 @@ enum class ClassType(val displayName: String) {
 }
 
 
-data class BookingForm(
+
+@Serializable
+// Extended to include payment details
+ data class BookingForm(
     val id: String? = null,
-    val name: String = "",
     val username: String = "",
     val password: String = "",
     val fromStation: String = "",
@@ -44,38 +49,64 @@ data class BookingForm(
     val passengerDetails: List<Passenger> = emptyList(),
     val boardingStation: String? = null, // Added boardingStation property
     val mobileNumber: String = "", // Added mobile number field for journey details
+    // Payment Details
+    val paymentMode: String = "", // UPI, CARDS, NET_BANKING, WALLETS
+    val paymentProvider: String = "",
+    val paymentDetails: Map<String, String> = emptyMap() // Generic map for flexibility
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AutomaticBookingScreen() {
+    var showCloneFormNameDialog by remember { mutableStateOf(false) }
+    var cloneFormName by remember { mutableStateOf("") }
+    var cloneSourceForm by remember { mutableStateOf<BookingForm?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val navController = LocalNavController.current
 
     // In a real app, this would come from a ViewModel
+    val context = LocalNavController.current.context
     var savedForms by remember { mutableStateOf<List<BookingForm>>(emptyList()) }
     var showFormScreen by remember { mutableStateOf<BookingForm?>(null) }
+    var showFormNameDialog by remember { mutableStateOf(false) }
+    var pendingFormName by remember { mutableStateOf("") }
+
+    // Load saved form if exists
+    LaunchedEffect(Unit) {
+        val loadedForms = loadAllBookingFormsFromStorage(context)
+        savedForms = loadedForms
+    }
 
     // Show form screen if needed
     if (showFormScreen != null) {
         BookingFormScreen(
-            formId = showFormScreen?.id,
+            bookingForm = showFormScreen,
             onSave = { form ->
-                savedForms = if (showFormScreen?.id != null) {
-                    // Update existing form
-                    savedForms.map { if (it.id == showFormScreen?.id) form else it }
-                } else {
-                    // Add new form
-                    savedForms + form
+                val isFormValid =
+                    form.username.isNotBlank() &&
+                    form.password.isNotBlank() &&
+                    form.fromStation.isNotBlank() &&
+                    form.toStation.isNotBlank() &&
+                    form.date.isNotBlank() &&
+                    form.passengerDetails.size == form.passengers
+                if (isFormValid) {
+                    saveBookingFormToStorage(context, form, pendingFormName)
+                    savedForms = loadAllBookingFormsFromStorage(context)
+                    showFormScreen = null
+                    pendingFormName = ""
                 }
-                showFormScreen = null
-            }
+                // else: validation and snackbar handled in BookingFormScreen
+            },
+            snackbarHostState = snackbarHostState
         )
         return
     }
 
     val showEmptyState = savedForms.isEmpty()
 
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ServiceTopBar(
                 title = "Automatic Booking",
@@ -84,11 +115,72 @@ fun AutomaticBookingScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showFormScreen = BookingForm(name = "", fromStation = "", toStation = "", date = "") },
+                onClick = { showFormNameDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add New Form")
+                Icon(Icons.Default.Add, contentDescription = "New Form")
+            }
+
+            if (showFormNameDialog) {
+                AlertDialog(
+                    onDismissRequest = { showFormNameDialog = false },
+                    title = { Text("Enter Form Name") },
+                    text = {
+                        OutlinedTextField(
+                            value = pendingFormName,
+                            onValueChange = { pendingFormName = it },
+                            label = { Text("Form Name") },
+                            singleLine = true
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                if (pendingFormName.isNotBlank()) {
+                                    showFormScreen = BookingForm()
+                                    showFormNameDialog = false
+                                }
+                            },
+                            enabled = pendingFormName.isNotBlank()
+                        ) { Text("Create") }
+                    },
+                    dismissButton = {
+                        OutlinedButton(onClick = { showFormNameDialog = false }) { Text("Cancel") }
+                    }
+                )
+            }
+            if (showCloneFormNameDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCloneFormNameDialog = false },
+                    title = { Text("Enter Name for Cloned Form") },
+                    text = {
+                        OutlinedTextField(
+                            value = cloneFormName,
+                            onValueChange = { cloneFormName = it },
+                            label = { Text("Cloned Form Name") },
+                            singleLine = true
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                if (cloneFormName.isNotBlank() && cloneSourceForm != null) {
+                                    val cloned = cloneSourceForm!!.copy(id = UUID.randomUUID().toString())
+                                    saveBookingFormToStorage(context, cloned, cloneFormName)
+                                    savedForms = loadAllBookingFormsFromStorage(context)
+                                    showCloneFormNameDialog = false
+                                    cloneSourceForm = null
+                                    cloneFormName = ""
+                                }
+                            },
+                            enabled = cloneFormName.isNotBlank()
+                        ) { Text("Clone") }
+                    },
+                    dismissButton = {
+                        OutlinedButton(onClick = { showCloneFormNameDialog = false; cloneSourceForm = null; cloneFormName = "" }) { Text("Cancel") }
+                    }
+                )
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -100,7 +192,7 @@ fun AutomaticBookingScreen() {
         ) {
             if (showEmptyState) {
                 EmptyFormsList(
-                    onAddNewClick = { showFormScreen = BookingForm(name = "", fromStation = "", toStation = "", date = "") }
+                    onAddNewClick = { showFormNameDialog = true }
                 )
             } else {
                 SavedFormsList(
@@ -108,10 +200,15 @@ fun AutomaticBookingScreen() {
                     onFormClick = { _ -> /* Handle form click */ },
                     onEditClick = { form -> showFormScreen = form },
                     onDeleteClick = { form ->
-                        savedForms = savedForms.filter { it.id != form.id }
+                        // Remove file from storage
+                        deleteBookingFormFromStorage(context, form)
+                        // Reload all forms from storage so only the deleted form disappears
+                        savedForms = loadAllBookingFormsFromStorage(context)
                     },
                     onCloneClick = { form ->
-                        showFormScreen = form.copy(id = UUID.randomUUID().toString())
+                        cloneSourceForm = form
+                        cloneFormName = ""
+                        showCloneFormNameDialog = true
                     },
                     onAutomationClick = {
                         // TODO: Implement automation logic here
@@ -124,11 +221,48 @@ fun AutomaticBookingScreen() {
 }
 
 
+fun getBookingFormFile(context: android.content.Context, formName: String): java.io.File {
+    val mediaDir = java.io.File(android.os.Environment.getExternalStoragePublicDirectory("Android/media"), context.packageName)
+    if (!mediaDir.exists()) mediaDir.mkdirs()
+    return java.io.File(mediaDir, "$formName.json")
+}
 
+fun saveBookingFormToStorage(context: android.content.Context, form: BookingForm, formName: String) {
+    try {
+        val file = getBookingFormFile(context, formName)
+        val json = Json.encodeToString(form)
+        file.writeText(json)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
 
+fun deleteBookingFormFromStorage(context: android.content.Context, form: BookingForm) {
+    // Try to find the file by matching BookingForm content
+    val dir = java.io.File(android.os.Environment.getExternalStoragePublicDirectory("Android/media"), context.packageName)
+    val files = dir.listFiles()?.filter { it.extension == "json" } ?: return
+    for (file in files) {
+        try {
+            val json = file.readText()
+            val loadedForm = Json.decodeFromString<BookingForm>(json)
+            if (loadedForm.id == form.id) {
+                file.delete()
+                break
+            }
+        } catch (_: Exception) {}
+    }
+}
 
-
-
-
-
-
+fun loadAllBookingFormsFromStorage(context: android.content.Context): List<BookingForm> {
+    val dir = java.io.File(android.os.Environment.getExternalStoragePublicDirectory("Android/media"), context.packageName)
+    val files = dir.listFiles()?.filter { it.extension == "json" } ?: return emptyList()
+    return files.mapNotNull { file ->
+        try {
+            val json = file.readText()
+            Json.decodeFromString<BookingForm>(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}

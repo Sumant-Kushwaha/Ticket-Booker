@@ -26,31 +26,16 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingFormScreen(
-    formId: String? = null,
-    onSave: (BookingForm) -> Unit
+    bookingForm: BookingForm? = null,
+    onSave: (BookingForm) -> Unit,
+    snackbarHostState: SnackbarHostState,
 ) {
     // Local context is available if needed
     LocalContext.current
 
-    val existingForm = remember(formId) {
-        if (formId != null) {
-            BookingForm(
-                id = formId,
-                name = "",
-                fromStation = "HW",
-                toStation = "BMKI",
-                date = "Date",
-                trainNumber = "Train Number",
-                classType = "Class",
-                passengers = 2
-            )
-        } else null
-    }
-
     var formState by remember {
         mutableStateOf(
-            existingForm ?: BookingForm(
-                name = "",
+            bookingForm ?: BookingForm(
                 fromStation = "",
                 toStation = "",
                 date = ""
@@ -62,20 +47,44 @@ fun BookingFormScreen(
     var showAddPassengerDialog by remember { mutableStateOf(false) }
     var editingPassengerIndex by remember { mutableStateOf<Int?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
-    val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    
 
-    val isFormValid = formState.name.isNotBlank() &&
+    val isFormValid =
             formState.username.isNotBlank() &&
             formState.password.isNotBlank() &&
             formState.fromStation.isNotBlank() &&
             formState.toStation.isNotBlank() &&
             formState.date.isNotBlank() &&
-            formState.passengerDetails.size == formState.passengers
+            formState.passengerDetails.size == formState.passengers &&
+            formState.paymentMode.isNotBlank() &&
+            formState.paymentProvider.isNotBlank() &&
+            formState.paymentDetails.isNotEmpty()
+
+    var snackbarMessage by remember { mutableStateOf<String?>(null) }
+
+    if (snackbarMessage != null) {
+        LaunchedEffect(snackbarMessage) {
+            snackbarHostState.showSnackbar(snackbarMessage!!)
+            snackbarMessage = null
+        }
+    }
 
     Scaffold(
-        topBar = { BookingTopBar(existingForm != null) },
-        bottomBar = { BookingBottomBar(isFormValid) { onSave(formState) } },
-        floatingActionButton = { BookingFAB(isFormValid) { onSave(formState) } }
+        topBar = { BookingTopBar(bookingForm != null) },
+        bottomBar = { BookingBottomBar(isFormValid) {
+            if (isFormValid) {
+                onSave(formState)
+            } else {
+                snackbarMessage = "Please fill all fields before saving."
+            }
+        } },
+        floatingActionButton = { BookingFAB(isFormValid) {
+            if (isFormValid) {
+                onSave(formState)
+            } else {
+                snackbarMessage = "Please fill all fields before saving."
+            }
+        } }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -93,10 +102,7 @@ fun BookingFormScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
-                    BookingDetailsSection(
-                        formState = formState,
-                        onFormStateChange = { formState = it }
-                    )
+                    BookingDetailsSection()
                 }
             }
 
@@ -139,6 +145,9 @@ fun BookingFormScreen(
 
             PassengerDetailsSection(
                 passengers = formState.passengerDetails,
+                paymentMode = formState.paymentMode.takeIf { it.isNotBlank() },
+                paymentProvider = formState.paymentProvider.takeIf { it.isNotBlank() },
+                paymentDetails = formState.paymentDetails,
                 onPassengerChange = { updatedPassengers ->
                     formState = formState.copy(
                         passengerDetails = updatedPassengers,
@@ -155,6 +164,15 @@ fun BookingFormScreen(
                 },
                 onDeletePassengerClick = { index ->
                     showDeleteConfirmation = index
+                },
+                onPaymentModeChange = { mode ->
+                    formState = formState.copy(paymentMode = mode, paymentProvider = "", paymentDetails = emptyMap())
+                },
+                onPaymentProviderChange = { provider ->
+                    formState = formState.copy(paymentProvider = provider, paymentDetails = emptyMap())
+                },
+                onPaymentDetailsChange = { details ->
+                    formState = formState.copy(paymentDetails = details)
                 }
             )
         }

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21"
 }
 
 android {
@@ -82,4 +83,7 @@ dependencies {
 
     // Firebase Auth
     implementation("com.google.firebase:firebase-auth-ktx:22.3.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1") // ✅ Latest as of 2025
+
 }

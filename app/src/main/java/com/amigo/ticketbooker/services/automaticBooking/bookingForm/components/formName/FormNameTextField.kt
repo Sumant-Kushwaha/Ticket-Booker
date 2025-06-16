@@ -12,31 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.services.automaticBooking.BookingForm
 
 @Composable
-fun BookingDetailsSection(
-    formState: BookingForm,
-    onFormStateChange: (BookingForm) -> Unit
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "Form Name",
-            Modifier.padding(bottom = 10.dp),
-            color = Color.Red,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        // Form Name
-        OutlinedTextField(
-            value = formState.name,
-            onValueChange = { onFormStateChange(formState.copy(name = it)) },
-            label = { Text("Form Name") },
-            leadingIcon = { Icon(Icons.Default.Description, null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            singleLine = true,
-            isError = formState.name.isBlank()
-        )
-    }
+fun BookingDetailsSection() {
+    // Form name field removed. Place for future booking meta fields if needed.
+    Spacer(modifier = Modifier.height(4.dp))
 }

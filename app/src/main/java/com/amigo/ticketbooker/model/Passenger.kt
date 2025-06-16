@@ -1,5 +1,6 @@
 package com.amigo.ticketbooker.model
 
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
 enum class Gender {
@@ -17,6 +18,7 @@ enum class BerthPreference {
     SIDE_UPPER
 }
 
+@Serializable
 data class Passenger(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",

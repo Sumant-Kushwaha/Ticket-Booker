@@ -105,12 +105,23 @@ fun JourneyDetailsSection(
         // Train Number
         OutlinedTextField(
             value = formState.trainNumber,
-            onValueChange = { onFormStateChange(formState.copy(trainNumber = it)) },
+            onValueChange = {
+                // Only allow digits and limit to 5 characters
+                if (it.length <= 5 && (it.isEmpty() || it.all { char -> char.isDigit() })) {
+                    onFormStateChange(formState.copy(trainNumber = it))
+                }
+            },
             label = { Text("Train Number") },
-            leadingIcon = { Icon(Icons.Default.DirectionsRailway, null) },
+            leadingIcon = { Icon(Icons.Default.DirectionsRailway, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = formState.trainNumber.isNotEmpty() && formState.trainNumber.length != 5, // ✅ Correct check
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            )
         )
+
 
         Spacer(modifier = Modifier.height(8.dp))
 

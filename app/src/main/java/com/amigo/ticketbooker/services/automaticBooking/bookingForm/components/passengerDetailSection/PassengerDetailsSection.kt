@@ -18,10 +18,16 @@ import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.p
 @Composable
 fun PassengerDetailsSection(
     passengers: List<Passenger>,
+    paymentMode: String?,
+    paymentProvider: String?,
+    paymentDetails: Map<String, String>,
     onPassengerChange: (List<Passenger>) -> Unit,
     onAddPassengerClick: () -> Unit,
     onEditPassengerClick: (Int) -> Unit,
-    onDeletePassengerClick: (Int) -> Unit
+    onDeletePassengerClick: (Int) -> Unit,
+    onPaymentModeChange: (String) -> Unit,
+    onPaymentProviderChange: (String) -> Unit,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (passengers.size < 6) {
@@ -45,31 +51,30 @@ fun PassengerDetailsSection(
             )
         }
 
-        // Add payment mode card after passenger cards
-        var selectedPaymentMode by remember { mutableStateOf<PaymentMode?>(null) }
-        var selectedProvider by remember { mutableStateOf<PaymentProvider?>(null) }
-
+        // Payment Mode Card
         PaymentModeCard(
-            selectedMode = selectedPaymentMode,
-            onPaymentModeSelected = {
-                selectedPaymentMode = it
-                selectedProvider = null // Reset provider when mode changes
+            selectedMode = paymentMode?.let { com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.valueOf(it) },
+            onPaymentModeSelected = { mode ->
+                onPaymentModeChange(mode.name)
+                onPaymentProviderChange("") // Reset provider
             },
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // Add the payment provider card
+        // Payment Provider Card
         PaymentProviderCard(
-            selectedMode = selectedPaymentMode,
-            selectedProvider = selectedProvider,
-            onProviderSelected = { selectedProvider = it },
+            selectedMode = paymentMode?.let { com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.valueOf(it) },
+            selectedProvider = paymentProvider?.let { com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProvider(it, paymentMode?.let { pm -> com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.valueOf(pm) } ?: com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.UPI) },
+            onProviderSelected = { provider -> onPaymentProviderChange(provider.name) },
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // Add payment details form
+        // Payment Details Form
         PaymentDetailsForm(
-            selectedMode = selectedPaymentMode,
-            selectedProvider = selectedProvider
+            paymentDetails = paymentDetails,
+            onPaymentDetailsChange = onPaymentDetailsChange,
+            selectedMode = paymentMode?.let { com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.valueOf(it) },
+            selectedProvider = paymentProvider?.let { com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProvider(it, paymentMode?.let { pm -> com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.valueOf(pm) } ?: com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode.UPI) }
         )
     }
 }

@@ -16,6 +16,8 @@ import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.p
 
 @Composable
 fun PaymentDetailsForm(
+    paymentDetails: Map<String, String>,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit,
     selectedMode: PaymentMode?,
     selectedProvider: PaymentProvider?
 ) {
@@ -32,18 +34,21 @@ fun PaymentDetailsForm(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             when (selectedMode) {
-                PaymentMode.UPI -> UPIForm()
-                PaymentMode.CARDS -> CardForm()
-                PaymentMode.NET_BANKING -> NetBankingForm()
-                PaymentMode.WALLETS -> WalletForm()
+                PaymentMode.UPI -> UPIForm(paymentDetails, onPaymentDetailsChange)
+                PaymentMode.CARDS -> CardForm(paymentDetails, onPaymentDetailsChange)
+                PaymentMode.NET_BANKING -> NetBankingForm(paymentDetails, onPaymentDetailsChange)
+                PaymentMode.WALLETS -> WalletForm(paymentDetails, onPaymentDetailsChange)
             }
         }
     }
 }
 
 @Composable
-private fun UPIForm() {
-    var upiId by remember { mutableStateOf("") }
+private fun UPIForm(
+    paymentDetails: Map<String, String>,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit
+) {
+    val upiId = paymentDetails["upiId"] ?: ""
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             "We Don't Store Any Payment Details",
@@ -54,7 +59,9 @@ private fun UPIForm() {
         )
         OutlinedTextField(
             value = upiId,
-            onValueChange = { upiId = it },
+            onValueChange = { newId ->
+                onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("upiId", newId) })
+            },
             label = { Text("Enter UPI ID") },
             placeholder = { Text("username@upi") },
             modifier = Modifier.fillMaxWidth(),
@@ -64,11 +71,14 @@ private fun UPIForm() {
 }
 
 @Composable
-private fun CardForm() {
-    var cardNumber by remember { mutableStateOf("") }
-    var expiryDate by remember { mutableStateOf("") }
-    var cvv by remember { mutableStateOf("") }
-    var autoFillOtp by remember { mutableStateOf(false) }
+private fun CardForm(
+    paymentDetails: Map<String, String>,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit
+) {
+    val cardNumber = paymentDetails["cardNumber"] ?: ""
+    val expiryDate = paymentDetails["expiryDate"] ?: ""
+    val cvv = paymentDetails["cvv"] ?: ""
+    val autoFillOtp = paymentDetails["autoFillOtp"] == "true"
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -81,7 +91,9 @@ private fun CardForm() {
             )
             OutlinedTextField(
                 value = cardNumber,
-                onValueChange = { if (it.length <= 16) cardNumber = it },
+                onValueChange = { newValue ->
+                    if (newValue.length <= 16) onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("cardNumber", newValue) })
+                },
                 label = { Text("Card Number") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
@@ -94,7 +106,9 @@ private fun CardForm() {
             ) {
                 OutlinedTextField(
                     value = expiryDate,
-                    onValueChange = { if (it.length <= 5) expiryDate = it },
+                    onValueChange = { newValue ->
+                        if (newValue.length <= 5) onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("expiryDate", newValue) })
+                    },
                     label = { Text("MM/YY") },
                     modifier = Modifier.weight(1f),
                     singleLine = true
@@ -102,7 +116,9 @@ private fun CardForm() {
 
                 OutlinedTextField(
                     value = cvv,
-                    onValueChange = { if (it.length <= 3) cvv = it },
+                    onValueChange = { newValue ->
+                        if (newValue.length <= 3) onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("cvv", newValue) })
+                    },
                     label = { Text("CVV") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -116,18 +132,23 @@ private fun CardForm() {
             ) {
                 Checkbox(
                     checked = autoFillOtp,
-                    onCheckedChange = { autoFillOtp = it }
+                    onCheckedChange = { checked ->
+                        onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("autoFillOtp", checked.toString()) })
+                    }
                 )
                 Text("Enable automatic OTP filling")
             }
         }
     }
 }
-@Composable
-private fun NetBankingForm() {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
 
+@Composable
+private fun NetBankingForm(
+    paymentDetails: Map<String, String>,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit
+) {
+    val username = paymentDetails["netbankingUsername"] ?: ""
+    val password = paymentDetails["netbankingPassword"] ?: ""
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -140,7 +161,9 @@ private fun NetBankingForm() {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { newValue ->
+                    onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("netbankingUsername", newValue) })
+                },
                 label = { Text("Username") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -148,7 +171,9 @@ private fun NetBankingForm() {
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { newValue ->
+                    onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("netbankingPassword", newValue) })
+                },
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -159,10 +184,12 @@ private fun NetBankingForm() {
 }
 
 @Composable
-private fun WalletForm() {
-    var mobileNumber by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
+private fun WalletForm(
+    paymentDetails: Map<String, String>,
+    onPaymentDetailsChange: (Map<String, String>) -> Unit
+) {
+    val mobileNumber = paymentDetails["walletMobileNumber"] ?: ""
+    val password = paymentDetails["walletPassword"] ?: ""
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -175,21 +202,23 @@ private fun WalletForm() {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = mobileNumber,
-                onValueChange = { if (it.length <= 10) mobileNumber = it },
+                onValueChange = { newValue ->
+                    if (newValue.length <= 10) onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("walletMobileNumber", newValue) })
+                },
                 label = { Text("Mobile Number") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
-                label = { Text("Password/PIN") },
+                onValueChange = { newValue ->
+                    onPaymentDetailsChange(paymentDetails.toMutableMap().apply { put("walletPassword", newValue) })
+                },
+                label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                visualTransformation = PasswordVisualTransformation()
             )
         }
     }
