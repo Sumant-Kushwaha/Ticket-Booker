@@ -3,6 +3,7 @@ package com.amigo.ticketbooker.services.automaticBooking
 
 import android.content.Context
 import androidx.compose.foundation.layout.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,6 +20,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import android.os.Environment
+import kotlinx.serialization.ExperimentalSerializationApi
 import java.io.File
 
 enum class ClassType(val displayName: String) {
@@ -64,6 +66,7 @@ fun AutomaticBookingScreen() {
     var cloneFormName by remember { mutableStateOf("") }
     var cloneSourceForm by remember { mutableStateOf<BookingForm?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     val navController = LocalNavController.current
 
     // In a real app, this would come from a ViewModel
@@ -72,6 +75,17 @@ fun AutomaticBookingScreen() {
     var showFormScreen by remember { mutableStateOf<BookingForm?>(null) }
     var showFormNameDialog by remember { mutableStateOf(false) }
     var pendingFormName by remember { mutableStateOf("") }
+
+    // Helper to get next available 3-digit numeric ID
+    fun getNextFormId(forms: List<BookingForm>): String {
+        val maxId = forms.mapNotNull { it.id?.toIntOrNull() }.maxOrNull() ?: 0
+        return String.format("%03d", maxId + 1)
+    }
+
+    // Case-insensitive check for duplicate form names
+    fun formNameExists(name: String, forms: List<BookingForm>): Boolean {
+        return forms.any { it.formName.trim().equals(name.trim(), ignoreCase = true) }
+    }
 
     // Load saved form if exists
     LaunchedEffect(Unit) {
@@ -99,8 +113,12 @@ fun AutomaticBookingScreen() {
                     }
                     saveBookingFormToStorage(context, form, form.formName)
                     savedForms = loadAllBookingFormsFromStorage(context)
-                    showFormScreen = null
+                    // Keep the form open; just update its state reference
+                    showFormScreen = form
                     pendingFormName = ""
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Form saved successfully")
+                    }
                 }
                 // else: validation and snackbar handled in BookingFormScreen
             },
@@ -145,8 +163,17 @@ fun AutomaticBookingScreen() {
                         Button(
                             onClick = {
                                 if (pendingFormName.isNotBlank()) {
-                                    showFormScreen = BookingForm(formName = pendingFormName)
-                                    showFormNameDialog = false
+                                    if (formNameExists(pendingFormName, savedForms)) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "Please enter a unique name for the form.",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        val newId = getNextFormId(savedForms)
+                                        showFormScreen = BookingForm(id = newId, formName = pendingFormName)
+                                        showFormNameDialog = false
+                                    }
                                 }
                             },
                             enabled = pendingFormName.isNotBlank()
@@ -173,12 +200,21 @@ fun AutomaticBookingScreen() {
                         Button(
                             onClick = {
                                 if (cloneFormName.isNotBlank() && cloneSourceForm != null) {
-                                    val cloned = cloneSourceForm!!.copy(id = UUID.randomUUID().toString())
-                                    saveBookingFormToStorage(context, cloned, cloneFormName)
-                                    savedForms = loadAllBookingFormsFromStorage(context)
-                                    showCloneFormNameDialog = false
-                                    cloneSourceForm = null
-                                    cloneFormName = ""
+                                    if (formNameExists(cloneFormName, savedForms)) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "Please enter a unique name for the form.",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        val newId = getNextFormId(savedForms)
+                                        val cloned = cloneSourceForm!!.copy(id = newId, formName = cloneFormName)
+                                        saveBookingFormToStorage(context, cloned, cloneFormName)
+                                        savedForms = loadAllBookingFormsFromStorage(context)
+                                        showCloneFormNameDialog = false
+                                        cloneSourceForm = null
+                                        cloneFormName = ""
+                                    }
                                 }
                             },
                             enabled = cloneFormName.isNotBlank()
@@ -219,10 +255,6 @@ fun AutomaticBookingScreen() {
                         cloneSourceForm = form
                         cloneFormName = ""
                         showCloneFormNameDialog = true
-                    },
-                    onAutomationClick = {
-                        // TODO: Implement automation logic here
-                        // This will be called when the Start Automation button is clicked
                     }
                 )
             }
@@ -237,11 +269,17 @@ fun getBookingFormFile(context: android.content.Context, formName: String): java
     return java.io.File(mediaDir, "$formName.json")
 }
 
+@OptIn(ExperimentalSerializationApi::class)
+val jsonFormatter = Json {
+    prettyPrint = true
+    prettyPrintIndent = "  " // 2-space indentation, optional
+}
+
 fun saveBookingFormToStorage(context: Context, form: BookingForm, formName: String) {
     try {
         val file = getBookingFormFile(context, formName)
         val formWithName = form.copy(formName = formName)
-        val json = Json.encodeToString(formWithName)
+        val json = jsonFormatter.encodeToString(formWithName)
         file.writeText(json)
     } catch (e: Exception) {
         e.printStackTrace()

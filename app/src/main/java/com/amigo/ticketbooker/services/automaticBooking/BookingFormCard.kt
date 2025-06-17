@@ -60,14 +60,6 @@ fun BookingFormCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Last Modifier",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = fontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
-
                 // Last modified time
                 Text(
                     text = "${form.passengers} ${if (form.passengers == 1) "Passenger" else "Passengers"}",

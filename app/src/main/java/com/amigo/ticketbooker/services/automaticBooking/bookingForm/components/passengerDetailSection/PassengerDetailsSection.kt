@@ -9,11 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.amigo.ticketbooker.model.Passenger
 import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.PaymentDetailsForm
-import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentMode
 import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentMode.PaymentModeCard
-import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProvider
 import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.paymentComposable.paymentProvider.PaymentProviderCard
-import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengercard.PassengerCard
+import com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerCard.PassengerCard
 
 @Composable
 fun PassengerDetailsSection(

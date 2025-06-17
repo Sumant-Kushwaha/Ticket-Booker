@@ -1,4 +1,4 @@
-package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengercard
+package com.amigo.ticketbooker.services.automaticBooking.bookingForm.components.passengerCard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -70,13 +70,29 @@ fun PassengerCard(
                 Text(" | ", fontWeight = FontWeight.Bold)
 
                 if (passenger.name.isNotBlank()) {
-                    Text(
-                        text = "${passenger.age} • ${
-                            passenger.gender.name.lowercase().replaceFirstChar { it.uppercase() }
-                        }",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Show child icon or label if isChild
+                        if (passenger.isChild) {
+                            Icon(
+                                imageVector = Icons.Default.ChildCare,
+                                contentDescription = "Child",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${passenger.childAge} • Child • ${passenger.gender.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Text(
+                                text = "${passenger.age} • Adult • ${passenger.gender.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 

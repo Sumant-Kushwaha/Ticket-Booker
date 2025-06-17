@@ -15,8 +15,7 @@ fun SavedFormsList(
     onFormClick: (BookingForm) -> Unit,
     onEditClick: (BookingForm) -> Unit,
     onDeleteClick: (BookingForm) -> Unit,
-    onCloneClick: (BookingForm) -> Unit,
-    onAutomationClick: () -> Unit
+    onCloneClick: (BookingForm) -> Unit
 ) {
     var isAutomating by remember { mutableStateOf(false) }
     var automationStatus by remember { mutableStateOf("Idle") }

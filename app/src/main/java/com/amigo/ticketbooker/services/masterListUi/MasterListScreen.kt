@@ -560,6 +560,7 @@ fun PassengerCard(
                             Gender.MALE -> Icons.Filled.Man
                             Gender.FEMALE -> Icons.Filled.Woman
                             Gender.OTHER -> Icons.Filled.Person
+                            Gender.UNSELECTED -> TODO()
                         },
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,

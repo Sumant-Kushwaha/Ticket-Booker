@@ -39,9 +39,17 @@ fun PassengerDialog(
     var berthPrefExpanded by remember { mutableStateOf(false) }
     var mealPrefExpanded by remember { mutableStateOf(false) }
     
-    val isFormValid = tempPassenger.name.isNotBlank() &&
-            (tempPassenger.isChild || tempPassenger.age in 5..120) &&
-            (!tempPassenger.isChild || tempPassenger.childAge.isNotBlank())
+    val isFormValid = if (tempPassenger.isChild) {
+    tempPassenger.name.isNotBlank() &&
+    tempPassenger.childAge.isNotBlank() &&
+    tempPassenger.gender != Gender.UNSELECTED
+} else {
+    tempPassenger.name.isNotBlank() &&
+    tempPassenger.age in 5..120 &&
+    tempPassenger.gender != Gender.UNSELECTED &&
+    tempPassenger.country.isNotBlank() &&
+    tempPassenger.berthPreference != BerthPreference.NO_PREFERENCE
+}
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -172,7 +180,7 @@ fun PassengerDialog(
                 ) {
                     OutlinedTextField(
                         readOnly = true,
-                        value = tempPassenger.gender.name.replaceFirstChar { it.uppercase() },
+                        value = if (tempPassenger.gender == Gender.UNSELECTED) "Select Gender" else tempPassenger.gender.name.replaceFirstChar { it.uppercase() },
                         onValueChange = { },
                         label = { Text("Gender") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
