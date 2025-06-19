@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
+import com.amigo.ticketbooker.services.automaticBooking.webRun.FlowRun
 import com.amigo.ticketbooker.ui.AppRoot
 import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
 
@@ -36,7 +37,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // Single composable call that handles everything
-                    AppRoot(onExitApp = { finish() })
+//                    AppRoot(onExitApp = { finish() })
+                    FlowRun()
                 }
             }
         }
