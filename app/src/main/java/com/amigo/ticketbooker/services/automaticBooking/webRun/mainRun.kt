@@ -6,15 +6,10 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
@@ -26,8 +21,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -128,10 +121,8 @@ fun MainAutomate(
                 val image = com.google.mlkit.vision.common.InputImage.fromBitmap(preprocessed, 0)
                 val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
-                        val raw = visionText.text.trim()
-                        val cleaned = raw.replace("[^a-zA-Z0-9]".toRegex(), "")
-                        val finalText = cleaned // Preserve original case
-                        Log.d("CaptchaOCR", "Cleaned captcha text: $finalText (raw: $raw)")
+                        val finalText = visionText.text.trim() // Preserve all symbols and original case
+                        Log.d("CaptchaOCR", "Captcha text: $finalText")
                         onResult(finalText)
                     }
                     .addOnFailureListener { e ->
@@ -177,6 +168,7 @@ fun MainAutomate(
                                                 input.value = '""" + text + """';
                                                 input.dispatchEvent(new Event('input', { bubbles: true }));
                                                 input.dispatchEvent(new Event('change', { bubbles: true }));
+                                                input.blur();
                                                 Android.sendToAndroid('✅ Captcha field filled');
                                             } else {
                                                 Android.sendToAndroid('❌ Captcha input not found');
@@ -212,7 +204,23 @@ fun MainAutomate(
                 delay(3000) // wait 3 seconds after page load
 
                 // Step 1: Click first element
-                val click1 = """
+                val popUpRemove = """
+                    javascript:(function() {
+                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > p-dialog.ng-tns-c19-2 > div > div > div.ng-tns-c19-2.ui-dialog-content.ui-widget-content > div > form > div.text-center.col-xs-12 > button");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ First element clicked");
+                        } else {
+                            Android.sendToAndroid("❌ First element not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(popUpRemove, null)
+
+                delay(1000) // short delay before next click
+
+                // Step 1: Click first element
+                val menuIcon = """
                     javascript:(function() {
                         const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
                         if (el) {
@@ -223,7 +231,7 @@ fun MainAutomate(
                         }
                     })();
                 """.trimIndent()
-                webViewRef?.evaluateJavascript(click1, null)
+                webViewRef?.evaluateJavascript(menuIcon, null)
 
                 delay(1000) // short delay before next click
 
@@ -251,6 +259,7 @@ fun MainAutomate(
                             input.value = "$inputUserName";
                             input.dispatchEvent(new Event('input', { bubbles: true }));
                             input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
                             Android.sendToAndroid("✅ Input field filled");
                         } else {
                             Android.sendToAndroid("❌ Input field not found");
@@ -269,6 +278,7 @@ fun MainAutomate(
                             input.value = "$inputPassword";
                             input.dispatchEvent(new Event('input', { bubbles: true }));
                             input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
                             Android.sendToAndroid("✅ Input field filled");
                         } else {
                             Android.sendToAndroid("❌ Input field not found");
@@ -311,7 +321,7 @@ fun MainAutomate(
                         })();
                     """.trimIndent()
                     webViewRef?.evaluateJavascript(clickSignIn, null)
-                    delay(2000) // Wait for login to process
+                    delay(3000) // Wait for login to process
 
                     // Check for target element
                     val checkTarget = """
