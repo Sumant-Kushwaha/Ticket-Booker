@@ -30,9 +30,10 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -41,7 +42,7 @@ import android.graphics.ColorMatrixColorFilter
 fun MainAutomate(
     modifier: Modifier = Modifier,
     inputUserName: String = "anshuabhishek",
-    inputPassword: String = "Amigo@2805",
+    inputPassword: String = "Amigo@2805"
 ) {
     val context = LocalContext.current
     var statusMessage by remember { mutableStateOf("Loading...") }
@@ -51,25 +52,57 @@ fun MainAutomate(
     var captchaImageUrl by remember { mutableStateOf("") } // For debugging or future use
     val contextForML = context.applicationContext
 
-    // Preprocess bitmap for better OCR accuracy (grayscale + contrast)
-    fun preprocessBitmap(src: Bitmap): Bitmap {
-        val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
+    // Enhanced preprocessing: grayscale, resize, adaptive binarization
+    fun adaptiveBinarize(bitmap: Bitmap, blockSize: Int = 12): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val binarized = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                var sum = 0
+                var count = 0
+                for (dy in -blockSize/2..blockSize/2) {
+                    for (dx in -blockSize/2..blockSize/2) {
+                        val nx = x + dx
+                        val ny = y + dy
+                        if (nx in 0 until width && ny in 0 until height) {
+                            val color = pixels[ny * width + nx]
+                            sum += Color.red(color)
+                            count++
+                        }
+                    }
+                }
+                val mean = sum / count
+                val pixel = Color.red(pixels[y * width + x])
+                val binColor = if (pixel > mean) Color.WHITE else Color.BLACK
+                binarized.setPixel(x, y, binColor)
+            }
+        }
+        return binarized
+    }
+
+    fun enhancedPreprocessBitmap(bitmap: Bitmap): Bitmap {
+        // 1. Grayscale
+        val width = bitmap.width
+        val height = bitmap.height
+        val grayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(grayscale)
         val paint = Paint()
         val colorMatrix = ColorMatrix()
         colorMatrix.setSaturation(0f)
-        // Increase contrast
-        val contrast = 2.0f
-        val translate = (-0.5f * contrast + 0.5f) * 255f
-        colorMatrix.set(floatArrayOf(
-            contrast, 0f, 0f, 0f, translate,
-            0f, contrast, 0f, 0f, translate,
-            0f, 0f, contrast, 0f, translate,
-            0f, 0f, 0f, 1f, 0f
-        ))
         paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
-        canvas.drawBitmap(src, 0f, 0f, paint)
-        return bmp
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        // 2. Resize if needed
+        val targetHeight = 60
+        val resized = if (height < targetHeight) {
+            Bitmap.createScaledBitmap(grayscale, (width * (targetHeight.toFloat() / height)).toInt(), targetHeight, true)
+        } else {
+            grayscale
+        }
+        // 3. Adaptive binarization
+        return adaptiveBinarize(resized, blockSize = 12)
     }
 
     // Helper to download image and run ML Kit OCR
@@ -88,18 +121,20 @@ fun MainAutomate(
                     val input = connection.getInputStream()
                     android.graphics.BitmapFactory.decodeStream(input)
                 }
-                val preprocessedBitmap = preprocessBitmap(bitmap)
                 val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
                     com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
                 )
-                val image = com.google.mlkit.vision.common.InputImage.fromBitmap(preprocessedBitmap, 0)
-                recognizer.process(image)
+                val preprocessed = enhancedPreprocessBitmap(bitmap)
+                val image = com.google.mlkit.vision.common.InputImage.fromBitmap(preprocessed, 0)
+                val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
-                        // Clean up: remove non-alphanum, preserve case
-                        val cleanedText = visionText.text.replace("[^A-Za-z0-9]".toRegex(), "").trim()
-                        onResult(cleanedText)
+                        val raw = visionText.text.trim()
+                        val cleaned = raw.replace("[^a-zA-Z0-9]".toRegex(), "")
+                        val finalText = cleaned // Preserve original case
+                        Log.d("CaptchaOCR", "Cleaned captcha text: $finalText (raw: $raw)")
+                        onResult(finalText)
                     }
-                    .addOnFailureListener { _ ->
+                    .addOnFailureListener { e ->
                         onResult("")
                     }
             } catch (e: Exception) {
@@ -259,151 +294,72 @@ fun MainAutomate(
                 webViewRef?.evaluateJavascript(extractCaptcha, null)
                 delay(1200) // give time for captcha to process
 
-                // Step 5: Click the SIGN IN button
-                val clickSignIn = """
-                    javascript:(function() {
-                        var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-                        if (btn) {
-                            btn.click();
-                            Android.sendToAndroid('✅ SIGN IN button clicked');
-                        } else {
-                            Android.sendToAndroid('❌ SIGN IN button not found');
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(clickSignIn, null)
-                delay(1000) // allow time for sign in action
-
-                // Retry logic for captcha and login error
+                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
                 var loginSuccess = false
-                var attempt = 0
-                while (attempt < 5 && !loginSuccess) {
-                    // 1. Check for login error element
-                    var errorFound = false
-                    val checkError = """
+                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+                for (attempt in 1..5) {
+                    // Click SIGN IN
+                    val clickSignIn = """
                         javascript:(function() {
-                            var err = document.querySelector('#login_header_disable > div > div > div.ng-tns-c19-13.ui-dialog-content.ui-widget-content > div.irmodal.ng-tns-c19-13 > div > div.login-bg.pull-left > div > div.modal-body > form > div.loginError');
-                            if (err) {
-                                Android.sendToAndroid('LOGIN_ERROR_PRESENT');
+                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
+                            if (btn) {
+                                btn.click();
+                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
                             } else {
-                                Android.sendToAndroid('LOGIN_ERROR_NOT_FOUND');
+                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
                             }
                         })();
                     """.trimIndent()
-                    val checkSuccess = """
+                    webViewRef?.evaluateJavascript(clickSignIn, null)
+                    delay(2000) // Wait for login to process
+
+                    // Check for target element
+                    val checkTarget = """
                         javascript:(function() {
-                            var succ = document.querySelector('body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head2 > nav > ul > li:nth-child(12) > a');
-                            if (succ) {
-                                Android.sendToAndroid('LOGIN_SUCCESS_PRESENT');
+                            var el = document.querySelector('$targetSelector');
+                            if (el) {
+                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
+                                return true;
                             } else {
-                                Android.sendToAndroid('LOGIN_SUCCESS_NOT_FOUND');
+                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
+                                return false;
                             }
                         })();
                     """.trimIndent()
-
-                    // Set up a one-time JS interface for this attempt
-                    val resultHolder = java.util.concurrent.atomic.AtomicReference<String>()
-                    val jsInterface = object {
-                        @JavascriptInterface
-                        fun sendToAndroid(message: String) {
-                            Log.d("LoginRetry", "Attempt ${'$'}attempt: ${'$'}message")
-                            resultHolder.set(message)
-                        }
+                    var found = false
+                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    webViewRef?.evaluateJavascript(
+                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
+                    ) { value ->
+                        found = value == "true"
+                        latch.complete(found)
                     }
-                    webViewRef?.addJavascriptInterface(jsInterface, "AndroidRetry")
-
-                    // Check for error
-                    webViewRef?.evaluateJavascript(checkError.replace("Android.sendToAndroid", "AndroidRetry.sendToAndroid"), null)
-                    delay(1200)
-                    val errorMsg = resultHolder.get() ?: ""
-                    if (errorMsg.contains("LOGIN_ERROR_PRESENT")) {
-                        errorFound = true
-                    }
-
-                    if (errorFound) {
-                        // Solve captcha again and click sign in again, but wait for OCR and fill to complete
-                        statusMessage = "Attempt ${'$'}{attempt+1}: Login error found, retrying captcha..."
-                        // Extract captcha again (triggers JS to send image URL)
-                        val captchaText = kotlinx.coroutines.suspendCancellableCoroutine<String> { cont ->
-                            // Listen for captcha image URL and then solve
-                            val jsInterface = object {
-                                @android.webkit.JavascriptInterface
-                                fun sendCaptchaImageUrl(url: String) {
-                                    if (url.isEmpty() || url == "NOT_FOUND") {
-                                        cont.resumeWith(Result.failure(Exception("Captcha image not loaded")))
-                                    } else {
-                                        processCaptchaImage(url, contextForML) { text ->
-                                            // Fill captcha input with JS
-                                            webViewRef?.post {
-                                                webViewRef?.evaluateJavascript(
-                                                    """
-                                                    (function() {
-                                                        var input = document.querySelector('input[formcontrolname=\"captcha\"]');
-                                                        if (input) {
-                                                            input.value = '""" + text + """';
-                                                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                                                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                                                        }
-                                                    })();
-                                                    """.trimIndent(),
-                                                    null
-                                                )
-                                            }
-                                            cont.resume(text, null)
-                                        }
-                                    }
-                                }
-                            }
-                            webViewRef?.addJavascriptInterface(jsInterface, "AndroidCaptchaRetry")
-                            // Retry logic: poll for captcha image every 500ms up to 5s
-                            val startTime = System.currentTimeMillis()
-                            fun tryExtractCaptcha() {
-                                val js = """
-                                    (function() {
-                                        var img = document.querySelector('.captcha-img');
-                                        if (img && img.src) {
-                                            AndroidCaptchaRetry.sendCaptchaImageUrl(img.src);
-                                        } else {
-                                            AndroidCaptchaRetry.sendCaptchaImageUrl('NOT_FOUND');
-                                        }
-                                    })();
-                                """.trimIndent()
-                                webViewRef?.evaluateJavascript(js, null)
-                            }
-                            fun poll() {
-                                tryExtractCaptcha()
-                                kotlinx.coroutines.GlobalScope.launch {
-                                    kotlinx.coroutines.delay(500)
-                                    if (!cont.isCompleted && (System.currentTimeMillis() - startTime < 5000)) {
-                                        poll()
-                                    } else if (!cont.isCompleted) {
-                                        cont.resumeWith(Result.failure(Exception("Captcha image did not load in time")))
-                                    }
-                                }
-                            }
-                            poll()
-                        }
-                        // Wait a bit for JS to fill
-                        delay(800)
-                        // Click sign in again
-                        webViewRef?.evaluateJavascript(clickSignIn, null)
-                        delay(1200)
+                    latch.await()
+                    if (found) {
+                        statusMessage = "✅ Login successful. Target element found."
+                        loginSuccess = true
+                        break
                     } else {
-                        // Check for login success
-                        webViewRef?.evaluateJavascript(checkSuccess.replace("Android.sendToAndroid", "AndroidRetry.sendToAndroid"), null)
-                        delay(1200)
-                        val succMsg = resultHolder.get() ?: ""
-                        if (succMsg.contains("LOGIN_SUCCESS_PRESENT")) {
-                            statusMessage = "✅ Login successful on attempt ${'$'}{attempt+1}"
-                            loginSuccess = true
-                        }
+                        statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+                        // Re-extract captcha and fill it
+                        val extractCaptcha = """
+                            javascript:(function() {
+                                var img = document.querySelector('.captcha-img');
+                                if (img) {
+                                    var src = img.src || img.getAttribute('src');
+                                    Android.sendCaptchaImageUrl(src);
+                                } else {
+                                    Android.sendToAndroid('❌ Captcha image not found');
+                                }
+                            })();
+                        """.trimIndent()
+                        webViewRef?.evaluateJavascript(extractCaptcha, null)
+                        delay(1500) // Wait for captcha to be solved and filled
                     }
-                    attempt++
                 }
                 if (!loginSuccess) {
-                    statusMessage = "❌ Login failed after 5 attempts."
+                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
                 }
-
             }
         }
 
@@ -419,3 +375,4 @@ fun MainAutomate(
         )
     }
 }
+    
