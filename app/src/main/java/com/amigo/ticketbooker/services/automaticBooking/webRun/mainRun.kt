@@ -35,8 +35,45 @@ import android.graphics.Paint
 fun MainAutomate(
     modifier: Modifier = Modifier,
     inputUserName: String = "anshuabhishek",
-    inputPassword: String = "Amigo@2805"
+    inputPassword: String = "Amigo@2805",
+    inputOrigin: String = "ANAND VIHAR TRM - ANVT",
+    inputDestination: String = "HARIDWAR JN - HW",
+    inputDate: String = "15/07/2025",
+    className: String = "6",
+    quotaName: String = "1"
 ) {
+
+    val quotaIndex = when (quotaName.trim().uppercase()) {
+        in listOf("1","GENERAL")                      -> 1
+        in listOf("2","LADIES")                       -> 2
+        in listOf("3","LOWER BERTH/SR.CITIZEN")       -> 3
+        in listOf("4","PERSON WITH DISABILITY")       -> 4
+        in listOf("5","DUTY PASS","DUTYPASS")         -> 5
+        in listOf("6","TATKAL", "TAT KAL")            -> 6
+        in listOf("7","PREMIUM TATKAL", "PREMIUM-TATKAL") -> 7
+        else -> 0
+    }
+
+    val classIndex = when (className.uppercase()) {
+        in listOf("2","EA", "ANUBHUTI CLASS")        -> 2
+        in listOf("3","1A", "AC FIRST CLASS")        -> 3
+        in listOf("4","EV", "VISTADOME AC")          -> 4
+        in listOf("5","EC", "EXEC. CHAIR CAR")       -> 5
+        in listOf("6","2A", "AC 2 TIER")             -> 6
+        in listOf("7","FC", "FIRST CLASS")           -> 7
+        in listOf("8","3A", "AC 3 TIER")             -> 8
+        in listOf("9","3E", "AC 3 ECONOMY")          -> 9
+        in listOf("10","VC", "VISTADOME CHAIR CAR")   -> 10
+        in listOf("11","CC", "AC CHAIR CAR")          -> 11
+        in listOf("12","SL", "SLEEPER")               -> 12
+        in listOf("13","VS", "VISTADOME NON AC")      -> 13
+        in listOf("14","2S", "SECOND SITTING")        -> 14
+        else -> 1 // not 0 anymore
+    }
+
+
+
+
     val context = LocalContext.current
     var statusMessage by remember { mutableStateOf("Loading...") }
     var isLoading by remember { mutableStateOf(true) }
@@ -56,8 +93,8 @@ fun MainAutomate(
             for (x in 0 until width) {
                 var sum = 0
                 var count = 0
-                for (dy in -blockSize/2..blockSize/2) {
-                    for (dx in -blockSize/2..blockSize/2) {
+                for (dy in -blockSize / 2..blockSize / 2) {
+                    for (dx in -blockSize / 2..blockSize / 2) {
                         val nx = x + dx
                         val ny = y + dy
                         if (nx in 0 until width && ny in 0 until height) {
@@ -90,7 +127,12 @@ fun MainAutomate(
         // 2. Resize if needed
         val targetHeight = 60
         val resized = if (height < targetHeight) {
-            Bitmap.createScaledBitmap(grayscale, (width * (targetHeight.toFloat() / height)).toInt(), targetHeight, true)
+            Bitmap.createScaledBitmap(
+                grayscale,
+                (width * (targetHeight.toFloat() / height)).toInt(),
+                targetHeight,
+                true
+            )
         } else {
             grayscale
         }
@@ -99,13 +141,18 @@ fun MainAutomate(
     }
 
     // Helper to download image and run ML Kit OCR
-    fun processCaptchaImage(url: String, context: android.content.Context, onResult: (String) -> Unit) {
+    fun processCaptchaImage(
+        url: String,
+        context: android.content.Context,
+        onResult: (String) -> Unit
+    ) {
         kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val bitmap = if (url.startsWith("data:image")) {
                     // base64 image
                     val base64Data = url.substringAfter(",")
-                    val decoded = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
+                    val decoded =
+                        android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
                     android.graphics.BitmapFactory.decodeByteArray(decoded, 0, decoded.size)
                 } else {
                     // normal url
@@ -121,9 +168,10 @@ fun MainAutomate(
                 val image = com.google.mlkit.vision.common.InputImage.fromBitmap(preprocessed, 0)
                 val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
-                        val finalText = visionText.text.trim() // Preserve all symbols and original case
-                        Log.d("CaptchaOCR", "Captcha text: $finalText")
-                        onResult(finalText)
+                        val raw = visionText.text.trim()
+                        val cleaned = raw.replace("\\s".toRegex(), "") // Remove all whitespace, keep special chars
+                        Log.d("CaptchaOCR", "Cleaned captcha text: $cleaned (raw: $raw)")
+                        onResult(cleaned)
                     }
                     .addOnFailureListener { e ->
                         onResult("")
@@ -203,7 +251,7 @@ fun MainAutomate(
             if (webViewRef != null) {
                 delay(3000) // wait 3 seconds after page load
 
-                // Step 1: Click first element
+                // Remove popup
                 val popUpRemove = """
                     javascript:(function() {
                         const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > p-dialog.ng-tns-c19-2 > div > div > div.ng-tns-c19-2.ui-dialog-content.ui-widget-content > div > form > div.text-center.col-xs-12 > button");
@@ -235,7 +283,7 @@ fun MainAutomate(
 
                 delay(1000) // short delay before next click
 
-                // Step 2: Click second element
+//                 Step 2: Click second element
                 val click2 = """
                     javascript:(function() {
                         const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
@@ -348,6 +396,157 @@ fun MainAutomate(
                     if (found) {
                         statusMessage = "✅ Login successful. Target element found."
                         loginSuccess = true
+
+                // Fill the origin field
+                val fillOrigin = """
+                            javascript:(function() {
+                                const div = document.querySelector('#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box > div:nth-child(1) > app-jp-input > div > form > div:nth-child(2) > div.col-md-7.col-xs-12.remove-padding > div:nth-child(1)');
+                                if (div) {
+                                    const input = div.querySelector('input');
+                                    if (input) {
+                                        input.value = "$inputOrigin";
+                                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        input.blur();
+                                        Android.sendToAndroid('✅ Origin input filled');
+                                    } else {
+                                        Android.sendToAndroid('❌ Origin input not found in div');
+                                    }
+                                } else {
+                                    Android.sendToAndroid('❌ Origin div not found');
+                                }
+                            })();
+                        """.trimIndent()
+                webViewRef?.evaluateJavascript(fillOrigin, null)
+
+                // Fill the destination field
+                val fillDestination = """
+                            javascript:(function() {
+                                const div = document.querySelector('#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box > div:nth-child(1) > app-jp-input > div > form > div:nth-child(2) > div.col-md-7.col-xs-12.remove-padding > div:nth-child(2)');
+                                if (div) {
+                                    const input = div.querySelector('input');
+                                    if (input) {
+                                        input.value = "$inputDestination";
+                                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        input.blur();
+                                        Android.sendToAndroid('✅ Destination input filled');
+                                    } else {
+                                        Android.sendToAndroid('❌ Destination input not found in div');
+                                    }
+                                } else {
+                                    Android.sendToAndroid('❌ Destination div not found');
+                                }
+                            })();
+                        """.trimIndent()
+                webViewRef?.evaluateJavascript(fillDestination, null)
+
+                // Fill the destination field
+                val fillDate = """
+                            javascript:(function() {
+                                const div = document.querySelector('#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box > div:nth-child(1) > app-jp-input > div > form > div:nth-child(2) > div.col-md-5.col-xs-12.remove-padding > div.form-group.ui-float-label');
+                                if (div) {
+                                    const input = div.querySelector('input');
+                                    if (input) {
+                                        input.value = "$inputDate";
+                                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        input.blur();
+                                        Android.sendToAndroid('✅ Destination input filled');
+                                    } else {
+                                        Android.sendToAndroid('❌ Destination input not found in div');
+                                    }
+                                } else {
+                                    Android.sendToAndroid('❌ Destination div not found');
+                                }
+                            })();
+                        """.trimIndent()
+                webViewRef?.evaluateJavascript(fillDate, null)
+
+                // Expand For Class
+                val expandClass = """
+                    javascript:(function() {
+                        const el = document.querySelector("#journeyClass > div > div.ui-dropdown-trigger.ui-state-default.ui-corner-right.ng-tns-c65-11 > span");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ DropDown Clicked");
+                        } else {
+                            Android.sendToAndroid("❌ DropDown Not Found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(expandClass, null)
+
+                // Fill Class
+                val fillClass = """
+                            javascript:(function() {
+                                const el = document.querySelector("#journeyClass > div > div.ng-trigger.ng-trigger-overlayAnimation.ng-tns-c65-11.ui-dropdown-panel.ui-widget.ui-widget-content.ui-corner-all.ui-shadow.ng-star-inserted > div > ul > p-dropdownitem:nth-child($classIndex) > li");
+                                if (el) {
+                                    el.click();
+                                    Android.sendToAndroid("✅ Class Selected");
+                                } else {
+                                    Android.sendToAndroid("❌ Class not Selected");
+                                }
+                            })();
+                        """.trimIndent()
+                webViewRef?.evaluateJavascript(fillClass, null)
+
+                // Expand For Quota
+                val expandQuota = """
+                    javascript:(function() {
+                        const el = document.querySelector("#journeyQuota > div > div.ui-dropdown-trigger.ui-state-default.ui-corner-right.ng-tns-c65-12");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ DropDown Clicked");
+                        } else {
+                            Android.sendToAndroid("❌ DropDown Not Found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(expandQuota, null)
+
+                // Fill Quota
+                val fillQuota = """
+                    javascript:(function() {
+    const quotaIndex = $quotaIndex; // Use a constant for clarity
+
+    // Step 1: Click class dropdown item
+    const dropdownItem = document.querySelector(`#journeyQuota > div > div.ng-trigger.ng-trigger-overlayAnimation.ng-tns-c65-12.ui-dropdown-panel.ui-widget.ui-widget-content.ui-corner-all.ui-shadow.ng-star-inserted > div > ul > p-dropdownitem:nth-child(${quotaIndex}) > li`);
+
+    if (dropdownItem) {
+        dropdownItem.click();
+        Android.sendToAndroid(`✅ Quota index ${quotaIndex} selected.`);
+
+        // Step 2: Attempt to click the confirm button after a delay
+        setTimeout(function() {
+            // Find the common selector for the confirm/accept button in the dialog
+            // You'll need to inspect the page to get the MOST accurate selector.
+            // Here are some common patterns; try them one by one if unsure.
+            let confirmButton = document.querySelector("p-confirmdialog button.ui-confirmdialog-acceptbutton"); // Most common
+            if (!confirmButton) {
+                 confirmButton = document.querySelector("p-confirmdialog div.ui-dialog-footer button:last-child"); // Another common pattern
+            }
+            if (!confirmButton) {
+                 confirmButton = document.querySelector("p-confirmdialog button.ui-button-success"); // Sometimes there's a success class
+            }
+            // Add more specific selectors here if the above don't work for your exact page
+
+            if (confirmButton) {
+                confirmButton.click();
+                Android.sendToAndroid("✅ Confirm button clicked.");
+            } else {
+                Android.sendToAndroid("⚠️ Confirm button not found after selecting quota.");
+            }
+
+        }, 700); // Increased delay slightly to ensure dialog appears
+
+    } else {
+        Android.sendToAndroid(`❌ Quota index $quotaIndex not found in dropdown.`);
+    }
+})();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(fillQuota, null)
+
                         break
                     } else {
                         statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
@@ -385,4 +584,3 @@ fun MainAutomate(
         )
     }
 }
-    
