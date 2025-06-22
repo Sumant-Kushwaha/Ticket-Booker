@@ -39,8 +39,8 @@ fun MainAutomate(
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
     inputDestination: String = "HARIDWAR JN - HW",
     inputDate: String = "15/07/2025",
-    className: String = "6",
-    quotaName: String = "1"
+    className: String = "12",
+    quotaName: String = "4"
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -267,135 +267,135 @@ fun MainAutomate(
 
                 delay(1000) // short delay before next click
 
-                // Step 1: Click first element
-                val menuIcon = """
-                    javascript:(function() {
-                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
-                        if (el) {
-                            el.click();
-                            Android.sendToAndroid("✅ First element clicked");
-                        } else {
-                            Android.sendToAndroid("❌ First element not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(menuIcon, null)
-
-                delay(1000) // short delay before next click
-
-//                 Step 2: Click second element
-                val click2 = """
-                    javascript:(function() {
-                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
-                        if (el) {
-                            el.click();
-                            Android.sendToAndroid("✅ Second element clicked");
-                        } else {
-                            Android.sendToAndroid("❌ Second element not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(click2, null)
-
-                delay(1000) // short delay before typing
-
-                // Step 3: Fill input field
-                val userNameInput = """
-                    javascript:(function() {
-                        const input = document.querySelector("input[formcontrolname='userid']");
-                        if (input) {
-                            input.value = "$inputUserName";
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            input.blur();
-                            Android.sendToAndroid("✅ Input field filled");
-                        } else {
-                            Android.sendToAndroid("❌ Input field not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(userNameInput, null)
-
-                delay(1000) // short delay before typing
-
-                // Step 3: Fill input field
-                val passwordInput = """
-                    javascript:(function() {
-                        const input = document.querySelector("input[formcontrolname='password']");
-                        if (input) {
-                            input.value = "$inputPassword";
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            input.blur();
-                            Android.sendToAndroid("✅ Input field filled");
-                        } else {
-                            Android.sendToAndroid("❌ Input field not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(passwordInput, null)
-
-//                delay(1200) // short delay before captcha extraction
-
-                // Step 4: Extract captcha image after password
-                val extractCaptcha = """
-                    javascript:(function() {
-                        var img = document.querySelector('.captcha-img');
-                        if (img) {
-                            var src = img.src || img.getAttribute('src');
-                            Android.sendCaptchaImageUrl(src);
-                        } else {
-                            Android.sendToAndroid('❌ Captcha image not found');
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(extractCaptcha, null)
-                delay(1200) // give time for captcha to process
-
-                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
-                var loginSuccess = false
-                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
-                for (attempt in 1..5) {
-                    // Click SIGN IN
-                    val clickSignIn = """
-                        javascript:(function() {
-                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-                            if (btn) {
-                                btn.click();
-                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
-                            } else {
-                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
-                            }
-                        })();
-                    """.trimIndent()
-                    webViewRef?.evaluateJavascript(clickSignIn, null)
-                    delay(3000) // Wait for login to process
-
-                    // Check for target element
-                    val checkTarget = """
-                        javascript:(function() {
-                            var el = document.querySelector('$targetSelector');
-                            if (el) {
-                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
-                                return true;
-                            } else {
-                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
-                                return false;
-                            }
-                        })();
-                    """.trimIndent()
-                    var found = false
-                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
-                    webViewRef?.evaluateJavascript(
-                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
-                    ) { value ->
-                        found = value == "true"
-                        latch.complete(found)
-                    }
-                    latch.await()
-                    if (found) {
-                        statusMessage = "✅ Login successful. Target element found."
-                        loginSuccess = true
+//                // Step 1: Click first element
+//                val menuIcon = """
+//                    javascript:(function() {
+//                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
+//                        if (el) {
+//                            el.click();
+//                            Android.sendToAndroid("✅ First element clicked");
+//                        } else {
+//                            Android.sendToAndroid("❌ First element not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(menuIcon, null)
+//
+//                delay(1000) // short delay before next click
+//
+////                 Step 2: Click second element
+//                val click2 = """
+//                    javascript:(function() {
+//                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
+//                        if (el) {
+//                            el.click();
+//                            Android.sendToAndroid("✅ Second element clicked");
+//                        } else {
+//                            Android.sendToAndroid("❌ Second element not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(click2, null)
+//
+//                delay(1000) // short delay before typing
+//
+//                // Step 3: Fill input field
+//                val userNameInput = """
+//                    javascript:(function() {
+//                        const input = document.querySelector("input[formcontrolname='userid']");
+//                        if (input) {
+//                            input.value = "$inputUserName";
+//                            input.dispatchEvent(new Event('input', { bubbles: true }));
+//                            input.dispatchEvent(new Event('change', { bubbles: true }));
+//                            input.blur();
+//                            Android.sendToAndroid("✅ Input field filled");
+//                        } else {
+//                            Android.sendToAndroid("❌ Input field not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(userNameInput, null)
+//
+//                delay(1000) // short delay before typing
+//
+//                // Step 3: Fill input field
+//                val passwordInput = """
+//                    javascript:(function() {
+//                        const input = document.querySelector("input[formcontrolname='password']");
+//                        if (input) {
+//                            input.value = "$inputPassword";
+//                            input.dispatchEvent(new Event('input', { bubbles: true }));
+//                            input.dispatchEvent(new Event('change', { bubbles: true }));
+//                            input.blur();
+//                            Android.sendToAndroid("✅ Input field filled");
+//                        } else {
+//                            Android.sendToAndroid("❌ Input field not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(passwordInput, null)
+//
+////                delay(1200) // short delay before captcha extraction
+//
+//                // Step 4: Extract captcha image after password
+//                val extractCaptcha = """
+//                    javascript:(function() {
+//                        var img = document.querySelector('.captcha-img');
+//                        if (img) {
+//                            var src = img.src || img.getAttribute('src');
+//                            Android.sendCaptchaImageUrl(src);
+//                        } else {
+//                            Android.sendToAndroid('❌ Captcha image not found');
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(extractCaptcha, null)
+//                delay(1200) // give time for captcha to process
+//
+//                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
+//                var loginSuccess = false
+//                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+//                for (attempt in 1..5) {
+//                    // Click SIGN IN
+//                    val clickSignIn = """
+//                        javascript:(function() {
+//                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
+//                            if (btn) {
+//                                btn.click();
+//                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
+//                            } else {
+//                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
+//                            }
+//                        })();
+//                    """.trimIndent()
+//                    webViewRef?.evaluateJavascript(clickSignIn, null)
+//                    delay(3000) // Wait for login to process
+//
+//                    // Check for target element
+//                    val checkTarget = """
+//                        javascript:(function() {
+//                            var el = document.querySelector('$targetSelector');
+//                            if (el) {
+//                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
+//                                return true;
+//                            } else {
+//                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
+//                                return false;
+//                            }
+//                        })();
+//                    """.trimIndent()
+//                    var found = false
+//                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
+//                    webViewRef?.evaluateJavascript(
+//                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
+//                    ) { value ->
+//                        found = value == "true"
+//                        latch.complete(found)
+//                    }
+//                    latch.await()
+//                    if (found) {
+//                        statusMessage = "✅ Login successful. Target element found."
+//                        loginSuccess = true
 
                 // Fill the origin field
                 val fillOrigin = """
@@ -418,6 +418,7 @@ fun MainAutomate(
                             })();
                         """.trimIndent()
                 webViewRef?.evaluateJavascript(fillOrigin, null)
+                delay(1000)
 
                 // Fill the destination field
                 val fillDestination = """
@@ -441,6 +442,8 @@ fun MainAutomate(
                         """.trimIndent()
                 webViewRef?.evaluateJavascript(fillDestination, null)
 
+                delay(1000)
+
                 // Fill the destination field
                 val fillDate = """
                             javascript:(function() {
@@ -462,6 +465,8 @@ fun MainAutomate(
                             })();
                         """.trimIndent()
                 webViewRef?.evaluateJavascript(fillDate, null)
+
+                delay(1000)
 
                 // Expand For Class
                 val expandClass = """
@@ -491,6 +496,8 @@ fun MainAutomate(
                         """.trimIndent()
                 webViewRef?.evaluateJavascript(fillClass, null)
 
+                delay(1000)
+
                 // Expand For Quota
                 val expandQuota = """
                     javascript:(function() {
@@ -508,67 +515,82 @@ fun MainAutomate(
                 // Fill Quota
                 val fillQuota = """
                     javascript:(function() {
-    const quotaIndex = $quotaIndex; // Use a constant for clarity
-
-    // Step 1: Click class dropdown item
-    const dropdownItem = document.querySelector(`#journeyQuota > div > div.ng-trigger.ng-trigger-overlayAnimation.ng-tns-c65-12.ui-dropdown-panel.ui-widget.ui-widget-content.ui-corner-all.ui-shadow.ng-star-inserted > div > ul > p-dropdownitem:nth-child(${quotaIndex}) > li`);
-
-    if (dropdownItem) {
-        dropdownItem.click();
-        Android.sendToAndroid(`✅ Quota index ${quotaIndex} selected.`);
-
-        // Step 2: Attempt to click the confirm button after a delay
-        setTimeout(function() {
-            // Find the common selector for the confirm/accept button in the dialog
-            // You'll need to inspect the page to get the MOST accurate selector.
-            // Here are some common patterns; try them one by one if unsure.
-            let confirmButton = document.querySelector("p-confirmdialog button.ui-confirmdialog-acceptbutton"); // Most common
-            if (!confirmButton) {
-                 confirmButton = document.querySelector("p-confirmdialog div.ui-dialog-footer button:last-child"); // Another common pattern
-            }
-            if (!confirmButton) {
-                 confirmButton = document.querySelector("p-confirmdialog button.ui-button-success"); // Sometimes there's a success class
-            }
-            // Add more specific selectors here if the above don't work for your exact page
-
-            if (confirmButton) {
-                confirmButton.click();
-                Android.sendToAndroid("✅ Confirm button clicked.");
-            } else {
-                Android.sendToAndroid("⚠️ Confirm button not found after selecting quota.");
-            }
-
-        }, 700); // Increased delay slightly to ensure dialog appears
-
-    } else {
-        Android.sendToAndroid(`❌ Quota index $quotaIndex not found in dropdown.`);
-    }
-})();
+                        const quotaIndex = $quotaIndex; // Use a constant for clarity
+                    
+                        // Step 1: Click class dropdown item
+                        const dropdownItem = document.querySelector(`#journeyQuota > div > div.ng-trigger.ng-trigger-overlayAnimation.ng-tns-c65-12.ui-dropdown-panel.ui-widget.ui-widget-content.ui-corner-all.ui-shadow.ng-star-inserted > div > ul > p-dropdownitem:nth-child(${quotaIndex}) > li`);
+                    
+                        if (dropdownItem) {
+                            dropdownItem.click();
+                            Android.sendToAndroid(`✅ Quota index ${quotaIndex} selected.`);
+                    
+                            // Step 2: Attempt to click the confirm button after a delay
+                            setTimeout(function() {
+                                // Find the common selector for the confirm/accept button in the dialog
+                                // You'll need to inspect the page to get the MOST accurate selector.
+                                // Here are some common patterns; try them one by one if unsure.
+                                let confirmButton = document.querySelector("p-confirmdialog button.ui-confirmdialog-acceptbutton"); // Most common
+                                if (!confirmButton) {
+                                     confirmButton = document.querySelector("p-confirmdialog div.ui-dialog-footer button:last-child"); // Another common pattern
+                                }
+                                if (!confirmButton) {
+                                     confirmButton = document.querySelector("p-confirmdialog button.ui-button-success"); // Sometimes there's a success class
+                                }
+                                // Add more specific selectors here if the above don't work for your exact page
+                    
+                                if (confirmButton) {
+                                    confirmButton.click();
+                                    Android.sendToAndroid("✅ Confirm button clicked.");
+                                } else {
+                                    Android.sendToAndroid("⚠️ Confirm button not found after selecting quota.");
+                                }
+                    
+                            }, 700); // Increased delay slightly to ensure dialog appears
+                    
+                        } else {
+                            Android.sendToAndroid(`❌ Quota index ${quotaIndex} not found in dropdown.`);
+                        }
+                    })();
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(fillQuota, null)
 
-                        break
-                    } else {
-                        statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
-                        // Re-extract captcha and fill it
-                        val extractCaptcha = """
-                            javascript:(function() {
-                                var img = document.querySelector('.captcha-img');
-                                if (img) {
-                                    var src = img.src || img.getAttribute('src');
-                                    Android.sendCaptchaImageUrl(src);
-                                } else {
-                                    Android.sendToAndroid('❌ Captcha image not found');
-                                }
-                            })();
-                        """.trimIndent()
-                        webViewRef?.evaluateJavascript(extractCaptcha, null)
-                        delay(1500) // Wait for captcha to be solved and filled
-                    }
-                }
-                if (!loginSuccess) {
-                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
-                }
+                delay(2000)
+                // Search Train Button
+                val searchButton = """
+                    javascript:(function() {
+                        const el = document.querySelector("#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box > div:nth-child(1) > app-jp-input > div > form > div:nth-child(5) > div.col-md-3.col-sm-12.col-xs-12.remove-pad > button");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ Search Button Clicked");
+                        } else {
+                            Android.sendToAndroid("❌ Search Button Not Found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(searchButton, null)
+
+//                        break
+//                    } else {
+//                        statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+//                        // Re-extract captcha and fill it
+//                        val extractCaptcha = """
+//                            javascript:(function() {
+//                                var img = document.querySelector('.captcha-img');
+//                                if (img) {
+//                                    var src = img.src || img.getAttribute('src');
+//                                    Android.sendCaptchaImageUrl(src);
+//                                } else {
+//                                    Android.sendToAndroid('❌ Captcha image not found');
+//                                }
+//                            })();
+//                        """.trimIndent()
+//                        webViewRef?.evaluateJavascript(extractCaptcha, null)
+//                        delay(1500) // Wait for captcha to be solved and filled
+//                    }
+//                }
+//                if (!loginSuccess) {
+//                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
+//                }
             }
         }
 
