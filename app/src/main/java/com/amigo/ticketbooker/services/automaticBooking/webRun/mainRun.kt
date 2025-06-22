@@ -569,6 +569,63 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(searchButton, null)
 
+                val selectTrain = """
+                    javascript:(function() {
+                        const targetTrainNumber = "09101"; // 🔁 Replace with your target
+                        const targetClassText = "Sleeper (SL)";
+                        let matchIndex = -1;
+                
+                        function checkTrainNumber() {
+                            for (let n = 2; n <= 20; n++) {
+                                const trainSelector = "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading > strong";
+                                const element = document.querySelector(trainSelector);
+                
+                                if (element) {
+                                    const trainText = element.textContent.trim();
+                                    if (trainText.includes(targetTrainNumber)) {
+                                        matchIndex = n;
+                                        Android.sendToAndroid("✅ Train number '" + targetTrainNumber + "' found at div:nth-child(" + matchIndex + ")");
+                
+                                        const formSelector = "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div > div.ng-star-inserted > div:nth-child(" + matchIndex + ")";
+                                        const form = document.querySelector(formSelector);
+                
+                                        if (form) {
+                                            const allCells = form.querySelectorAll("td");
+                                            for (let cell of allCells) {
+                                                if (cell.textContent.trim().includes(targetClassText)) {
+                                                    const clickable = cell.querySelector("div");
+                                                    if (clickable) {
+                                                        clickable.click();
+                                                        Android.sendToAndroid("✅ Clicked on class: " + targetClassText + " inside form #" + matchIndex);
+                                                    } else {
+                                                        Android.sendToAndroid("❌ Class div not clickable.");
+                                                    }
+                                                    return;
+                                                }
+                                            }
+                                            Android.sendToAndroid("❌ '" + targetClassText + "' not found in form #" + matchIndex);
+                                        } else {
+                                            Android.sendToAndroid("❌ Form for train found but couldn't access structure.");
+                                        }
+                                        return;
+                                    }
+                                }
+                            }
+                            Android.sendToAndroid("❌ Train number '" + targetTrainNumber + "' not found.");
+                        }
+                
+                        if (document.readyState === "complete" || document.readyState === "interactive") {
+                            setTimeout(checkTrainNumber, 300);
+                        } else {
+                            document.addEventListener("DOMContentLoaded", function() {
+                                setTimeout(checkTrainNumber, 300);
+                            });
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(selectTrain, null)
+
+
 //                        break
 //                    } else {
 //                        statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
