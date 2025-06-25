@@ -42,11 +42,11 @@ fun MainAutomate(
     inputUserName: String = "anshuabhishek",
     inputPassword: String = "Amigo@2805",
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
-    inputDestination: String = "HARIDWAR JN - HW",
-    inputDate: String = "28/07/2025",
+    inputDestination: String = "BAPUDM MOTIHARI - BMKI ",
+    inputDate: String = "02/08/2025",
     quotaName: String = "1",
-    className: String = "3a",
-    trainNumber: Int = 19019
+    className: String = "sl",
+    trainNumber: Int = 12558
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -300,131 +300,131 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(popUpRemove, null)
 
-//                // Step 1: Click first element
-//                val menuIcon = """
-//                    javascript:(function() {
-//                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
-//                        if (el) {
-//                            el.click();
-//                            Android.sendToAndroid("✅ First element clicked");
-//                        } else {
-//                            Android.sendToAndroid("❌ First element not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(menuIcon, null)
-//
-//                delay(1000) // short delay before next click
-//
-////                 Step 2: Click on Login Button In Menu
-//                val loginButtonInMenu = """
-//                    javascript:(function() {
-//                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
-//                        if (el) {
-//                            el.click();
-//                            Android.sendToAndroid("✅ Second element clicked");
-//                        } else {
-//                            Android.sendToAndroid("❌ Second element not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
-//
-//                delay(500) // short delay before typing
-//
-//                // Step 3: Fill UserName
-//                val userNameInput = """
-//                    javascript:(function() {
-//                        const input = document.querySelector("input[formcontrolname='userid']");
-//                        if (input) {
-//                            input.value = "$inputUserName";
-//                            input.dispatchEvent(new Event('input', { bubbles: true }));
-//                            input.dispatchEvent(new Event('change', { bubbles: true }));
-//                            input.blur();
-//                            Android.sendToAndroid("✅ Input field filled");
-//                        } else {
-//                            Android.sendToAndroid("❌ Input field not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(userNameInput, null)
-//
-//                // Step 3: Fill Password
-//                val passwordInput = """
-//                    javascript:(function() {
-//                        const input = document.querySelector("input[formcontrolname='password']");
-//                        if (input) {
-//                            input.value = "$inputPassword";
-//                            input.dispatchEvent(new Event('input', { bubbles: true }));
-//                            input.dispatchEvent(new Event('change', { bubbles: true }));
-//                            input.blur();
-//                            Android.sendToAndroid("✅ Input field filled");
-//                        } else {
-//                            Android.sendToAndroid("❌ Input field not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(passwordInput, null)
-//
-//                // Step 4: Extract captcha image after password
-//                val extractCaptcha = """
-//                    javascript:(function() {
-//                        var img = document.querySelector('.captcha-img');
-//                        if (img) {
-//                            var src = img.src || img.getAttribute('src');
-//                            Android.sendCaptchaImageUrl(src);
-//                        } else {
-//                            Android.sendToAndroid('❌ Captcha image not found');
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(extractCaptcha, null)
-//                delay(1200) // give time for captcha to process
-//
-//                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
-//                var loginSuccess = false
-//                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
-//                for (attempt in 1..5) {
-//                    // Click SIGN IN
-//                    val clickSignIn = """
-//                        javascript:(function() {
-//                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-//                            if (btn) {
-//                                btn.click();
-//                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
-//                            } else {
-//                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
-//                            }
-//                        })();
-//                    """.trimIndent()
-//                    webViewRef?.evaluateJavascript(clickSignIn, null)
-//                    delay(3000) // Wait for login to process
-//
-//                    // Check for target element
-//                    val checkTarget = """
-//                        javascript:(function() {
-//                            var el = document.querySelector('$targetSelector');
-//                            if (el) {
-//                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
-//                                return true;
-//                            } else {
-//                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
-//                                return false;
-//                            }
-//                        })();
-//                    """.trimIndent()
-//                    var found = false
-//                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
-//                    webViewRef?.evaluateJavascript(
-//                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
-//                    ) { value ->
-//                        found = value == "true"
-//                        latch.complete(found)
-//                    }
-//                    latch.await()
-//                    if (found) {
-//                        statusMessage = "✅ Login successful. Target element found."
-//                        loginSuccess = true
+                // Step 1: Click first element
+                val menuIcon = """
+                    javascript:(function() {
+                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ First element clicked");
+                        } else {
+                            Android.sendToAndroid("❌ First element not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(menuIcon, null)
+
+                delay(1000) // short delay before next click
+
+//                 Step 2: Click on Login Button In Menu
+                val loginButtonInMenu = """
+                    javascript:(function() {
+                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ Second element clicked");
+                        } else {
+                            Android.sendToAndroid("❌ Second element not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
+
+                delay(500) // short delay before typing
+
+                // Step 3: Fill UserName
+                val userNameInput = """
+                    javascript:(function() {
+                        const input = document.querySelector("input[formcontrolname='userid']");
+                        if (input) {
+                            input.value = "$inputUserName";
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
+                            Android.sendToAndroid("✅ Input field filled");
+                        } else {
+                            Android.sendToAndroid("❌ Input field not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(userNameInput, null)
+
+                // Step 3: Fill Password
+                val passwordInput = """
+                    javascript:(function() {
+                        const input = document.querySelector("input[formcontrolname='password']");
+                        if (input) {
+                            input.value = "$inputPassword";
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
+                            Android.sendToAndroid("✅ Input field filled");
+                        } else {
+                            Android.sendToAndroid("❌ Input field not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(passwordInput, null)
+
+                // Step 4: Extract captcha image after password
+                val extractCaptcha = """
+                    javascript:(function() {
+                        var img = document.querySelector('.captcha-img');
+                        if (img) {
+                            var src = img.src || img.getAttribute('src');
+                            Android.sendCaptchaImageUrl(src);
+                        } else {
+                            Android.sendToAndroid('❌ Captcha image not found');
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(extractCaptcha, null)
+                delay(1200) // give time for captcha to process
+
+                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
+                var loginSuccess = false
+                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+                for (attempt in 1..5) {
+                    // Click SIGN IN
+                    val clickSignIn = """
+                        javascript:(function() {
+                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
+                            if (btn) {
+                                btn.click();
+                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
+                            } else {
+                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
+                            }
+                        })();
+                    """.trimIndent()
+                    webViewRef?.evaluateJavascript(clickSignIn, null)
+                    delay(3000) // Wait for login to process
+
+                    // Check for target element
+                    val checkTarget = """
+                        javascript:(function() {
+                            var el = document.querySelector('$targetSelector');
+                            if (el) {
+                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
+                                return true;
+                            } else {
+                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
+                                return false;
+                            }
+                        })();
+                    """.trimIndent()
+                    var found = false
+                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    webViewRef?.evaluateJavascript(
+                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
+                    ) { value ->
+                        found = value == "true"
+                        latch.complete(found)
+                    }
+                    latch.await()
+                    if (found) {
+                        statusMessage = "✅ Login successful. Target element found."
+                        loginSuccess = true
 
 
                         // Expand For Class
@@ -672,121 +672,155 @@ fun MainAutomate(
                         webViewRef?.evaluateJavascript(searchButton, null)
 
                         val selectTrain = """
-    javascript:(function() {
-        const targetTrainNumber = "$trainNumber"; // e.g., 12004
-        const targetClassCode = "$className";     // e.g., SL, 1A
-        const targetDay = "$targetDay";           // e.g., "Sun, 27 Jul"
-
-        function waitForElementLoad(callback) {
-            const checkExist = setInterval(() => {
-                const testSelector = document.querySelector(
-                    "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div"
-                );
-                if (testSelector) {
-                    clearInterval(checkExist);
-                    callback();
-                }
-            }, 300);
-        }
-
-        function matchTrainAndClickClass() {
-            for (let n = 3; n <= 20; n++) {
-                const headingSelector =
-                    "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading";
-
-                const headingElement = document.querySelector(headingSelector);
-                if (!headingElement) continue;
-
-                const fullTrainText = headingElement.textContent.trim();
-                if (fullTrainText.includes(targetTrainNumber)) {
-                    Android.sendToAndroid("✅ Found train number " + targetTrainNumber + " at nth-child(" + n + ")");
-
-                    for (let b = 1; b <= 9; b++) {
-                        const classCellSelector =
-                            "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div:nth-child(5) > div.white-back.col-xs-12.ng-star-inserted > table > tr > td:nth-child(" + b + ")";
-
-                        const classCell = document.querySelector(classCellSelector);
-                        if (!classCell) continue;
-
-                        const classText = classCell.textContent.trim().toUpperCase();
-                        if (classText.includes(targetClassCode.toUpperCase())) {
-                            const clickTarget = classCell.querySelector("div");
-                            if (clickTarget) {
-                                clickTarget.click();
-                                Android.sendToAndroid("✅ Clicked on class '" + targetClassCode + "' at td:nth-child(" + b + ")");
-
-                                // 🔁 Wait a bit and search for .pre-avl
+                    javascript:(function() {
+                        const targetTrainNumber = "$trainNumber";
+                        const targetClassCode = "$className";
+                        const targetDay = "$targetDay";
+                    
+                        function waitForElementLoad(callback) {
+                            const interval = setInterval(() => {
+                                const el = document.querySelector("#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div");
+                                if (el) {
+                                    clearInterval(interval);
+                                    callback();
+                                }
+                            }, 300);
+                        }
+                    
+                        function tryClickSearchButton(attempt = 1, maxAttempts = 1000) {
+                        const searchBtn = document.querySelector(".btnDefault.train_Search.ng-star-inserted:not(.disable-book)");
+                        if (searchBtn) {
+                            searchBtn.click();
+                            Android.sendToAndroid("✅ Enabled search button clicked.");
+                            return;
+                        }
+                    
+                        const fallbackArea = document.querySelector(".ng-star-inserted");
+                        if (fallbackArea) {
+                            const containers = fallbackArea.querySelectorAll("div");
+                            let clicked = false;
+                    
+                            containers.forEach(container => {
+                                if (container.textContent.trim().toUpperCase().includes(targetClassCode.toUpperCase())) {
+                                    container.click(); // ✅ Click the whole container, not <td>
+                                    Android.sendToAndroid("🔁 Retried by clicking class block containing '" + targetClassCode + "' (attempt " + attempt + ")");
+                                    clicked = true;
+                                }
+                            });
+                    
+                            if (clicked) {
                                 setTimeout(() => {
-                                    const preAvlSelector =
-                                        "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") .pre-avl";
-                                    const elements = document.querySelectorAll(preAvlSelector);
-
-                                    let matched = false;
-                                    elements.forEach(el => {
-                                        const text = el.textContent.trim();
-                                        if (text.includes(targetDay)) {
-                                            el.click();
-                                            Android.sendToAndroid("✅ Clicked on date cell with '" + targetDay + "'");
-                                            matched = true;
-                                        }
-                                    });
-
-                                    if (!matched) {
-                                        Android.sendToAndroid("❌ No .pre-avl element matched date '" + targetDay + "'");
+                                    if (attempt < maxAttempts) {
+                                        tryClickSearchButton(attempt + 1, maxAttempts);
+                                    } else {
+                                        Android.sendToAndroid("❌ Gave up after " + maxAttempts + " attempts.");
                                     }
-                                }, 800); // Wait for availability table to load
-
-                                return;
+                                }, 1200);
                             } else {
-                                Android.sendToAndroid("❌ No clickable div inside class cell td:nth-child(" + b + ")");
+                                Android.sendToAndroid("❌ Class block containing '" + targetClassCode + "' not found in fallback area.");
                             }
+                        } else {
+                            Android.sendToAndroid("❌ Fallback area not found (attempt " + attempt + ").");
                         }
                     }
-
-                    Android.sendToAndroid("❌ Class '" + targetClassCode + "' not found at nth-child(" + n + ")");
-                    return;
-                }
-            }
-
-            Android.sendToAndroid("❌ Train number '" + targetTrainNumber + "' not found");
-        }
-
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            waitForElementLoad(matchTrainAndClickClass);
-        } else {
-            document.addEventListener("DOMContentLoaded", () => {
-                waitForElementLoad(matchTrainAndClickClass);
-            });
-        }
-    })();
-""".trimIndent()
-
+                    
+                    
+                        function matchTrainAndClickClass() {
+                            for (let n = 3; n <= 20; n++) {
+                                const headingSelector =
+                                    "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading";
+                    
+                                const headingElement = document.querySelector(headingSelector);
+                                if (!headingElement) continue;
+                    
+                                const fullTrainText = headingElement.textContent.trim();
+                                if (fullTrainText.includes(targetTrainNumber)) {
+                                    Android.sendToAndroid("✅ Found train number '" + targetTrainNumber + "' at nth-child(" + n + ")");
+                    
+                                    for (let b = 1; b <= 9; b++) {
+                                        const classSelector =
+                                            "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div:nth-child(5) > div.white-back.col-xs-12.ng-star-inserted > table > tr > td:nth-child(" + b + ")";
+                                        const classCell = document.querySelector(classSelector);
+                                        if (!classCell) continue;
+                    
+                                        const classText = classCell.textContent.trim().toUpperCase();
+                                        if (classText.includes(targetClassCode.toUpperCase())) {
+                                            const clickable = classCell.querySelector("div");
+                                            if (clickable) {
+                                                clickable.click();
+                                                Android.sendToAndroid("✅ Clicked on class '" + targetClassCode + "'");
+                    
+                                                setTimeout(() => {
+                                                    const preAvlSelector =
+                                                        "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") .pre-avl";
+                                                    const cells = document.querySelectorAll(preAvlSelector);
+                                                    let matched = false;
+                    
+                                                    cells.forEach(el => {
+                                                        if (el.textContent.trim().includes(targetDay)) {
+                                                            el.click();
+                                                            Android.sendToAndroid("✅ Clicked on date: " + targetDay);
+                                                            matched = true;
+                    
+                                                            setTimeout(() => {
+                                                                tryClickSearchButton();
+                                                            }, 1000);
+                                                        }
+                                                    });
+                    
+                                                    if (!matched) {
+                                                        Android.sendToAndroid("❌ Date '" + targetDay + "' not found in .pre-avl.");
+                                                    }
+                                                }, 800);
+                                                return;
+                                            }
+                                        }
+                                    }
+                    
+                                    Android.sendToAndroid("❌ Class '" + targetClassCode + "' not found in section nth-child(" + n + ")");
+                                    return;
+                                }
+                            }
+                    
+                            Android.sendToAndroid("❌ Train number '" + targetTrainNumber + "' not found between nth-child(3) to 20");
+                        }
+                    
+                        if (document.readyState === "complete" || document.readyState === "interactive") {
+                            waitForElementLoad(matchTrainAndClickClass);
+                        } else {
+                            document.addEventListener("DOMContentLoaded", () => {
+                                waitForElementLoad(matchTrainAndClickClass);
+                            });
+                        }
+                    })();
+                    """.trimIndent()
                         webViewRef?.evaluateJavascript(selectTrain, null)
 
 
-//                        break
-//                    } else {
-//                        statusMessage =
-//                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
-//                        // Re-extract captcha and fill it
-//                        val extractCaptcha = """
-//                            javascript:(function() {
-//                                var img = document.querySelector('.captcha-img');
-//                                if (img) {
-//                                    var src = img.src || img.getAttribute('src');
-//                                    Android.sendCaptchaImageUrl(src);
-//                                } else {
-//                                    Android.sendToAndroid('❌ Captcha image not found');
-//                                }
-//                            })();
-//                        """.trimIndent()
-//                        webViewRef?.evaluateJavascript(extractCaptcha, null)
-//                        delay(1500) // Wait for captcha to be solved and filled
-//                    }
-//                }
-//                if (!loginSuccess) {
-//                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
-//                }
+
+                        break
+                    } else {
+                        statusMessage =
+                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+                        // Re-extract captcha and fill it
+                        val extractCaptcha = """
+                            javascript:(function() {
+                                var img = document.querySelector('.captcha-img');
+                                if (img) {
+                                    var src = img.src || img.getAttribute('src');
+                                    Android.sendCaptchaImageUrl(src);
+                                } else {
+                                    Android.sendToAndroid('❌ Captcha image not found');
+                                }
+                            })();
+                        """.trimIndent()
+                        webViewRef?.evaluateJavascript(extractCaptcha, null)
+                        delay(1500) // Wait for captcha to be solved and filled
+                    }
+                }
+                if (!loginSuccess) {
+                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
+                }
             }
         }
 
