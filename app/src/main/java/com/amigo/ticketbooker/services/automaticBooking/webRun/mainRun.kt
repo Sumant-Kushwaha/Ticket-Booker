@@ -296,7 +296,7 @@ fun MainAutomate(
 
                 delay(1000) // short delay before next click
 
-                //Step 3: Click second element
+                //Step 2: Click second element
                 val loginButton = """
                     javascript:(function() {
                         const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
@@ -310,7 +310,7 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(loginButton, null)
 
-                // Step 2: Extract captcha image
+                // Step 3: Extract captcha image
                 val extractCaptcha = """
                     javascript:(function() {
                         var img = document.querySelector('.captcha-img');
@@ -325,7 +325,7 @@ fun MainAutomate(
                 webViewRef?.evaluateJavascript(extractCaptcha, null)
                 delay(1500) // give time for captcha to process
 
-                // Step 3: Fill input field
+                // Step 4: Fill input field
                 val userNameInput = """
                     javascript:(function() {
                         const input = document.querySelector("input[formcontrolname='userid']");
@@ -342,7 +342,7 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(userNameInput, null)
 
-                // Step 3: Fill input field
+                // Step 5: Fill input field
                 val passwordInput = """
                     javascript:(function() {
                         const input = document.querySelector("input[formcontrolname='password']");
@@ -357,9 +357,9 @@ fun MainAutomate(
                         }
                     })();
                 """.trimIndent()
-                webViewRef?.evaluateJavascript(passwordInput, null) 
+                webViewRef?.evaluateJavascript(passwordInput, null)
 
-                // Step 5: Click the SIGN IN button and perform up to 10 attempts for captcha and login
+                // Step 6: Click the SIGN IN button and perform up to 5 attempts for captcha and login
                 var loginSuccess = false
                 val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
                 for (attempt in 1..10) {
@@ -376,7 +376,6 @@ fun MainAutomate(
                         })();
                     """.trimIndent()
                     webViewRef?.evaluateJavascript(clickSignIn, null)
-                    delay(1000) // Wait for login to process
 
                     // Check for target element
                     val checkTarget = """
