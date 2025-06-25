@@ -44,36 +44,54 @@ fun MainAutomate(
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
     inputDestination: String = "HARIDWAR JN - HW",
     inputDate: String = "27/07/2025",
-    className: String = "sl",
-    quotaName: String = "1"
+    quotaName: String = "1",
+    className: String = "1a",
+    trainNumber: Int = 12401
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
-        in listOf("1","GENERAL")                      -> 1
-        in listOf("2","LADIES")                       -> 2
-        in listOf("3","LOWER BERTH/SR.CITIZEN")       -> 3
-        in listOf("4","PERSON WITH DISABILITY")       -> 4
-        in listOf("5","DUTY PASS","DUTYPASS")         -> 5
-        in listOf("6","TATKAL", "TAT KAL")            -> 6
-        in listOf("7","PREMIUM TATKAL", "PREMIUM-TATKAL") -> 7
+        in listOf("1", "GENERAL") -> 1
+        in listOf("2", "LADIES") -> 2
+        in listOf("3", "LOWER BERTH/SR.CITIZEN") -> 3
+        in listOf("4", "PERSON WITH DISABILITY") -> 4
+        in listOf("5", "DUTY PASS", "DUTYPASS") -> 5
+        in listOf("6", "TATKAL", "TAT KAL") -> 6
+        in listOf("7", "PREMIUM TATKAL", "PREMIUM-TATKAL") -> 7
         else -> 0
     }
 
     val classIndex = when (className.uppercase()) {
-        in listOf("2","EA", "ANUBHUTI CLASS")        -> 2
-        in listOf("3","1A", "AC FIRST CLASS")        -> 3
-        in listOf("4","EV", "VISTADOME AC")          -> 4
-        in listOf("5","EC", "EXEC. CHAIR CAR")       -> 5
-        in listOf("6","2A", "AC 2 TIER")             -> 6
-        in listOf("7","FC", "FIRST CLASS")           -> 7
-        in listOf("8","3A", "AC 3 TIER")             -> 8
-        in listOf("9","3E", "AC 3 ECONOMY")          -> 9
-        in listOf("10","VC", "VISTADOME CHAIR CAR")   -> 10
-        in listOf("11","CC", "AC CHAIR CAR")          -> 11
-        in listOf("12","SL", "SLEEPER")               -> 12
-        in listOf("13","VS", "VISTADOME NON AC")      -> 13
-        in listOf("14","2S", "SECOND SITTING")        -> 14
+        in listOf("2", "EA", "ANUBHUTI CLASS") -> 2
+        in listOf("3", "1A", "AC FIRST CLASS") -> 3
+        in listOf("4", "EV", "VISTADOME AC") -> 4
+        in listOf("5", "EC", "EXEC. CHAIR CAR") -> 5
+        in listOf("6", "2A", "AC 2 TIER") -> 6
+        in listOf("7", "FC", "FIRST CLASS") -> 7
+        in listOf("8", "3A", "AC 3 TIER") -> 8
+        in listOf("9", "3E", "AC 3 ECONOMY") -> 9
+        in listOf("10", "VC", "VISTADOME CHAIR CAR") -> 10
+        in listOf("11", "CC", "AC CHAIR CAR") -> 11
+        in listOf("12", "SL", "SLEEPER") -> 12
+        in listOf("13", "VS", "VISTADOME NON AC") -> 13
+        in listOf("14", "2S", "SECOND SITTING") -> 14
         else -> 1 // not 0 anymore
+    }
+
+    val className = when (classIndex) {
+        2  -> "EA"
+        3  -> "1A"
+        4  -> "EV"
+        5  -> "EC"
+        6  -> "2A"
+        7  -> "FC"
+        8  -> "3A"
+        9  -> "3E"
+        10 -> "VC"
+        11 -> "CC"
+        12 -> "SL"
+        13 -> "VS"
+        14 -> "2S"
+        else -> null  // or "UNKNOWN", or throw Exception("Invalid class index")
     }
 
 
@@ -91,7 +109,6 @@ fun MainAutomate(
     val targetMonthName = monthNames[targetMonthIndex]  // e.g., "August"
 
     Log.d("ParsedDate", "Day: $targetDay, Month: $targetMonthName, Year: $targetYear")
-
 
 
     val context = LocalContext.current
@@ -184,7 +201,10 @@ fun MainAutomate(
                 val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
                         val raw = visionText.text.trim()
-                        val cleaned = raw.replace("\\s".toRegex(), "") // Remove all whitespace, keep special chars
+                        val cleaned = raw.replace(
+                            "\\s".toRegex(),
+                            ""
+                        ) // Remove all whitespace, keep special chars
                         Log.d("CaptchaOCR", "Cleaned captcha text: $cleaned (raw: $raw)")
                         onResult(cleaned)
                     }
@@ -361,7 +381,8 @@ fun MainAutomate(
 
                 // Step 6: Click the SIGN IN button and perform up to 5 attempts for captcha and login
                 var loginSuccess = false
-                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+                val targetSelector =
+                    "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
                 for (attempt in 1..10) {
                     // Click SIGN IN
                     val clickSignIn = """
@@ -431,7 +452,6 @@ fun MainAutomate(
                     })();
                 """.trimIndent()
                         webViewRef?.evaluateJavascript(fillClass, null)
-//                delay(500)
 
                         // Expand For Quota
                         val expandQuota = """
@@ -488,7 +508,6 @@ fun MainAutomate(
                     })();
                 """.trimIndent()
                         webViewRef?.evaluateJavascript(fillQuota, null)
-//                delay(500)
 
                         // Select Date
                         val selectDate = """
@@ -504,89 +523,85 @@ fun MainAutomate(
                         return "❌ Could not find calendar input";
                     })();
                 """.trimIndent()
-
-                        webViewRef?.evaluateJavascript(selectDate) {
-                                result ->
+                        webViewRef?.evaluateJavascript(selectDate) { result ->
                             Log.d("Calendar", result ?: "No result")
                         }
 
                         // Wait for calendar to open
                         Handler(Looper.getMainLooper()).postDelayed({
                             val jsScript = """
-                        (function() {
-                            const monthNames = ["January", "February", "March", "April", "May", "June",
-                                "July", "August", "September", "October", "November", "December"];
+                (function() {
+                    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
                 
-                            function getCurrentMonthIndex() {
-                                const el = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-                                return el ? monthNames.indexOf(el.innerText) : -1;
+                    function getCurrentMonthIndex() {
+                        const el = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
+                        return el ? monthNames.indexOf(el.innerText) : -1;
+                    }
+                
+                    function getCurrentYear() {
+                        const yearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
+                        return yearEl ? parseInt(yearEl.innerText) : -1;
+                    }
+                
+                    const currMonth = getCurrentMonthIndex();
+                    const currYear = getCurrentYear();
+                    const targetMonth = monthNames.indexOf("$targetMonthName");
+                    const targetYear = parseInt("$targetYear");
+                    const targetDay = "$targetDay";
+                
+                    const monthDiff = (targetYear - currYear) * 12 + (targetMonth - currMonth);
+                    const direction = monthDiff > 0 ? "forward" : (monthDiff < 0 ? "backward" : "same");
+                
+                    function clickMonthArrowNTimes(n, direction, callback) {
+                        if (n <= 0) return callback();
+                        const selector = direction === "forward"
+                            ? '.ui-datepicker-next-icon.pi.pi-chevron-right.ng-tns-c58-10'
+                            : '.ui-datepicker-prev-icon.pi.pi-chevron-left.ng-tns-c58-10';
+                        const btn = document.querySelector(selector);
+                        if (!btn) return callback();
+                
+                        btn.click();
+                        setTimeout(() => clickMonthArrowNTimes(n - 1, direction, callback), 400);
+                    }
+                
+                    function verifyMonthMatch() {
+                        const nowMonthEl = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
+                        const nowYearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
+                        const nowMonth = nowMonthEl ? nowMonthEl.innerText : "";
+                        const nowYear = nowYearEl ? nowYearEl.innerText : "";
+                
+                        return nowMonth === "$targetMonthName" && nowYear === "$targetYear";
+                    }
+                
+                    function selectDate() {
+                        const tbody = document.querySelector('#jDate > span > div > div > div.ui-datepicker-calendar-container.ng-tns-c58-10.ng-star-inserted > table > tbody');
+                        if (!tbody) return "❌ Calendar not found";
+                
+                        const anchors = tbody.querySelectorAll('a');
+                        for (const a of anchors) {
+                            if (a.innerText === targetDay) {
+                                a.click();
+                                return "✅ Date " + targetDay + " Selected";
                             }
+                        }
+                        return "❌ Date " + targetDay + " Not Found";
+                    }
                 
-                            function getCurrentYear() {
-                                const yearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-                                return yearEl ? parseInt(yearEl.innerText) : -1;
-                            }
-                
-                            const currMonth = getCurrentMonthIndex();
-                            const currYear = getCurrentYear();
-                            const targetMonth = monthNames.indexOf("$targetMonthName");
-                            const targetYear = parseInt("$targetYear");
-                            const targetDay = "$targetDay";
-                
-                            const monthDiff = (targetYear - currYear) * 12 + (targetMonth - currMonth);
-                            const direction = monthDiff > 0 ? "forward" : (monthDiff < 0 ? "backward" : "same");
-                
-                            function clickMonthArrowNTimes(n, direction, callback) {
-                                if (n <= 0) return callback();
-                                const selector = direction === "forward"
-                                    ? '.ui-datepicker-next-icon.pi.pi-chevron-right.ng-tns-c58-10'
-                                    : '.ui-datepicker-prev-icon.pi.pi-chevron-left.ng-tns-c58-10';
-                                const btn = document.querySelector(selector);
-                                if (!btn) return callback();
-                
-                                btn.click();
-                                setTimeout(() => clickMonthArrowNTimes(n - 1, direction, callback), 400);
-                            }
-                
-                            function verifyMonthMatch() {
-                                const nowMonthEl = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-                                const nowYearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-                                const nowMonth = nowMonthEl ? nowMonthEl.innerText : "";
-                                const nowYear = nowYearEl ? nowYearEl.innerText : "";
-                
-                                return nowMonth === "$targetMonthName" && nowYear === "$targetYear";
-                            }
-                
-                            function selectDate() {
-                                const tbody = document.querySelector('#jDate > span > div > div > div.ui-datepicker-calendar-container.ng-tns-c58-10.ng-star-inserted > table > tbody');
-                                if (!tbody) return "❌ Calendar not found";
-                
-                                const anchors = tbody.querySelectorAll('a');
-                                for (const a of anchors) {
-                                    if (a.innerText === targetDay) {
-                                        a.click();
-                                        return "✅ Date " + targetDay + " Selected";
-                                    }
+                    return new Promise(function (resolve) {
+                        clickMonthArrowNTimes(Math.abs(monthDiff), direction, function () {
+                            setTimeout(() => {
+                                if (!verifyMonthMatch()) {
+                                    resolve("❌ Month not matched after navigation");
+                                    return;
                                 }
-                                return "❌ Date " + targetDay + " Not Found";
-                            }
-                
-                            return new Promise(function (resolve) {
-                                clickMonthArrowNTimes(Math.abs(monthDiff), direction, function () {
-                                    setTimeout(() => {
-                                        if (!verifyMonthMatch()) {
-                                            resolve("❌ Month not matched after navigation");
-                                            return;
-                                        }
-                                        resolve(selectDate());
-                                    }, 500);
-                                });
-                            });
-                        })();
+                                resolve(selectDate());
+                            }, 500);
+                        });
+                    });
+                })();
                 """.trimIndent()
-
-                            webViewRef?.evaluateJavascript(jsScript) {
-                                    result ->
+                            webViewRef?.evaluateJavascript(jsScript) { result ->
                                 val output = result?.replace("\"", "") ?: ""
                                 Log.d("CalendarAction", output)
                             }
@@ -639,6 +654,7 @@ fun MainAutomate(
                         webViewRef?.evaluateJavascript(fillDestination, null)
 
                         delay(1000)
+
                         // Search Train Button
                         val searchButton = """
                     javascript:(function() {
@@ -654,65 +670,80 @@ fun MainAutomate(
                         webViewRef?.evaluateJavascript(searchButton, null)
 
                         val selectTrain = """
-                    javascript:(function() {
-                        const targetTrainNumber = "09101"; // 🔁 Replace with your target
-                        const targetClassText = "Sleeper (SL)";
-                        let matchIndex = -1;
-                
-                        function checkTrainNumber() {
-                            for (let n = 2; n <= 20; n++) {
-                                const trainSelector = "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading > strong";
-                                const element = document.querySelector(trainSelector);
-                
-                                if (element) {
-                                    const trainText = element.textContent.trim();
-                                    if (trainText.includes(targetTrainNumber)) {
-                                        matchIndex = n;
-                                        Android.sendToAndroid("✅ Train number '" + targetTrainNumber + "' found at div:nth-child(" + matchIndex + ")");
-                
-                                        const formSelector = "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div > div.ng-star-inserted > div:nth-child(" + matchIndex + ")";
-                                        const form = document.querySelector(formSelector);
-                
-                                        if (form) {
-                                            const allCells = form.querySelectorAll("td");
-                                            for (let cell of allCells) {
-                                                if (cell.textContent.trim().includes(targetClassText)) {
-                                                    const clickable = cell.querySelector("div");
-                                                    if (clickable) {
-                                                        clickable.click();
-                                                        Android.sendToAndroid("✅ Clicked on class: " + targetClassText + " inside form #" + matchIndex);
-                                                    } else {
-                                                        Android.sendToAndroid("❌ Class div not clickable.");
-                                                    }
-                                                    return;
-                                                }
-                                            }
-                                            Android.sendToAndroid("❌ '" + targetClassText + "' not found in form #" + matchIndex);
-                                        } else {
-                                            Android.sendToAndroid("❌ Form for train found but couldn't access structure.");
-                                        }
+    javascript:(function() {
+        const targetTrainNumber = "$trainNumber"; // 🟩 Dynamic train number
+        const targetClassCode = "$className"; // 🔁 Target class short code (e.g., SL)
+
+        function waitForElementLoad(callback) {
+            const checkExist = setInterval(() => {
+                const testSelector = document.querySelector(
+                    "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div"
+                );
+                if (testSelector) {
+                    clearInterval(checkExist);
+                    callback();
+                }
+            }, 300);
+        }
+
+        function matchTrainAndClickClass() {
+            for (let n = 3; n <= 20; n++) {
+                const headingSelector =
+                    "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading";
+
+                const headingElement = document.querySelector(headingSelector);
+
+                if (headingElement) {
+                    const fullTrainText = headingElement.textContent.trim();
+                    if (fullTrainText.includes(targetTrainNumber)) {
+                        Android.sendToAndroid("✅ Found train number " + targetTrainNumber + " at nth-child(" + n + ")");
+                        
+                        // Now search for class cell in that nth-child(n)
+                        for (let b = 1; b <= 9; b++) {
+                            const classCellSelector =
+                                "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div:nth-child(5) > div.white-back.col-xs-12.ng-star-inserted > table > tr > td:nth-child(" + b + ")";
+
+                            const classCell = document.querySelector(classCellSelector);
+
+                            if (classCell) {
+                                const classText = classCell.textContent.trim().toUpperCase();
+                                if (classText.includes(targetClassCode.toUpperCase())) {
+                                    const clickTarget = classCell.querySelector("div");
+                                    if (clickTarget) {
+                                        clickTarget.click();
+                                        Android.sendToAndroid("✅ Clicked on class '" + targetClassCode + "' at td:nth-child(" + b + ")");
                                         return;
+                                    } else {
+                                        Android.sendToAndroid("❌ Class cell found but no clickable div at td:nth-child(" + b + ")");
                                     }
                                 }
                             }
-                            Android.sendToAndroid("❌ Train number '" + targetTrainNumber + "' not found.");
                         }
-                
-                        if (document.readyState === "complete" || document.readyState === "interactive") {
-                            setTimeout(checkTrainNumber, 300);
-                        } else {
-                            document.addEventListener("DOMContentLoaded", function() {
-                                setTimeout(checkTrainNumber, 300);
-                            });
-                        }
-                    })();
-                """.trimIndent()
+                        Android.sendToAndroid("❌ Target class '" + targetClassCode + "' not found in train section nth-child(" + n + ")");
+                        return;
+                    }
+                }
+            }
+            Android.sendToAndroid("❌ Target train number '" + targetTrainNumber + "' not found between nth-child(3) to (20)");
+        }
+
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            waitForElementLoad(matchTrainAndClickClass);
+        } else {
+            document.addEventListener("DOMContentLoaded", () => {
+                waitForElementLoad(matchTrainAndClickClass);
+            });
+        }
+    })();
+""".trimIndent()
+
                         webViewRef?.evaluateJavascript(selectTrain, null)
 
 
                         break
                     } else {
-                        statusMessage = "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+                        statusMessage =
+                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
                         // Re-extract captcha and fill it
                         val extractCaptcha = """
                             javascript:(function() {
