@@ -300,134 +300,259 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(popUpRemove, null)
 
-                // Step 1: Click first element
-                val menuIcon = """
-                    javascript:(function() {
-                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
-                        if (el) {
-                            el.click();
-                            Android.sendToAndroid("✅ First element clicked");
-                        } else {
-                            Android.sendToAndroid("❌ First element not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(menuIcon, null)
+//                // Step 1: Click first element
+//                val menuIcon = """
+//                    javascript:(function() {
+//                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
+//                        if (el) {
+//                            el.click();
+//                            Android.sendToAndroid("✅ First element clicked");
+//                        } else {
+//                            Android.sendToAndroid("❌ First element not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(menuIcon, null)
+//
+//                delay(1000) // short delay before next click
+//
+////                 Step 2: Click on Login Button In Menu
+//                val loginButtonInMenu = """
+//                    javascript:(function() {
+//                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
+//                        if (el) {
+//                            el.click();
+//                            Android.sendToAndroid("✅ Second element clicked");
+//                        } else {
+//                            Android.sendToAndroid("❌ Second element not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
+//
+//                delay(500) // short delay before typing
+//
+//                // Step 3: Fill UserName
+//                val userNameInput = """
+//                    javascript:(function() {
+//                        const input = document.querySelector("input[formcontrolname='userid']");
+//                        if (input) {
+//                            input.value = "$inputUserName";
+//                            input.dispatchEvent(new Event('input', { bubbles: true }));
+//                            input.dispatchEvent(new Event('change', { bubbles: true }));
+//                            input.blur();
+//                            Android.sendToAndroid("✅ Input field filled");
+//                        } else {
+//                            Android.sendToAndroid("❌ Input field not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(userNameInput, null)
+//
+//                // Step 3: Fill Password
+//                val passwordInput = """
+//                    javascript:(function() {
+//                        const input = document.querySelector("input[formcontrolname='password']");
+//                        if (input) {
+//                            input.value = "$inputPassword";
+//                            input.dispatchEvent(new Event('input', { bubbles: true }));
+//                            input.dispatchEvent(new Event('change', { bubbles: true }));
+//                            input.blur();
+//                            Android.sendToAndroid("✅ Input field filled");
+//                        } else {
+//                            Android.sendToAndroid("❌ Input field not found");
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(passwordInput, null)
+//
+//                // Step 4: Extract captcha image after password
+//                val extractCaptcha = """
+//                    javascript:(function() {
+//                        var img = document.querySelector('.captcha-img');
+//                        if (img) {
+//                            var src = img.src || img.getAttribute('src');
+//                            Android.sendCaptchaImageUrl(src);
+//                        } else {
+//                            Android.sendToAndroid('❌ Captcha image not found');
+//                        }
+//                    })();
+//                """.trimIndent()
+//                webViewRef?.evaluateJavascript(extractCaptcha, null)
+//                delay(1200) // give time for captcha to process
+//
+//                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
+//                var loginSuccess = false
+//                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+//                for (attempt in 1..5) {
+//                    // Click SIGN IN
+//                    val clickSignIn = """
+//                        javascript:(function() {
+//                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
+//                            if (btn) {
+//                                btn.click();
+//                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
+//                            } else {
+//                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
+//                            }
+//                        })();
+//                    """.trimIndent()
+//                    webViewRef?.evaluateJavascript(clickSignIn, null)
+//                    delay(3000) // Wait for login to process
+//
+//                    // Check for target element
+//                    val checkTarget = """
+//                        javascript:(function() {
+//                            var el = document.querySelector('$targetSelector');
+//                            if (el) {
+//                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
+//                                return true;
+//                            } else {
+//                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
+//                                return false;
+//                            }
+//                        })();
+//                    """.trimIndent()
+//                    var found = false
+//                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
+//                    webViewRef?.evaluateJavascript(
+//                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
+//                    ) { value ->
+//                        found = value == "true"
+//                        latch.complete(found)
+//                    }
+//                    latch.await()
+//                    if (found) {
+//                        statusMessage = "✅ Login successful. Target element found."
+//                        loginSuccess = true
 
-                delay(1000) // short delay before next click
 
-//                 Step 2: Click on Login Button In Menu
-                val loginButtonInMenu = """
-                    javascript:(function() {
-                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
-                        if (el) {
-                            el.click();
-                            Android.sendToAndroid("✅ Second element clicked");
-                        } else {
-                            Android.sendToAndroid("❌ Second element not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
+//                        // Select Date
+//                        val selectDate = """
+//                    (function () {
+//                        const input = document.querySelector('#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box.tbis-box-pad > div:nth-child(1) > app-jp-input > div > form > div:nth-child(2) > div.col-md-5.col-xs-12.remove-padding > div.form-group.ui-float-label');
+//                        if (input) {
+//                            input.focus();
+//                            input.click();
+//                            input.dispatchEvent(new Event('input', { bubbles: true }));
+//                            input.dispatchEvent(new Event('change', { bubbles: true }));
+//                            return "✅ Calendar opened";
+//                        }
+//                        return "❌ Could not find calendar input";
+//                    })();
+//                """.trimIndent()
+//                        webViewRef?.evaluateJavascript(selectDate) { result ->
+//                            Log.d("Calendar", result ?: "No result")
+//                        }
+//
+//                        // Wait for calendar to open
+//                        Handler(Looper.getMainLooper()).postDelayed({
+//                            val jsScript = """
+//                (function() {
+//                    const monthNames = ["January", "February", "March", "April", "May", "June",
+//                        "July", "August", "September", "October", "November", "December"];
+//
+//                    function getCurrentMonthIndex() {
+//                        const el = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
+//                        return el ? monthNames.indexOf(el.innerText) : -1;
+//                    }
+//
+//                    function getCurrentYear() {
+//                        const yearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
+//                        return yearEl ? parseInt(yearEl.innerText) : -1;
+//                    }
+//
+//                    const currMonth = getCurrentMonthIndex();
+//                    const currYear = getCurrentYear();
+//                    const targetMonth = monthNames.indexOf("$targetMonthName");
+//                    const targetYear = parseInt("$targetYear");
+//                    const targetDay = "$targetDay";
+//
+//                    const monthDiff = (targetYear - currYear) * 12 + (targetMonth - currMonth);
+//                    const direction = monthDiff > 0 ? "forward" : (monthDiff < 0 ? "backward" : "same");
+//
+//                    function clickMonthArrowNTimes(n, direction, callback) {
+//                        if (n <= 0) return callback();
+//                        const selector = direction === "forward"
+//                            ? '.ui-datepicker-next-icon.pi.pi-chevron-right.ng-tns-c58-10'
+//                            : '.ui-datepicker-prev-icon.pi.pi-chevron-left.ng-tns-c58-10';
+//                        const btn = document.querySelector(selector);
+//                        if (!btn) return callback();
+//
+//                        btn.click();
+//                        setTimeout(() => clickMonthArrowNTimes(n - 1, direction, callback), 400);
+//                    }
+//
+//                    function verifyMonthMatch() {
+//                        const nowMonthEl = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
+//                        const nowYearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
+//                        const nowMonth = nowMonthEl ? nowMonthEl.innerText : "";
+//                        const nowYear = nowYearEl ? nowYearEl.innerText : "";
+//
+//                        return nowMonth === "$targetMonthName" && nowYear === "$targetYear";
+//                    }
+//
+//                    function selectDate() {
+//                        const tbody = document.querySelector('#jDate > span > div > div > div.ui-datepicker-calendar-container.ng-tns-c58-10.ng-star-inserted > table > tbody');
+//                        if (!tbody) return "❌ Calendar not found";
+//
+//                        const anchors = tbody.querySelectorAll('a');
+//                        for (const a of anchors) {
+//                            if (a.innerText === targetDay) {
+//                                a.click();
+//                                return "✅ Date " + targetDay + " Selected";
+//                            }
+//                        }
+//                        return "❌ Date " + targetDay + " Not Found";
+//                    }
+//
+//                    return new Promise(function (resolve) {
+//                        clickMonthArrowNTimes(Math.abs(monthDiff), direction, function () {
+//                            setTimeout(() => {
+//                                if (!verifyMonthMatch()) {
+//                                    resolve("❌ Month not matched after navigation");
+//                                    return;
+//                                }
+//                                resolve(selectDate());
+//                            }, 500);
+//                        });
+//                    });
+//                })();
+//                """.trimIndent()
+//                            webViewRef?.evaluateJavascript(jsScript) { result ->
+//                                val output = result?.replace("\"", "") ?: ""
+//                                Log.d("CalendarAction", output)
+//                            }
+//                        }, 100)
 
-                delay(500) // short delay before typing
+                val targetDateStr = "26/07/2025"
 
-                // Step 3: Fill UserName
-                val userNameInput = """
-                    javascript:(function() {
-                        const input = document.querySelector("input[formcontrolname='userid']");
-                        if (input) {
-                            input.value = "$inputUserName";
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            input.blur();
-                            Android.sendToAndroid("✅ Input field filled");
-                        } else {
-                            Android.sendToAndroid("❌ Input field not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(userNameInput, null)
+                val jsSetDate = """
+javascript:(function() {
+    // Find the input using its class (avoiding dynamic ng-tns-* class)
+    const input = document.querySelector('input.ui-inputtext[autocomplete="off"]');
+    if (!input) return "❌ Date input not found";
 
-                // Step 3: Fill Password
-                val passwordInput = """
-                    javascript:(function() {
-                        const input = document.querySelector("input[formcontrolname='password']");
-                        if (input) {
-                            input.value = "$inputPassword";
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            input.blur();
-                            Android.sendToAndroid("✅ Input field filled");
-                        } else {
-                            Android.sendToAndroid("❌ Input field not found");
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(passwordInput, null)
+    // Set the value
+    input.value = "$targetDateStr";
 
-                // Step 4: Extract captcha image after password
-                val extractCaptcha = """
-                    javascript:(function() {
-                        var img = document.querySelector('.captcha-img');
-                        if (img) {
-                            var src = img.src || img.getAttribute('src');
-                            Android.sendCaptchaImageUrl(src);
-                        } else {
-                            Android.sendToAndroid('❌ Captcha image not found');
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(extractCaptcha, null)
-                delay(1200) // give time for captcha to process
+    // Dispatch Angular-compatible events
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    input.dispatchEvent(new Event('blur', { bubbles: true }));
 
-                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
-                var loginSuccess = false
-                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
-                for (attempt in 1..5) {
-                    // Click SIGN IN
-                    val clickSignIn = """
-                        javascript:(function() {
-                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-                            if (btn) {
-                                btn.click();
-                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
-                            } else {
-                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
-                            }
-                        })();
-                    """.trimIndent()
-                    webViewRef?.evaluateJavascript(clickSignIn, null)
-                    delay(3000) // Wait for login to process
+    return "✅ Date set to $targetDateStr";
+})();
+""".trimIndent()
 
-                    // Check for target element
-                    val checkTarget = """
-                        javascript:(function() {
-                            var el = document.querySelector('$targetSelector');
-                            if (el) {
-                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
-                                return true;
-                            } else {
-                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
-                                return false;
-                            }
-                        })();
-                    """.trimIndent()
-                    var found = false
-                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
-                    webViewRef?.evaluateJavascript(
-                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
-                    ) { value ->
-                        found = value == "true"
-                        latch.complete(found)
-                    }
-                    latch.await()
-                    if (found) {
-                        statusMessage = "✅ Login successful. Target element found."
-                        loginSuccess = true
+                webViewRef?.evaluateJavascript(jsSetDate) { result ->
+                    Log.d("SetDate", result ?: "No result")
+                }
+                
 
 
-                        // Expand For Class
+
+                // Expand For Class
                         val expandClass = """
                     javascript:(function() {
                         const el = document.querySelector("#journeyClass > div > div.ui-dropdown-trigger.ui-state-default.ui-corner-right.ng-tns-c65-11 > span");
@@ -510,104 +635,6 @@ fun MainAutomate(
                     })();
                 """.trimIndent()
                         webViewRef?.evaluateJavascript(fillQuota, null)
-
-                        // Select Date
-                        val selectDate = """
-                    (function () {
-                        const input = document.querySelector('input.ng-tns-c58-10.ui-inputtext.ui-widget.ui-state-default.ui-corner-all.ng-star-inserted');
-                        if (input) {
-                            input.focus();
-                            input.click();
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
-                            return "✅ Calendar opened";
-                        }
-                        return "❌ Could not find calendar input";
-                    })();
-                """.trimIndent()
-                        webViewRef?.evaluateJavascript(selectDate) { result ->
-                            Log.d("Calendar", result ?: "No result")
-                        }
-
-                        // Wait for calendar to open
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            val jsScript = """
-                (function() {
-                    const monthNames = ["January", "February", "March", "April", "May", "June",
-                        "July", "August", "September", "October", "November", "December"];
-                
-                    function getCurrentMonthIndex() {
-                        const el = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-                        return el ? monthNames.indexOf(el.innerText) : -1;
-                    }
-                
-                    function getCurrentYear() {
-                        const yearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-                        return yearEl ? parseInt(yearEl.innerText) : -1;
-                    }
-                
-                    const currMonth = getCurrentMonthIndex();
-                    const currYear = getCurrentYear();
-                    const targetMonth = monthNames.indexOf("$targetMonthName");
-                    const targetYear = parseInt("$targetYear");
-                    const targetDay = "$targetDay";
-                
-                    const monthDiff = (targetYear - currYear) * 12 + (targetMonth - currMonth);
-                    const direction = monthDiff > 0 ? "forward" : (monthDiff < 0 ? "backward" : "same");
-                
-                    function clickMonthArrowNTimes(n, direction, callback) {
-                        if (n <= 0) return callback();
-                        const selector = direction === "forward"
-                            ? '.ui-datepicker-next-icon.pi.pi-chevron-right.ng-tns-c58-10'
-                            : '.ui-datepicker-prev-icon.pi.pi-chevron-left.ng-tns-c58-10';
-                        const btn = document.querySelector(selector);
-                        if (!btn) return callback();
-                
-                        btn.click();
-                        setTimeout(() => clickMonthArrowNTimes(n - 1, direction, callback), 400);
-                    }
-                
-                    function verifyMonthMatch() {
-                        const nowMonthEl = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-                        const nowYearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-                        const nowMonth = nowMonthEl ? nowMonthEl.innerText : "";
-                        const nowYear = nowYearEl ? nowYearEl.innerText : "";
-                
-                        return nowMonth === "$targetMonthName" && nowYear === "$targetYear";
-                    }
-                
-                    function selectDate() {
-                        const tbody = document.querySelector('#jDate > span > div > div > div.ui-datepicker-calendar-container.ng-tns-c58-10.ng-star-inserted > table > tbody');
-                        if (!tbody) return "❌ Calendar not found";
-                
-                        const anchors = tbody.querySelectorAll('a');
-                        for (const a of anchors) {
-                            if (a.innerText === targetDay) {
-                                a.click();
-                                return "✅ Date " + targetDay + " Selected";
-                            }
-                        }
-                        return "❌ Date " + targetDay + " Not Found";
-                    }
-                
-                    return new Promise(function (resolve) {
-                        clickMonthArrowNTimes(Math.abs(monthDiff), direction, function () {
-                            setTimeout(() => {
-                                if (!verifyMonthMatch()) {
-                                    resolve("❌ Month not matched after navigation");
-                                    return;
-                                }
-                                resolve(selectDate());
-                            }, 500);
-                        });
-                    });
-                })();
-                """.trimIndent()
-                            webViewRef?.evaluateJavascript(jsScript) { result ->
-                                val output = result?.replace("\"", "") ?: ""
-                                Log.d("CalendarAction", output)
-                            }
-                        }, 100)
 
                         delay(2000) // Wait for date selection to complete
 
@@ -797,30 +824,30 @@ fun MainAutomate(
                         webViewRef?.evaluateJavascript(selectTrain, null)
 
 
-
-                        break
-                    } else {
-                        statusMessage =
-                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
-                        // Re-extract captcha and fill it
-                        val extractCaptcha = """
-                            javascript:(function() {
-                                var img = document.querySelector('.captcha-img');
-                                if (img) {
-                                    var src = img.src || img.getAttribute('src');
-                                    Android.sendCaptchaImageUrl(src);
-                                } else {
-                                    Android.sendToAndroid('❌ Captcha image not found');
-                                }
-                            })();
-                        """.trimIndent()
-                        webViewRef?.evaluateJavascript(extractCaptcha, null)
-                        delay(1500) // Wait for captcha to be solved and filled
-                    }
-                }
-                if (!loginSuccess) {
-                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
-                }
+//
+//                        break
+//                    } else {
+//                        statusMessage =
+//                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+//                        // Re-extract captcha and fill it
+//                        val extractCaptcha = """
+//                            javascript:(function() {
+//                                var img = document.querySelector('.captcha-img');
+//                                if (img) {
+//                                    var src = img.src || img.getAttribute('src');
+//                                    Android.sendCaptchaImageUrl(src);
+//                                } else {
+//                                    Android.sendToAndroid('❌ Captcha image not found');
+//                                }
+//                            })();
+//                        """.trimIndent()
+//                        webViewRef?.evaluateJavascript(extractCaptcha, null)
+//                        delay(1500) // Wait for captcha to be solved and filled
+//                    }
+//                }
+//                if (!loginSuccess) {
+//                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
+//                }
             }
         }
 
