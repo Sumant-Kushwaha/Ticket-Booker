@@ -298,133 +298,133 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(popUpRemove, null)
 
-//                // Step 1: Click first element
-//                val menuIcon = """
-//                    javascript:(function() {
-//                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
-//                        if (el) {
-//                            el.click();
-//                            Android.sendToAndroid("✅ First element clicked");
-//                        } else {
-//                            Android.sendToAndroid("❌ First element not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(menuIcon, null)
-//
-//                delay(1000) // short delay before next click
-//
-////                 Step 2: Click on Login Button In Menu
-//                val loginButtonInMenu = """
-//                    javascript:(function() {
-//                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
-//                        if (el) {
-//                            el.click();
-//                            Android.sendToAndroid("✅ Second element clicked");
-//                        } else {
-//                            Android.sendToAndroid("❌ Second element not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
-//
-//                delay(500) // short delay before typing
-//
-//                // Step 3: Fill UserName
-//                val userNameInput = """
-//                    javascript:(function() {
-//                        const input = document.querySelector("input[formcontrolname='userid']");
-//                        if (input) {
-//                            input.value = "$inputUserName";
-//                            input.dispatchEvent(new Event('input', { bubbles: true }));
-//                            input.dispatchEvent(new Event('change', { bubbles: true }));
-//                            input.blur();
-//                            Android.sendToAndroid("✅ Input field filled");
-//                        } else {
-//                            Android.sendToAndroid("❌ Input field not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(userNameInput, null)
-//
-//                // Step 3: Fill Password
-//                val passwordInput = """
-//                    javascript:(function() {
-//                        const input = document.querySelector("input[formcontrolname='password']");
-//                        if (input) {
-//                            input.value = "$inputPassword";
-//                            input.dispatchEvent(new Event('input', { bubbles: true }));
-//                            input.dispatchEvent(new Event('change', { bubbles: true }));
-//                            input.blur();
-//                            Android.sendToAndroid("✅ Input field filled");
-//                        } else {
-//                            Android.sendToAndroid("❌ Input field not found");
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(passwordInput, null)
-//
-//                // Step 4: Extract captcha image after password
-//                val extractCaptcha = """
-//                    javascript:(function() {
-//                        var img = document.querySelector('.captcha-img');
-//                        if (img) {
-//                            var src = img.src || img.getAttribute('src');
-//                            Android.sendCaptchaImageUrl(src);
-//                        } else {
-//                            Android.sendToAndroid('❌ Captcha image not found');
-//                        }
-//                    })();
-//                """.trimIndent()
-//                webViewRef?.evaluateJavascript(extractCaptcha, null)
-//                delay(1200) // give time for captcha to process
-//
-//                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
-//                var loginSuccess = false
-//                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
-//                for (attempt in 1..5) {
-//                    // Click SIGN IN
-//                    val clickSignIn = """
-//                        javascript:(function() {
-//                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-//                            if (btn) {
-//                                btn.click();
-//                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
-//                            } else {
-//                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
-//                            }
-//                        })();
-//                    """.trimIndent()
-//                    webViewRef?.evaluateJavascript(clickSignIn, null)
-//                    delay(3000) // Wait for login to process
-//
-//                    // Check for target element
-//                    val checkTarget = """
-//                        javascript:(function() {
-//                            var el = document.querySelector('$targetSelector');
-//                            if (el) {
-//                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
-//                                return true;
-//                            } else {
-//                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
-//                                return false;
-//                            }
-//                        })();
-//                    """.trimIndent()
-//                    var found = false
-//                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
-//                    webViewRef?.evaluateJavascript(
-//                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
-//                    ) { value ->
-//                        found = value == "true"
-//                        latch.complete(found)
-//                    }
-//                    latch.await()
-//                    if (found) {
-//                        statusMessage = "✅ Login successful. Target element found."
-//                        loginSuccess = true
+                // Step 1: Click first element
+                val menuIcon = """
+                    javascript:(function() {
+                        const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ First element clicked");
+                        } else {
+                            Android.sendToAndroid("❌ First element not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(menuIcon, null)
 
+                delay(1000) // short delay before next click
 
+//                 Step 2: Click on Login Button In Menu
+                val loginButtonInMenu = """
+                    javascript:(function() {
+                        const el = document.querySelector("#slide-menu > p-sidebar > div > nav > div > label > button");
+                        if (el) {
+                            el.click();
+                            Android.sendToAndroid("✅ Second element clicked");
+                        } else {
+                            Android.sendToAndroid("❌ Second element not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(loginButtonInMenu, null)
+
+                delay(500) // short delay before typing
+
+                // Step 3: Fill UserName
+                val userNameInput = """
+                    javascript:(function() {
+                        const input = document.querySelector("input[formcontrolname='userid']");
+                        if (input) {
+                            input.value = "$inputUserName";
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
+                            Android.sendToAndroid("✅ Input field filled");
+                        } else {
+                            Android.sendToAndroid("❌ Input field not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(userNameInput, null)
+
+                // Step 3: Fill Password
+                val passwordInput = """
+                    javascript:(function() {
+                        const input = document.querySelector("input[formcontrolname='password']");
+                        if (input) {
+                            input.value = "$inputPassword";
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            input.blur();
+                            Android.sendToAndroid("✅ Input field filled");
+                        } else {
+                            Android.sendToAndroid("❌ Input field not found");
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(passwordInput, null)
+
+                // Step 4: Extract captcha image after password
+                val extractCaptcha = """
+                    javascript:(function() {
+                        var img = document.querySelector('.captcha-img');
+                        if (img) {
+                            var src = img.src || img.getAttribute('src');
+                            Android.sendCaptchaImageUrl(src);
+                        } else {
+                            Android.sendToAndroid('❌ Captcha image not found');
+                        }
+                    })();
+                """.trimIndent()
+                webViewRef?.evaluateJavascript(extractCaptcha, null)
+                delay(1200) // give time for captcha to process
+
+                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
+                var loginSuccess = false
+                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
+                for (attempt in 1..5) {
+                    // Click SIGN IN
+                    val clickSignIn = """
+                        javascript:(function() {
+                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
+                            if (btn) {
+                                btn.click();
+                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
+                            } else {
+                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
+                            }
+                        })();
+                    """.trimIndent()
+                    webViewRef?.evaluateJavascript(clickSignIn, null)
+                    delay(3000) // Wait for login to process
+
+                    // Check for target element
+                    val checkTarget = """
+                        javascript:(function() {
+                            var el = document.querySelector('$targetSelector');
+                            if (el) {
+                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
+                                return true;
+                            } else {
+                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
+                                return false;
+                            }
+                        })();
+                    """.trimIndent()
+                    var found = false
+                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                    webViewRef?.evaluateJavascript(
+                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
+                    ) { value ->
+                        found = value == "true"
+                        latch.complete(found)
+                    }
+                    latch.await()
+                    if (found) {
+                        statusMessage = "✅ Login successful. Target element found."
+                        loginSuccess = true
+
+                //Date Input
                 val dateInput = """
                     javascript:(function () {
                         const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -806,30 +806,29 @@ fun MainAutomate(
                         webViewRef?.evaluateJavascript(selectTrain, null)
 
 
-//
-//                        break
-//                    } else {
-//                        statusMessage =
-//                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
-//                        // Re-extract captcha and fill it
-//                        val extractCaptcha = """
-//                            javascript:(function() {
-//                                var img = document.querySelector('.captcha-img');
-//                                if (img) {
-//                                    var src = img.src || img.getAttribute('src');
-//                                    Android.sendCaptchaImageUrl(src);
-//                                } else {
-//                                    Android.sendToAndroid('❌ Captcha image not found');
-//                                }
-//                            })();
-//                        """.trimIndent()
-//                        webViewRef?.evaluateJavascript(extractCaptcha, null)
-//                        delay(1500) // Wait for captcha to be solved and filled
-//                    }
-//                }
-//                if (!loginSuccess) {
-//                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
-//                }
+                        break
+                    } else {
+                        statusMessage =
+                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
+                        // Re-extract captcha and fill it
+                        val extractCaptcha = """
+                            javascript:(function() {
+                                var img = document.querySelector('.captcha-img');
+                                if (img) {
+                                    var src = img.src || img.getAttribute('src');
+                                    Android.sendCaptchaImageUrl(src);
+                                } else {
+                                    Android.sendToAndroid('❌ Captcha image not found');
+                                }
+                            })();
+                        """.trimIndent()
+                        webViewRef?.evaluateJavascript(extractCaptcha, null)
+                        delay(1500) // Wait for captcha to be solved and filled
+                    }
+                }
+                if (!loginSuccess) {
+                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
+                }
             }
         }
 
