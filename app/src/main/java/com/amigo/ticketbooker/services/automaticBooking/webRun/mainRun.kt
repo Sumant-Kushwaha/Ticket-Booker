@@ -30,9 +30,13 @@ import android.graphics.Paint
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import androidx.core.graphics.scale
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
 @Composable
 fun MainAutomate(
@@ -41,9 +45,9 @@ fun MainAutomate(
     inputPassword: String = "Amigo@2805",
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
     inputDestination: String = "BAPUDM MOTIHARI - BMKI ",
-    inputDate: String = "30/07/2025",
-    quotaName: String = "1",
-    className: String = "sl",
+    inputDate: String = "15/08/2025",
+    quotaName: String = "4",
+    className: String = "12",
     trainNumber: Int = 12558
 ) {
 
@@ -116,6 +120,7 @@ fun MainAutomate(
     var captchaText by remember { mutableStateOf("") } // To store extracted captcha
     var captchaImageUrl by remember { mutableStateOf("") } // For debugging or future use
     val contextForML = context.applicationContext
+    val scope = rememberCoroutineScope()
 
     // Enhanced preprocessing: grayscale, resize, adaptive binarization
     fun adaptiveBinarize(bitmap: Bitmap, blockSize: Int = 12): Bitmap {
@@ -429,16 +434,16 @@ fun MainAutomate(
                     javascript:(function () {
                         const monthNames = ["January", "February", "March", "April", "May", "June",
                                             "July", "August", "September", "October", "November", "December"];
-                    
+
                         const targetDay = "$targetDay"; // "27"
                         const targetMonth = "$targetMonthName"; // "June"
                         const targetYear = parseInt("$targetYear"); // 2025
-                    
+
                         function log(msg) {
                             if (window.Android) Android.sendToAndroid(msg);
                             console.log(msg);
                         }
-                    
+
                         // Find the calendar input
                         const input = document.querySelector(
                             '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
@@ -447,11 +452,11 @@ fun MainAutomate(
                             log("❌ Date input not found");
                             return;
                         }
-                    
+
                         // Open the calendar
                         input.focus();
                         input.click();
-                    
+
                         // Wait for the calendar to open
                         function waitForCalendar(callback) {
                             if (document.querySelector(".ui-datepicker-calendar")) {
@@ -460,30 +465,30 @@ fun MainAutomate(
                                 setTimeout(() => waitForCalendar(callback), 200);
                             }
                         }
-                    
+
                         function getMonthIndex(monthName) {
                             return monthNames.indexOf(monthName);
                         }
-                    
+
                         function getCurrentMonthYear() {
                             const monthText = document.querySelector(".ui-datepicker-month")?.innerText?.trim();
                             const yearText = document.querySelector(".ui-datepicker-year")?.innerText?.trim();
-                    
+
                             return {
                                 monthIndex: getMonthIndex(monthText),
                                 year: parseInt(yearText)
                             };
                         }
-                    
+
                         function alignMonthYear(callback) {
                             const { monthIndex: currentMonthIndex, year: currentYear } = getCurrentMonthYear();
                             const targetMonthIndex = getMonthIndex(targetMonth);
-                    
+
                             if (isNaN(currentMonthIndex) || isNaN(currentYear)) {
                                 setTimeout(() => alignMonthYear(callback), 200);
                                 return;
                             }
-                    
+
                             if (currentYear < targetYear || (currentYear === targetYear && currentMonthIndex < targetMonthIndex)) {
                                 document.querySelector(".ui-datepicker-next")?.click();
                                 setTimeout(() => alignMonthYear(callback), 300);
@@ -494,16 +499,16 @@ fun MainAutomate(
                                 callback();
                             }
                         }
-                    
+
                         function selectDate() {
                         const calendar = document.querySelector(".ui-datepicker-calendar");
                         if (!calendar) {
                             log("❌ Calendar table not found");
                             return;
                         }
-                    
+
                         const dayLinks = calendar.querySelectorAll("td > a");
-                    
+
                         let found = false;
                         dayLinks.forEach(a => {
                             const text = a.textContent.trim();
@@ -512,15 +517,15 @@ fun MainAutomate(
                                 found = true;
                             }
                         });
-                    
+
                         if (found) {
                             log("✅ Day " + targetDay + " clicked successfully");
                         } else {
                             log("❌ Day " + targetDay + " not found in calendar grid");
                         }
                     }
-                    
-                    
+
+
                         waitForCalendar(() => {
                             alignMonthYear(() => {
                                 setTimeout(selectDate, 300);
@@ -528,9 +533,39 @@ fun MainAutomate(
                         });
                     })();
                     """.trimIndent()
-                // Evaluate the script in WebView
-                webViewRef?.evaluateJavascript(dateInput) {
-                    Log.d("DatePicker", it ?: "No JS result")
+                // Evaluate the script in WebView and wait until the date field is actually filled
+                val dateSelected = suspendCancellableCoroutine<Boolean> { cont ->
+                    // Kick off the click script
+                    webViewRef?.evaluateJavascript(dateInput) { _ ->
+                        // Start polling for the selected date value
+                        scope.launch {
+                            val checkScript = """
+                                javascript:(function(){
+                                    const inp = document.querySelector('#jDate input, input[placeholder=\"DD/MM/YYYY\"], input[formcontrolname=\"journeyDate\"], input[formcontrolname=\"journeyDateInput\"], input.ui-inputtext[role=\"textbox\"]');
+                                    return inp ? inp.value : "";
+                                })();
+                            """.trimIndent()
+                            while (isActive) {
+                                val currentVal = suspendCancellableCoroutine<String> { innerCont ->
+                                    webViewRef?.evaluateJavascript(checkScript) {
+                                        innerCont.resume(it?.trim('"') ?: "")
+                                    }
+                                }
+                                if (currentVal.isNotBlank() && currentVal.replace("\\s", "") == journeyDate.replace("\\s", "")) {
+                                    cont.resume(true)
+                                    break
+                                }
+                                delay(300)
+                            }
+                        }
+                    }
+                }
+
+                // Wait until dateSelected completes
+                if (dateSelected) {
+                    Log.d("DatePicker", "✅ Date confirmed in input: $journeyDate")
+                } else {
+                    Log.d("DatePicker", "❌ Date not selected within timeout")
                 }
 
 
@@ -580,14 +615,14 @@ fun MainAutomate(
                         val fillQuota = """
                     javascript:(function() {
                         const quotaIndex = $quotaIndex; // Use a constant for clarity
-                    
+
                         // Step 1: Click class dropdown item
                         const dropdownItem = document.querySelector(`#journeyQuota > div > div.ng-trigger.ng-trigger-overlayAnimation.ng-tns-c65-12.ui-dropdown-panel.ui-widget.ui-widget-content.ui-corner-all.ui-shadow.ng-star-inserted > div > ul > p-dropdownitem:nth-child(${quotaIndex}) > li`);
-                    
+
                         if (dropdownItem) {
                             dropdownItem.click();
                             Android.sendToAndroid(`✅ Quota index ${quotaIndex} selected.`);
-                    
+
                             // Step 2: Attempt to click the confirm button after a delay
                             setTimeout(function() {
                                 // Find the common selector for the confirm/accept button in the dialog
@@ -601,24 +636,22 @@ fun MainAutomate(
                                      confirmButton = document.querySelector("p-confirmdialog button.ui-button-success"); // Sometimes there's a success class
                                 }
                                 // Add more specific selectors here if the above don't work for your exact page
-                    
+
                                 if (confirmButton) {
                                     confirmButton.click();
                                     Android.sendToAndroid("✅ Confirm button clicked.");
                                 } else {
                                     Android.sendToAndroid("⚠️ Confirm button not found after selecting quota.");
                                 }
-                    
+
                             }, 700); // Increased delay slightly to ensure dialog appears
-                    
+
                         } else {
                             Android.sendToAndroid(`❌ Quota index $quotaIndex not found in dropdown.`);
                         }
                     })();
                 """.trimIndent()
                         webViewRef?.evaluateJavascript(fillQuota, null)
-
-                        delay(2000) // Wait for date selection to complete
 
                         // Fill the origin field
                         val fillOrigin = """
@@ -664,7 +697,7 @@ fun MainAutomate(
                 """.trimIndent()
                         webViewRef?.evaluateJavascript(fillDestination, null)
 
-                        delay(1000)
+//                        delay(2000)
 
                         // Search Train Button
                         val searchButton = """
@@ -685,7 +718,7 @@ fun MainAutomate(
                         const targetTrainNumber = "$trainNumber";
                         const targetClassCode = "$className";
                         const targetDay = "$targetDay";
-                    
+
                         function waitForElementLoad(callback) {
                             const interval = setInterval(() => {
                                 const el = document.querySelector("#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div");
@@ -695,7 +728,7 @@ fun MainAutomate(
                                 }
                             }, 300);
                         }
-                    
+
                         function tryClickSearchButton(attempt = 1, maxAttempts = 1000) {
                         const searchBtn = document.querySelector(".btnDefault.train_Search.ng-star-inserted:not(.disable-book)");
                         if (searchBtn) {
@@ -703,12 +736,12 @@ fun MainAutomate(
                             Android.sendToAndroid("✅ Enabled search button clicked.");
                             return;
                         }
-                    
+
                         const fallbackArea = document.querySelector(".ng-star-inserted");
                         if (fallbackArea) {
                             const containers = fallbackArea.querySelectorAll("div");
                             let clicked = false;
-                    
+
                             containers.forEach(container => {
                                 if (container.textContent.trim().toUpperCase().includes(targetClassCode.toUpperCase())) {
                                     container.click(); // ✅ Click the whole container, not <td>
@@ -716,7 +749,7 @@ fun MainAutomate(
                                     clicked = true;
                                 }
                             });
-                    
+
                             if (clicked) {
                                 setTimeout(() => {
                                     if (attempt < maxAttempts) {
@@ -732,51 +765,51 @@ fun MainAutomate(
                             Android.sendToAndroid("❌ Fallback area not found (attempt " + attempt + ").");
                         }
                     }
-                    
-                    
+
+
                         function matchTrainAndClickClass() {
                             for (let n = 3; n <= 20; n++) {
                                 const headingSelector =
                                     "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div.dull-back.no-pad.col-xs-12 > div.col-sm-5.col-xs-11.train-heading";
-                    
+
                                 const headingElement = document.querySelector(headingSelector);
                                 if (!headingElement) continue;
-                    
+
                                 const fullTrainText = headingElement.textContent.trim();
                                 if (fullTrainText.includes(targetTrainNumber)) {
                                     Android.sendToAndroid("✅ Found train number '" + targetTrainNumber + "' at nth-child(" + n + ")");
-                    
+
                                     for (let b = 1; b <= 9; b++) {
                                         const classSelector =
                                             "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") > div.form-group.no-pad.col-xs-12.bull-back.border-all > app-train-avl-enq > div.ng-star-inserted > div:nth-child(5) > div.white-back.col-xs-12.ng-star-inserted > table > tr > td:nth-child(" + b + ")";
                                         const classCell = document.querySelector(classSelector);
                                         if (!classCell) continue;
-                    
+
                                         const classText = classCell.textContent.trim().toUpperCase();
                                         if (classText.includes(targetClassCode.toUpperCase())) {
                                             const clickable = classCell.querySelector("div");
                                             if (clickable) {
                                                 clickable.click();
                                                 Android.sendToAndroid("✅ Clicked on class '" + targetClassCode + "'");
-                    
+
                                                 setTimeout(() => {
                                                     const preAvlSelector =
                                                         "#divMain > div > app-train-list > div.col-sm-9.col-xs-12 > div.tbis-div > div.ng-star-inserted > div:nth-child(" + n + ") .pre-avl";
                                                     const cells = document.querySelectorAll(preAvlSelector);
                                                     let matched = false;
-                    
+
                                                     cells.forEach(el => {
                                                         if (el.textContent.trim().includes(targetDay)) {
                                                             el.click();
                                                             Android.sendToAndroid("✅ Clicked on date: " + targetDay);
                                                             matched = true;
-                    
+
                                                             setTimeout(() => {
                                                                 tryClickSearchButton();
                                                             }, 1000);
                                                         }
                                                     });
-                    
+
                                                     if (!matched) {
                                                         Android.sendToAndroid("❌ Date '" + targetDay + "' not found in .pre-avl.");
                                                     }
@@ -785,15 +818,15 @@ fun MainAutomate(
                                             }
                                         }
                                     }
-                    
+
                                     Android.sendToAndroid("❌ Class '" + targetClassCode + "' not found in section nth-child(" + n + ")");
                                     return;
                                 }
                             }
-                    
+
                             Android.sendToAndroid("❌ Train number '" + targetTrainNumber + "' not found between nth-child(3) to 20");
                         }
-                    
+
                         if (document.readyState === "complete" || document.readyState === "interactive") {
                             waitForElementLoad(matchTrainAndClickClass);
                         } else {
