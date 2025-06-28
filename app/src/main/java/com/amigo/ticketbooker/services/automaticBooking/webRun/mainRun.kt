@@ -27,8 +27,6 @@ import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
-import android.os.Handler
-import android.os.Looper
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import androidx.core.graphics.scale
@@ -43,7 +41,7 @@ fun MainAutomate(
     inputPassword: String = "Amigo@2805",
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
     inputDestination: String = "BAPUDM MOTIHARI - BMKI ",
-    inputDate: String = "02/08/2025",
+    inputDate: String = "30/07/2025",
     quotaName: String = "1",
     className: String = "sl",
     trainNumber: Int = 12558
@@ -427,129 +425,113 @@ fun MainAutomate(
 //                        loginSuccess = true
 
 
-//                        // Select Date
-//                        val selectDate = """
-//                    (function () {
-//                        const input = document.querySelector('#divMain > div > app-main-page > div > div > div.col-xs-12.level_2.slanted-div > div.col-xs-12.remove-padding.tbis-box.tbis-box-pad > div:nth-child(1) > app-jp-input > div > form > div:nth-child(2) > div.col-md-5.col-xs-12.remove-padding > div.form-group.ui-float-label');
-//                        if (input) {
-//                            input.focus();
-//                            input.click();
-//                            input.dispatchEvent(new Event('input', { bubbles: true }));
-//                            input.dispatchEvent(new Event('change', { bubbles: true }));
-//                            return "✅ Calendar opened";
-//                        }
-//                        return "❌ Could not find calendar input";
-//                    })();
-//                """.trimIndent()
-//                        webViewRef?.evaluateJavascript(selectDate) { result ->
-//                            Log.d("Calendar", result ?: "No result")
-//                        }
-//
-//                        // Wait for calendar to open
-//                        Handler(Looper.getMainLooper()).postDelayed({
-//                            val jsScript = """
-//                (function() {
-//                    const monthNames = ["January", "February", "March", "April", "May", "June",
-//                        "July", "August", "September", "October", "November", "December"];
-//
-//                    function getCurrentMonthIndex() {
-//                        const el = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-//                        return el ? monthNames.indexOf(el.innerText) : -1;
-//                    }
-//
-//                    function getCurrentYear() {
-//                        const yearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-//                        return yearEl ? parseInt(yearEl.innerText) : -1;
-//                    }
-//
-//                    const currMonth = getCurrentMonthIndex();
-//                    const currYear = getCurrentYear();
-//                    const targetMonth = monthNames.indexOf("$targetMonthName");
-//                    const targetYear = parseInt("$targetYear");
-//                    const targetDay = "$targetDay";
-//
-//                    const monthDiff = (targetYear - currYear) * 12 + (targetMonth - currMonth);
-//                    const direction = monthDiff > 0 ? "forward" : (monthDiff < 0 ? "backward" : "same");
-//
-//                    function clickMonthArrowNTimes(n, direction, callback) {
-//                        if (n <= 0) return callback();
-//                        const selector = direction === "forward"
-//                            ? '.ui-datepicker-next-icon.pi.pi-chevron-right.ng-tns-c58-10'
-//                            : '.ui-datepicker-prev-icon.pi.pi-chevron-left.ng-tns-c58-10';
-//                        const btn = document.querySelector(selector);
-//                        if (!btn) return callback();
-//
-//                        btn.click();
-//                        setTimeout(() => clickMonthArrowNTimes(n - 1, direction, callback), 400);
-//                    }
-//
-//                    function verifyMonthMatch() {
-//                        const nowMonthEl = document.querySelector('.ui-datepicker-month.ng-tns-c58-10.ng-star-inserted');
-//                        const nowYearEl = document.querySelector('.ui-datepicker-year.ng-tns-c58-10.ng-star-inserted');
-//                        const nowMonth = nowMonthEl ? nowMonthEl.innerText : "";
-//                        const nowYear = nowYearEl ? nowYearEl.innerText : "";
-//
-//                        return nowMonth === "$targetMonthName" && nowYear === "$targetYear";
-//                    }
-//
-//                    function selectDate() {
-//                        const tbody = document.querySelector('#jDate > span > div > div > div.ui-datepicker-calendar-container.ng-tns-c58-10.ng-star-inserted > table > tbody');
-//                        if (!tbody) return "❌ Calendar not found";
-//
-//                        const anchors = tbody.querySelectorAll('a');
-//                        for (const a of anchors) {
-//                            if (a.innerText === targetDay) {
-//                                a.click();
-//                                return "✅ Date " + targetDay + " Selected";
-//                            }
-//                        }
-//                        return "❌ Date " + targetDay + " Not Found";
-//                    }
-//
-//                    return new Promise(function (resolve) {
-//                        clickMonthArrowNTimes(Math.abs(monthDiff), direction, function () {
-//                            setTimeout(() => {
-//                                if (!verifyMonthMatch()) {
-//                                    resolve("❌ Month not matched after navigation");
-//                                    return;
-//                                }
-//                                resolve(selectDate());
-//                            }, 500);
-//                        });
-//                    });
-//                })();
-//                """.trimIndent()
-//                            webViewRef?.evaluateJavascript(jsScript) { result ->
-//                                val output = result?.replace("\"", "") ?: ""
-//                                Log.d("CalendarAction", output)
-//                            }
-//                        }, 100)
-
-                val targetDateStr = "26/07/2025"
-
-                val jsSetDate = """
-javascript:(function() {
-    // Find the input using its class (avoiding dynamic ng-tns-* class)
-    const input = document.querySelector('input.ui-inputtext[autocomplete="off"]');
-    if (!input) return "❌ Date input not found";
-
-    // Set the value
-    input.value = "$targetDateStr";
-
-    // Dispatch Angular-compatible events
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    input.dispatchEvent(new Event('blur', { bubbles: true }));
-
-    return "✅ Date set to $targetDateStr";
-})();
-""".trimIndent()
-
-                webViewRef?.evaluateJavascript(jsSetDate) { result ->
-                    Log.d("SetDate", result ?: "No result")
+                val dateInput = """
+                    javascript:(function () {
+                        const monthNames = ["January", "February", "March", "April", "May", "June",
+                                            "July", "August", "September", "October", "November", "December"];
+                    
+                        const targetDay = "$targetDay"; // "27"
+                        const targetMonth = "$targetMonthName"; // "June"
+                        const targetYear = parseInt("$targetYear"); // 2025
+                    
+                        function log(msg) {
+                            if (window.Android) Android.sendToAndroid(msg);
+                            console.log(msg);
+                        }
+                    
+                        // Find the calendar input
+                        const input = document.querySelector(
+                            '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
+                        );
+                        if (!input) {
+                            log("❌ Date input not found");
+                            return;
+                        }
+                    
+                        // Open the calendar
+                        input.focus();
+                        input.click();
+                    
+                        // Wait for the calendar to open
+                        function waitForCalendar(callback) {
+                            if (document.querySelector(".ui-datepicker-calendar")) {
+                                callback();
+                            } else {
+                                setTimeout(() => waitForCalendar(callback), 200);
+                            }
+                        }
+                    
+                        function getMonthIndex(monthName) {
+                            return monthNames.indexOf(monthName);
+                        }
+                    
+                        function getCurrentMonthYear() {
+                            const monthText = document.querySelector(".ui-datepicker-month")?.innerText?.trim();
+                            const yearText = document.querySelector(".ui-datepicker-year")?.innerText?.trim();
+                    
+                            return {
+                                monthIndex: getMonthIndex(monthText),
+                                year: parseInt(yearText)
+                            };
+                        }
+                    
+                        function alignMonthYear(callback) {
+                            const { monthIndex: currentMonthIndex, year: currentYear } = getCurrentMonthYear();
+                            const targetMonthIndex = getMonthIndex(targetMonth);
+                    
+                            if (isNaN(currentMonthIndex) || isNaN(currentYear)) {
+                                setTimeout(() => alignMonthYear(callback), 200);
+                                return;
+                            }
+                    
+                            if (currentYear < targetYear || (currentYear === targetYear && currentMonthIndex < targetMonthIndex)) {
+                                document.querySelector(".ui-datepicker-next")?.click();
+                                setTimeout(() => alignMonthYear(callback), 300);
+                            } else if (currentYear > targetYear || (currentYear === targetYear && currentMonthIndex > targetMonthIndex)) {
+                                document.querySelector(".ui-datepicker-prev")?.click();
+                                setTimeout(() => alignMonthYear(callback), 300);
+                            } else {
+                                callback();
+                            }
+                        }
+                    
+                        function selectDate() {
+                        const calendar = document.querySelector(".ui-datepicker-calendar");
+                        if (!calendar) {
+                            log("❌ Calendar table not found");
+                            return;
+                        }
+                    
+                        const dayLinks = calendar.querySelectorAll("td > a");
+                    
+                        let found = false;
+                        dayLinks.forEach(a => {
+                            const text = a.textContent.trim();
+                            if (text === targetDay || text === String(parseInt(targetDay))) {
+                                a.click();
+                                found = true;
+                            }
+                        });
+                    
+                        if (found) {
+                            log("✅ Day " + targetDay + " clicked successfully");
+                        } else {
+                            log("❌ Day " + targetDay + " not found in calendar grid");
+                        }
+                    }
+                    
+                    
+                        waitForCalendar(() => {
+                            alignMonthYear(() => {
+                                setTimeout(selectDate, 300);
+                            });
+                        });
+                    })();
+                    """.trimIndent()
+                // Evaluate the script in WebView
+                webViewRef?.evaluateJavascript(dateInput) {
+                    Log.d("DatePicker", it ?: "No JS result")
                 }
-                
-
 
 
                 // Expand For Class
