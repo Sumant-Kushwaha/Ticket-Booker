@@ -46,9 +46,14 @@ fun MainAutomate(
     inputOrigin: String = "ANAND VIHAR TRM - ANVT",
     inputDestination: String = "BAPUDM MOTIHARI - BMKI ",
     inputDate: String = "15/08/2025",
-    quotaName: String = "4",
+    quotaName: String = "1",
     className: String = "12",
-    trainNumber: Int = 12558
+    trainNumber: Int = 12558,
+    passengerName:String="Omshree",
+    passengerAge:String="20",
+    passengerGender:String="F",
+    passengerSeatPreference:String="SU",
+    passengerMobileNumber: String = "7302221097",
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -97,6 +102,21 @@ fun MainAutomate(
     }
 
 
+    val birthName = when (passengerSeatPreference.uppercase()) {
+        in listOf("2", "L", "Lower") -> 2
+        in listOf("3", "M", "Middle") -> 3
+        in listOf("4", "U", "Upper") -> 4
+        in listOf("5", "SL", "Side Lower") -> 5
+        in listOf("6", "SU", "Side Upper") -> 6
+        else -> 1 // not 0 anymore
+    }
+
+    val genderName = when (passengerGender.uppercase()) {
+        in listOf("2", "M", "Male") -> 2
+        in listOf("3", "F", "Female") -> 3
+        in listOf("4", "T", "Transgender") -> 4
+        else -> 1 // not 0 anymore
+    }
 
     val journeyDate = inputDate  // user input in dd/MM/yyyy format
 
@@ -837,6 +857,117 @@ fun MainAutomate(
                     })();
                     """.trimIndent()
                         webViewRef?.evaluateJavascript(selectTrain, null)
+
+                        val fillName = """
+    javascript:(function() {
+        function waitForInputAndSetValue() {
+            var inputElements = document.querySelectorAll(
+                'input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input'
+            );
+            if (inputElements.length > 0) {
+                inputElements[0].value = "$passengerName";
+                var event = new Event('input', { bubbles: true });
+                inputElements[0].dispatchEvent(event);
+                console.log("Passenger name set.");
+            } else {
+                setTimeout(waitForInputAndSetValue, 300); // retry every 300ms
+            }
+        }
+        waitForInputAndSetValue();
+    })();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(fillName, null)
+
+
+                        val fillPassengerAge = """
+    javascript:(function() {
+        function waitForInputAndSetValue() {
+            var inputElements = document.querySelectorAll(
+                'input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]'
+            );
+            if (inputElements.length > 0) {
+                inputElements[0].value = "$passengerAge";
+                var event = new Event('input', { bubbles: true });
+                inputElements[0].dispatchEvent(event);
+                console.log("Passenger age set.");
+            } else {
+                setTimeout(waitForInputAndSetValue, 300);
+            }
+        }
+        waitForInputAndSetValue();
+    })();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(fillPassengerAge, null)
+
+
+                        val fillGender = """
+    javascript:(function() {
+        function waitAndSelectGender() {
+            var selectEl = document.querySelector('select[formcontrolname="passengerGender"]');
+            if (selectEl) {
+                selectEl.value = "$passengerGender"; // e.g., M, F, or T
+                var event = new Event('change', { bubbles: true });
+                selectEl.dispatchEvent(event);
+                console.log("Passenger gender set.");
+            } else {
+                setTimeout(waitAndSelectGender, 300); // Retry until found
+            }
+        }
+        waitAndSelectGender();
+    })();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(fillGender, null)
+
+
+                        val fillBerthPreference = """
+    javascript:(function() {
+        function waitAndSelectBerth() {
+            var selectEl = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
+            if (selectEl) {
+                // Step 1: Clear value first to force refresh
+                selectEl.value = "";
+                var clearEvent = new Event('change', { bubbles: true });
+                selectEl.dispatchEvent(clearEvent);
+
+                // Step 2: Set desired value after short delay
+                setTimeout(function() {
+                    selectEl.value = "$passengerSeatPreference";
+                    var changeEvent = new Event('change', { bubbles: true });
+                    selectEl.dispatchEvent(changeEvent);
+                    console.log("Berth preference accurately set to: $passengerSeatPreference");
+                }, 100); // Delay ensures Angular/UI updates
+            } else {
+                setTimeout(waitAndSelectBerth, 300);
+            }
+        }
+        waitAndSelectBerth();
+    })();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(fillBerthPreference, null)
+
+
+                        val fillMobileNumber = """
+    javascript:(function() {
+        function waitForInputAndSetValue() {
+            var input = document.querySelector('input[formcontrolname="mobileNumber"]');
+            if (input) {
+                input.value = "$passengerMobileNumber";
+                var event = new Event('input', { bubbles: true });
+                input.dispatchEvent(event);
+                console.log("Passenger mobile number set.");
+            } else {
+                setTimeout(waitForInputAndSetValue, 300);
+            }
+        }
+        waitForInputAndSetValue();
+    })();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(fillMobileNumber, null)
 
 
                         break
