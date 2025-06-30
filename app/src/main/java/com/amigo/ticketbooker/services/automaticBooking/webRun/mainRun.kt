@@ -54,7 +54,10 @@ fun MainAutomate(
     passengerGender:String="F",
     passengerSeatPreference:String="SU",
     passengerMobileNumber: String = "7302221097",
-) {
+    autoUpgradeOption: String = "1", // "1" = check, "0" = leave unchecked
+    travelInsurance:String="1",
+    paymentOption:Int=2,
+    ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
         in listOf("1", "GENERAL") -> 1
@@ -102,20 +105,10 @@ fun MainAutomate(
     }
 
 
-    val birthName = when (passengerSeatPreference.uppercase()) {
-        in listOf("2", "L", "Lower") -> 2
-        in listOf("3", "M", "Middle") -> 3
-        in listOf("4", "U", "Upper") -> 4
-        in listOf("5", "SL", "Side Lower") -> 5
-        in listOf("6", "SU", "Side Upper") -> 6
-        else -> 1 // not 0 anymore
-    }
-
-    val genderName = when (passengerGender.uppercase()) {
-        in listOf("2", "M", "Male") -> 2
-        in listOf("3", "F", "Female") -> 3
-        in listOf("4", "T", "Transgender") -> 4
-        else -> 1 // not 0 anymore
+    val paymentOption = when (paymentOption) {
+        1  -> "CARD_NETBANKING"
+        2  -> "UPI"
+        else -> null  // or "UNKNOWN", or throw Exception("Invalid class index")
     }
 
     val journeyDate = inputDate  // user input in dd/MM/yyyy format
@@ -858,116 +851,171 @@ fun MainAutomate(
                     """.trimIndent()
                         webViewRef?.evaluateJavascript(selectTrain, null)
 
-                        val fillName = """
-    javascript:(function() {
-        function waitForInputAndSetValue() {
-            var inputElements = document.querySelectorAll(
-                'input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input'
-            );
-            if (inputElements.length > 0) {
-                inputElements[0].value = "$passengerName";
-                var event = new Event('input', { bubbles: true });
-                inputElements[0].dispatchEvent(event);
-                console.log("Passenger name set.");
-            } else {
-                setTimeout(waitForInputAndSetValue, 300); // retry every 300ms
-            }
+                        val fillPassengerDetails = """
+javascript: (function () {
+    function fillName() {
+        var inputElements = document.querySelectorAll(
+            'input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input'
+        );
+        if (inputElements.length > 0) {
+            inputElements[0].value = "$passengerName";
+            var event = new Event('input', { bubbles: true });
+            inputElements[0].dispatchEvent(event);
+            console.log("Passenger name set.");
+        } else {
+            setTimeout(fillName, 300);
         }
-        waitForInputAndSetValue();
-    })();
+    }
+
+    function fillAge() {
+        var inputElements = document.querySelectorAll(
+            'input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]'
+        );
+        if (inputElements.length > 0) {
+            inputElements[0].value = "$passengerAge";
+            var event = new Event('input', { bubbles: true });
+            inputElements[0].dispatchEvent(event);
+            console.log("Passenger age set.");
+        } else {
+            setTimeout(fillAge, 300);
+        }
+    }
+
+    function fillGender() {
+        var selectEl = document.querySelector('select[formcontrolname="passengerGender"]');
+        if (selectEl) {
+            selectEl.value = "$passengerGender"; // M, F, T
+            var event = new Event('change', { bubbles: true });
+            selectEl.dispatchEvent(event);
+            console.log("Passenger gender set.");
+        } else {
+            setTimeout(fillGender, 300);
+        }
+    }
+
+    function fillBerth() {
+        var selectEl = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
+        if (selectEl) {
+            selectEl.value = "";
+            var clearEvent = new Event('change', { bubbles: true });
+            selectEl.dispatchEvent(clearEvent);
+
+            setTimeout(function () {
+                selectEl.value = "$passengerSeatPreference";
+                var changeEvent = new Event('change', { bubbles: true });
+                selectEl.dispatchEvent(changeEvent);
+                console.log("Berth preference set to: $passengerSeatPreference");
+            }, 100);
+        } else {
+            setTimeout(fillBerth, 300);
+        }
+    }
+
+    // Call all functions
+    fillName();
+    fillAge();
+    fillGender();
+    fillBerth();
+})();
 """.trimIndent()
 
-                        webViewRef?.evaluateJavascript(fillName, null)
-
-
-                        val fillPassengerAge = """
-    javascript:(function() {
-        function waitForInputAndSetValue() {
-            var inputElements = document.querySelectorAll(
-                'input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]'
-            );
-            if (inputElements.length > 0) {
-                inputElements[0].value = "$passengerAge";
-                var event = new Event('input', { bubbles: true });
-                inputElements[0].dispatchEvent(event);
-                console.log("Passenger age set.");
-            } else {
-                setTimeout(waitForInputAndSetValue, 300);
-            }
-        }
-        waitForInputAndSetValue();
-    })();
-""".trimIndent()
-
-                        webViewRef?.evaluateJavascript(fillPassengerAge, null)
-
-
-                        val fillGender = """
-    javascript:(function() {
-        function waitAndSelectGender() {
-            var selectEl = document.querySelector('select[formcontrolname="passengerGender"]');
-            if (selectEl) {
-                selectEl.value = "$passengerGender"; // e.g., M, F, or T
-                var event = new Event('change', { bubbles: true });
-                selectEl.dispatchEvent(event);
-                console.log("Passenger gender set.");
-            } else {
-                setTimeout(waitAndSelectGender, 300); // Retry until found
-            }
-        }
-        waitAndSelectGender();
-    })();
-""".trimIndent()
-
-                        webViewRef?.evaluateJavascript(fillGender, null)
-
-
-                        val fillBerthPreference = """
-    javascript:(function() {
-        function waitAndSelectBerth() {
-            var selectEl = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
-            if (selectEl) {
-                // Step 1: Clear value first to force refresh
-                selectEl.value = "";
-                var clearEvent = new Event('change', { bubbles: true });
-                selectEl.dispatchEvent(clearEvent);
-
-                // Step 2: Set desired value after short delay
-                setTimeout(function() {
-                    selectEl.value = "$passengerSeatPreference";
-                    var changeEvent = new Event('change', { bubbles: true });
-                    selectEl.dispatchEvent(changeEvent);
-                    console.log("Berth preference accurately set to: $passengerSeatPreference");
-                }, 100); // Delay ensures Angular/UI updates
-            } else {
-                setTimeout(waitAndSelectBerth, 300);
-            }
-        }
-        waitAndSelectBerth();
-    })();
-""".trimIndent()
-
-                        webViewRef?.evaluateJavascript(fillBerthPreference, null)
+                        webViewRef?.evaluateJavascript(fillPassengerDetails, null)
 
 
                         val fillMobileNumber = """
-    javascript:(function() {
-        function waitForInputAndSetValue() {
-            var input = document.querySelector('input[formcontrolname="mobileNumber"]');
-            if (input) {
-                input.value = "$passengerMobileNumber";
-                var event = new Event('input', { bubbles: true });
-                input.dispatchEvent(event);
-                console.log("Passenger mobile number set.");
-            } else {
-                setTimeout(waitForInputAndSetValue, 300);
-            }
+javascript: (function () {
+    function waitForInputAndSetValue() {
+        var input = document.querySelector('input[formcontrolname="mobileNumber"]');
+        if (input) {
+            input.value = "$passengerMobileNumber";
+            var event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+            console.log("Passenger mobile number set.");
+        } else {
+            setTimeout(waitForInputAndSetValue, 300);
         }
-        waitForInputAndSetValue();
-    })();
+    }
+    waitForInputAndSetValue();
+})();
 """.trimIndent()
 
                         webViewRef?.evaluateJavascript(fillMobileNumber, null)
+
+                        val toggleAutoUpgradationCheckbox = """
+javascript: (function () {
+    function waitAndToggleCheckbox() {
+        var checkbox = document.getElementById("autoUpgradation");
+        if (checkbox) {
+            var shouldCheck = "$autoUpgradeOption" === "1";
+            if (checkbox.checked !== shouldCheck) {
+                checkbox.click();
+                console.log("Auto Upgradation checkbox toggled to: " + shouldCheck);
+            } else {
+                console.log("Auto Upgradation checkbox already in correct state.");
+            }
+        } else {
+            setTimeout(waitAndToggleCheckbox, 300);
+        }
+    }
+    waitAndToggleCheckbox();
+})();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(toggleAutoUpgradationCheckbox, null)
+
+
+
+                        val selectInsurance = """
+javascript: (function () {
+    function waitAndSelectInsurance() {
+        var yesRadio = document.getElementById("travelInsuranceOptedYes-0");
+        var noRadio = document.getElementById("travelInsuranceOptedNo-0");
+
+        if (yesRadio && noRadio) {
+            if ("$travelInsurance" === "1") {
+                yesRadio.click();
+                Android.sendToAndroid("✅ Insurance selected YES for travel insurance.");
+            } else {
+                noRadio.click();
+                Android.sendToAndroid("❌ Insurance selected NO for travel insurance.");
+            }
+        } else {
+            setTimeout(waitAndSelectInsurance, 300); // Retry every 300ms
+        }
+    }
+    waitAndSelectInsurance();
+})();
+""".trimIndent()
+
+                        webViewRef?.evaluateJavascript(selectInsurance, null)
+
+
+                        val paymentSelectionScript = """
+javascript: (function () {
+    function waitAndSelectPayment() {
+        var cardNetbankingRadio = document.querySelector('p-radiobutton[id="3"] input[type="radio"][name="paymentType"]');
+        var upiRadio = document.querySelector('p-radiobutton[id="2"] input[type="radio"][name="paymentType"]');
+
+        if (cardNetbankingRadio && upiRadio) {
+            if ("$paymentOption" === "CARD_NETBANKING") {
+                cardNetbankingRadio.click();
+                Android.sendToAndroid("✅ Car NetBanking option selected.");
+            } else if ("$paymentOption" === "UPI") {
+                upiRadio.click();
+                Android.sendToAndroid("✅ UPI option selected.");
+            } else {
+                console.log("Invalid payment option: " + "$paymentOption");
+            }
+        } else {
+            setTimeout(waitAndSelectPayment, 300); // Retry every 300ms
+        }
+    }
+    waitAndSelectPayment();
+})();
+""".trimIndent()
+
+//                        webViewRef?.evaluateJavascript(paymentSelectionScript, null)
+
 
 
                         break
