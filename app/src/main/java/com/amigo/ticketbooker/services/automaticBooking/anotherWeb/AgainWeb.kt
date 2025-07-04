@@ -133,7 +133,10 @@ fun IrctcWebViewScreen(
                                     }
 
                                     suspend fun solveCaptchaAndSignIn() {
-                                        while (true) {
+                                        val maxRetries = 5 // Change this value as needed
+                                        var retries = 0
+                                        while (retries < maxRetries) {
+                                            retries++
                                             // Download captcha and store link
                                             val captchaUrl = getCaptchaUrl()
                                             lastCaptchaUrl = captchaUrl
@@ -184,6 +187,9 @@ fun IrctcWebViewScreen(
                                                 break
                                             }
                                         }
+                                        if (retries >= maxRetries) {
+                                            statusMessage = "❌ Max captcha retries reached."
+                                        }
                                     }
 
                                     solveCaptchaAndSignIn()
@@ -210,89 +216,6 @@ fun IrctcWebViewScreen(
 private const val CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 13; Pixel 6 Pro) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) " +
         "Chrome/114.0.5735.199 Mobile Safari/537.36"
-
-suspend fun randomDelay(minMillis: Long, maxMillis: Long) {
-    val delayMillis = Random.nextLong(minMillis, maxMillis + 1)
-    delay(delayMillis)
-}
-
-
-//fun captchaSolver(
-//    context: Context,
-//    webView: WebView,
-//    captchaImageSelector: String,
-//    inputFieldSelector: String,
-//    buttonSelector: String,
-//    refreshButtonXPath: String,
-//    waitAnimationXPath: String = "/div/div[2]/span[2]",
-//    verifiedElementXPath: String = "/html/body/app-root/app-home/div[1]/app-header/div[2]/div[2]/div[1]/a[2]/span",
-//    maxRetries: Int = 3,
-//    onVerified: (() -> Unit)? = null // <-- callback for verification
-//) {
-//    var retries = 0
-//
-//    fun solve() {
-//        if (retries >= maxRetries) {
-//            Log.d("CaptchaSolver", "❌ Max retries reached.")
-//            return
-//        }
-//
-//        retries++
-//
-//        val getImageJS = """
-//            (function() {
-//                const img = document.querySelector("$captchaImageSelector");
-//                if (img) {
-//                    return img.src || img.getAttribute('src');
-//                }
-//                return "";
-//            })();
-//        """.trimIndent()
-//
-//        webView.evaluateJavascript(getImageJS) { imageUrl ->
-//            if (imageUrl.isNullOrBlank() || imageUrl == "\"\"") {
-//                Log.d("CaptchaSolver", "❌ Captcha image not found.")
-//                return@evaluateJavascript
-//            }
-//
-//            downloadAndRecognizeCaptcha(context, imageUrl.trim('"')) { captchaText ->
-//                if (captchaText.isEmpty()) {
-//                    Log.d("CaptchaSolver", "⚠️ OCR failed, refreshing captcha.")
-//                    refreshCaptcha(webView, refreshButtonXPath)
-//                    solve()
-//                    return@downloadAndRecognizeCaptcha
-//                }
-//
-//                // Wait for 2 seconds before filling captcha input, then 1-2 seconds before clicking login
-//                CoroutineScope(Dispatchers.Main).launch {
-//                    delay(1000) // 2 seconds before filling captcha
-//                    fillCaptchaInput(webView, inputFieldSelector, captchaText)
-//                    delay((1000..2000).random().toLong()) // 1-2 seconds before clicking login
-//                    clickLoginButton(webView, buttonSelector)
-//                }
-//
-//                waitForCaptchaVerification(
-//                    webView,
-//                    waitAnimationXPath,
-//                    verifiedElementXPath,
-//                    refreshButtonXPath,
-//                    { verified ->
-//                        if (verified) {
-//                            Log.d("CaptchaSolver", "✅ Captcha solved successfully.")
-//                            onVerified?.invoke() // Call the callback if provided
-//                        } else {
-//                            Log.d("CaptchaSolver", "❌ Captcha solve failed, retrying ($retries/$maxRetries).")
-//                            refreshCaptcha(webView, refreshButtonXPath)
-//                            solve()
-//                        }
-//                    }
-//                )
-//            }
-//        }
-//    }
-//
-//    solve()
-//}
 
 private fun downloadAndRecognizeCaptcha(context: Context, imageUrl: String, onResult: (String) -> Unit) {
     CoroutineScope(Dispatchers.IO).launch {
@@ -345,7 +268,7 @@ private fun fillCaptchaInput(webView: WebView, inputSelector: String, captcha: S
     val js = """
         (function() {
             const input = document.querySelector("$inputSelector");
-            if (input) { input.value = "1$captcha"; input.dispatchEvent(new Event('input', { bubbles: true })); }
+            if (input) { input.value = "$captcha"; input.dispatchEvent(new Event('input', { bubbles: true })); }
         })();
     """.trimIndent()
     webView.post { webView.evaluateJavascript(js, null) }
@@ -361,16 +284,6 @@ private fun clickLoginButton(webView: WebView, buttonSelector: String) {
     webView.post { webView.evaluateJavascript(js, null) }
 }
 
-// For compatibility, keep the old function but use the new ones inside if needed
-//private fun fillAndSubmitCaptcha(webView: WebView, inputSelector: String, buttonSelector: String, captcha: String) {
-//    fillCaptchaInput(webView, inputSelector, captcha)
-//    // Optionally add a delay before clicking
-//    CoroutineScope(Dispatchers.Main).launch {
-//        delay(400)
-//        clickLoginButton(webView, buttonSelector)
-//    }
-//}
-
 private fun refreshCaptcha(webView: WebView, refreshButtonXPath: String) {
     val js = """
         (function() {
@@ -381,52 +294,6 @@ private fun refreshCaptcha(webView: WebView, refreshButtonXPath: String) {
 
     webView.post { webView.evaluateJavascript(js, null) }
 }
-
-//private fun waitForCaptchaVerification(
-//    webView: WebView,
-//    waitXPath: String,
-//    verifyXPath: String,
-//    refreshButtonXPath: String,
-//    onResult: (Boolean) -> Unit,
-//    timeoutMillis: Long = 60000L // 60 seconds
-//) {
-//    val startTime = System.currentTimeMillis()
-//    fun poll() {
-//        CoroutineScope(Dispatchers.Main).launch {
-//            val elapsed = System.currentTimeMillis() - startTime
-//            if (elapsed > timeoutMillis) {
-//                Log.d("CaptchaSolver", "❌ Verification timed out after ${timeoutMillis / 1000} seconds.")
-//                onResult(false)
-//                return@launch
-//            }
-//            val checkJS = """
-//                (function() {
-//                    const waitEl = document.evaluate('$waitXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-//                    if (waitEl) return "WAITING";
-//                    const verifyEl = document.evaluate('$verifyXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-//                    if (verifyEl) return "SUCCESS";
-//                    return "FAIL";
-//                })();
-//            """.trimIndent()
-//            webView.evaluateJavascript(checkJS) { result ->
-//                when {
-//                    result?.contains("WAITING") == true -> {
-//                        Log.d("CaptchaSolver", "⏳ Waiting for animation...")
-//                        poll()
-//                    }
-//                    result?.contains("SUCCESS") == true -> {
-//                        onResult(true)
-//                    }
-//                    else -> {
-//                        Log.d("CaptchaSolver", "❌ Verification not found, retrying...")
-//                        poll()
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    poll()
-//}
 
 private fun removePopup(webView: WebView) {
     val js = """
@@ -523,8 +390,3 @@ private fun enterPassword(webView: WebView, inputPassword: String) {
                 """.trimIndent()
     webView.evaluateJavascript(js, null)
 }
-
-// NOTE: Do NOT assign the result of launch/async to a variable expecting a WebView.
-// For example, this is WRONG:
-//   val webView = CoroutineScope(Dispatchers.Main).launch { ... } // webView is NOT a WebView!
-// Always use the actual WebView instance, and launch coroutines for side effects only.
