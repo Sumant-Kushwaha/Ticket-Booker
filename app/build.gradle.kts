@@ -88,4 +88,7 @@ dependencies {
 
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
+    // https://mvnrepository.com/artifact/org.mozilla.geckoview/geckoview
+    implementation("org.mozilla.geckoview:geckoview:139.0.20250523173407")
+
 }

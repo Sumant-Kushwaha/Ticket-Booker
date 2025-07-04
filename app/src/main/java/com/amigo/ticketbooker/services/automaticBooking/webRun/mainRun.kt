@@ -1,6 +1,7 @@
 package com.amigo.ticketbooker.services.automaticBooking.webRun
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -22,17 +23,22 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.set
-import androidx.core.graphics.scale
+import android.util.Base64
+import com.amigo.ticketbooker.services.automaticBooking.anotherWeb.captchaSolver
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.net.URL
 import kotlin.coroutines.resume
 
 
@@ -131,171 +137,40 @@ fun MainAutomate(
     var isLoading by remember { mutableStateOf(true) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var captchaText by remember { mutableStateOf("") } // To store extracted captcha
-    var captchaImageUrl by remember { mutableStateOf("") } // For debugging or future use
-    val contextForML = context.applicationContext
     val scope = rememberCoroutineScope()
 
-    // Enhanced preprocessing: grayscale, resize, adaptive binarization
-    fun adaptiveBinarize(bitmap: Bitmap, blockSize: Int = 12): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val binarized = createBitmap(width, height)
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                var sum = 0
-                var count = 0
-                for (dy in -blockSize / 2..blockSize / 2) {
-                    for (dx in -blockSize / 2..blockSize / 2) {
-                        val nx = x + dx
-                        val ny = y + dy
-                        if (nx in 0 until width && ny in 0 until height) {
-                            val color = pixels[ny * width + nx]
-                            sum += Color.red(color)
-                            count++
-                        }
-                    }
-                }
-                val mean = sum / count
-                val pixel = Color.red(pixels[y * width + x])
-                val binColor = if (pixel > mean) Color.WHITE else Color.BLACK
-                binarized[x, y] = binColor
-            }
-        }
-        return binarized
-    }
 
-    fun enhancedPreprocessBitmap(bitmap: Bitmap): Bitmap {
-        // 1. Grayscale
-        val width = bitmap.width
-        val height = bitmap.height
-        val grayscale = createBitmap(width, height)
-        val canvas = Canvas(grayscale)
-        val paint = Paint()
-        val colorMatrix = ColorMatrix()
-        colorMatrix.setSaturation(0f)
-        paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        // 2. Resize if needed
-        val targetHeight = 60
-        val resized = if (height < targetHeight) {
-            grayscale.scale((width * (targetHeight.toFloat() / height)).toInt(), targetHeight)
-        } else {
-            grayscale
-        }
-        // 3. Adaptive binarization
-        return adaptiveBinarize(resized, blockSize = 12)
-    }
-
-    // Helper to download image and run ML Kit OCR
-    fun processCaptchaImage(
-        url: String,
-        context: android.content.Context,
-        onResult: (String) -> Unit
-    ) {
-        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                val bitmap = if (url.startsWith("data:image")) {
-                    // base64 image
-                    val base64Data = url.substringAfter(",")
-                    val decoded =
-                        android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
-                    android.graphics.BitmapFactory.decodeByteArray(decoded, 0, decoded.size)
-                } else {
-                    // normal url
-                    val connection = java.net.URL(url).openConnection()
-                    connection.connect()
-                    val input = connection.getInputStream()
-                    android.graphics.BitmapFactory.decodeStream(input)
-                }
-                val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
-                    com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
-                )
-                val preprocessed = enhancedPreprocessBitmap(bitmap)
-                val image = com.google.mlkit.vision.common.InputImage.fromBitmap(preprocessed, 0)
-                val result = recognizer.process(image)
-                    .addOnSuccessListener { visionText ->
-                        val raw = visionText.text.trim()
-                        val cleaned = raw.replace(
-                            "\\s".toRegex(),
-                            ""
-                        ) // Remove all whitespace, keep special chars
-                        Log.d("CaptchaOCR", "Cleaned captcha text: $cleaned (raw: $raw)")
-                        onResult(cleaned)
-                    }
-                    .addOnFailureListener { e ->
-                        onResult("")
-                    }
-            } catch (e: Exception) {
-                onResult("")
-            }
-        }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
 
-        AndroidView(factory = {
-            WebView(context).apply {
-                settings.javaScriptEnabled = true
-                WebView.setWebContentsDebuggingEnabled(true)
+        AndroidView(
+            factory = { context ->
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    WebView.setWebContentsDebuggingEnabled(true)
 
-                addJavascriptInterface(object {
-                    @JavascriptInterface
-                    fun sendToAndroid(message: String) {
-                        Log.d("WebViewJS", message)
-                        statusMessage = message
-                    }
+                    addJavascriptInterface(object {
+                        @JavascriptInterface
+                        fun sendToAndroid(message: String) {
+                            Log.d("WebViewJS", message)
+                            statusMessage = message
+                        }
+                    }, "Android")
 
-                    @JavascriptInterface
-                    fun sendCaptchaImageUrl(url: String) {
-                        Log.d("WebViewJS", "Captcha Image URL: $url")
-                        captchaImageUrl = url
-                        // Download and process image in background
-                        processCaptchaImage(url, contextForML) { text ->
-                            captchaText = text
-                            statusMessage = "Captcha solved: $text"
-                            Log.d("CaptchaOCR", "Extracted captcha text: $text")
-                            // Inject captcha text into the captcha input field
-                            if (text.isNotEmpty()) {
-                                webViewRef?.post {
-                                    webViewRef?.evaluateJavascript(
-                                        """
-                                        (function() {
-                                            var input = document.querySelector('input[formcontrolname="captcha"]');
-                                            if (input) {
-                                                input.value = '""" + text + """';
-                                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                                                input.dispatchEvent(new Event('change', { bubbles: true }));
-                                                input.blur();
-                                                Android.sendToAndroid('✅ Captcha field filled');
-                                            } else {
-                                                Android.sendToAndroid('❌ Captcha input not found');
-                                            }
-                                        })();
-                                        """.trimIndent(),
-                                        null
-                                    )
-                                }
-                            }
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            isLoading = false
+                            statusMessage = "✅ Page loaded. Running automation..."
+                            webViewRef = view // store reference if you need to run JS later
                         }
                     }
-                }, "Android")
 
-                webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        isLoading = false
-                        statusMessage = "✅ Page loaded. Running automation..."
-
-                        webViewRef = view // store ref for use in LaunchedEffect
-
-
-                    }
+                    loadUrl("https://www.irctc.co.in/nget/train-search")
                 }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
-                loadUrl("https://www.irctc.co.in/nget/train-search")
-            }
-        }, modifier = Modifier.fillMaxSize())
 
         // Step chain (triggered once page is loaded and webViewRef is set)
         LaunchedEffect(webViewRef) {
@@ -382,65 +257,18 @@ fun MainAutomate(
                 """.trimIndent()
                 webViewRef?.evaluateJavascript(passwordInput, null)
 
-                // Step 4: Extract captcha image after password
-                val extractCaptcha = """
-                    javascript:(function() {
-                        var img = document.querySelector('.captcha-img');
-                        if (img) {
-                            var src = img.src || img.getAttribute('src');
-                            Android.sendCaptchaImageUrl(src);
-                        } else {
-                            Android.sendToAndroid('❌ Captcha image not found');
-                        }
-                    })();
-                """.trimIndent()
-                webViewRef?.evaluateJavascript(extractCaptcha, null)
-                delay(1200) // give time for captcha to process
+                captchaSolver(
+                    context,
+                    webViewRef!!,
+                    captchaImageSelector = ".captcha-img",
+                    inputFieldSelector = "input[formcontrolname='captcha']",
+                    buttonSelector = "#login_header_disable > div > div > div.ng-tns-c19-13.ui-dialog-content.ui-widget-content > div.irmodal.ng-tns-c19-13 > div > div.login-bg.pull-left > div > div.modal-body > form > span > button",
+                    refreshButtonXPath = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span",
+                    waitAnimationXPath = "/div/div[2]/span[2]",
+                    verifiedElementXPath = "/html/body/app-root/app-home/div[1]/app-header/div[2]/div[2]/div[1]/a[2]/span",
+                    maxRetries = 5
+                )
 
-                // Step 5: Click the SIGN IN button and perform up to 5 attempts for captcha and login
-                var loginSuccess = false
-                val targetSelector = "body > app-root > app-home > div.header-fix > app-header > div.col-sm-12.h_container > div.text-center.h_main_div > div.row.col-sm-12.h_head1 > a.search_btn.loginText.ng-star-inserted > span"
-                for (attempt in 1..5) {
-                    // Click SIGN IN
-                    val clickSignIn = """
-                        javascript:(function() {
-                            var btn = document.querySelector('button.search_btn.train_Search.train_Search_custom_hover');
-                            if (btn) {
-                                btn.click();
-                                Android.sendToAndroid('✅ SIGN IN button clicked (attempt $attempt)');
-                            } else {
-                                Android.sendToAndroid('❌ SIGN IN button not found (attempt $attempt)');
-                            }
-                        })();
-                    """.trimIndent()
-                    webViewRef?.evaluateJavascript(clickSignIn, null)
-                    delay(3000) // Wait for login to process
-
-                    // Check for target element
-                    val checkTarget = """
-                        javascript:(function() {
-                            var el = document.querySelector('$targetSelector');
-                            if (el) {
-                                Android.sendToAndroid('✅ Target element found (attempt $attempt)');
-                                return true;
-                            } else {
-                                Android.sendToAndroid('❌ Target element NOT found (attempt $attempt)');
-                                return false;
-                            }
-                        })();
-                    """.trimIndent()
-                    var found = false
-                    val latch = kotlinx.coroutines.CompletableDeferred<Boolean>()
-                    webViewRef?.evaluateJavascript(
-                        "(function() { return document.querySelector('$targetSelector') !== null; })();"
-                    ) { value ->
-                        found = value == "true"
-                        latch.complete(found)
-                    }
-                    latch.await()
-                    if (found) {
-                        statusMessage = "✅ Login successful. Target element found."
-                        loginSuccess = true
 
                 //Date Input
                 val dateInput = """
@@ -1016,31 +844,6 @@ javascript: (function () {
 
 //                        webViewRef?.evaluateJavascript(paymentSelectionScript, null)
 
-
-
-                        break
-                    } else {
-                        statusMessage =
-                            "❌ Target element not found. Retrying captcha (attempt $attempt)..."
-                        // Re-extract captcha and fill it
-                        val extractCaptcha = """
-                            javascript:(function() {
-                                var img = document.querySelector('.captcha-img');
-                                if (img) {
-                                    var src = img.src || img.getAttribute('src');
-                                    Android.sendCaptchaImageUrl(src);
-                                } else {
-                                    Android.sendToAndroid('❌ Captcha image not found');
-                                }
-                            })();
-                        """.trimIndent()
-                        webViewRef?.evaluateJavascript(extractCaptcha, null)
-                        delay(1500) // Wait for captcha to be solved and filled
-                    }
-                }
-                if (!loginSuccess) {
-                    statusMessage = "❌ Login failed after 5 attempts. Target element not found."
-                }
             }
         }
 
@@ -1056,3 +859,173 @@ javascript: (function () {
         )
     }
 }
+
+
+
+
+fun captchaSolver(
+    context: Context,
+    webView: WebView,
+    captchaImageSelector: String,
+    inputFieldSelector: String,
+    buttonSelector: String,
+    refreshButtonXPath: String,
+    waitAnimationXPath: String = "/div/div[2]/span[2]",
+    verifiedElementXPath: String = "/html/body/app-root/app-home/div[1]/app-header/div[2]/div[2]/div[1]/a[2]/span",
+    maxRetries: Int = 3
+) {
+    var retries = 0
+
+    fun solve() {
+        if (retries >= maxRetries) {
+            Log.d("CaptchaSolver", "❌ Max retries reached.")
+            return
+        }
+
+        retries++
+
+        val getImageJS = """
+            (function() {
+                const img = document.querySelector("$captchaImageSelector");
+                if (img) {
+                    return img.src || img.getAttribute('src');
+                }
+                return "";
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(getImageJS) { imageUrl ->
+            if (imageUrl.isNullOrBlank() || imageUrl == "\"\"") {
+                Log.d("CaptchaSolver", "❌ Captcha image not found.")
+                return@evaluateJavascript
+            }
+
+            downloadAndRecognizeCaptcha(context, imageUrl.trim('"')) { captchaText ->
+                if (captchaText.isEmpty()) {
+                    Log.d("CaptchaSolver", "⚠️ OCR failed, refreshing captcha.")
+                    refreshCaptcha(webView, refreshButtonXPath)
+                    solve()
+                    return@downloadAndRecognizeCaptcha
+                }
+
+                fillAndSubmitCaptcha(webView, inputFieldSelector, buttonSelector, captchaText)
+
+                waitForCaptchaVerification(webView, waitAnimationXPath, verifiedElementXPath, refreshButtonXPath) { verified ->
+                    if (verified) {
+                        Log.d("CaptchaSolver", "✅ Captcha solved successfully.")
+                    } else {
+                        Log.d("CaptchaSolver", "❌ Captcha solve failed, retrying ($retries/$maxRetries).")
+                        solve()
+                    }
+                }
+            }
+        }
+    }
+
+    solve()
+}
+
+private fun downloadAndRecognizeCaptcha(context: Context, imageUrl: String, onResult: (String) -> Unit) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val bitmap = if (imageUrl.startsWith("data:image")) {
+                val base64 = imageUrl.substringAfter(",")
+                val decoded = Base64.decode(base64, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(decoded, 0, decoded.size)
+            } else {
+                BitmapFactory.decodeStream(URL(imageUrl).openConnection().getInputStream())
+            }
+
+            val preprocessed = preprocessBitmap(bitmap)
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            val image = InputImage.fromBitmap(preprocessed, 0)
+
+            recognizer.process(image)
+                .addOnSuccessListener { onResult(it.text.trim().replace("\\s".toRegex(), "")) }
+                .addOnFailureListener { onResult("") }
+
+        } catch (e: Exception) {
+            Log.e("CaptchaSolver", "Error loading captcha: ${e.message}")
+            onResult("")
+        }
+    }
+}
+
+private fun preprocessBitmap(bitmap: Bitmap): Bitmap {
+    val grayBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(grayBitmap)
+    val paint = Paint().apply {
+        colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+    }
+    canvas.drawBitmap(bitmap, 0f, 0f, paint)
+
+    val binarized = Bitmap.createBitmap(grayBitmap.width, grayBitmap.height, Bitmap.Config.ARGB_8888)
+    for (x in 0 until grayBitmap.width) {
+        for (y in 0 until grayBitmap.height) {
+            val pixel = grayBitmap.getPixel(x, y)
+            val brightness = android.graphics.Color.red(pixel) // <-- use fully qualified name
+            val binarizedColor = if (brightness < 128) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+            binarized.setPixel(x, y, binarizedColor)
+        }
+    }
+
+    return binarized
+}
+
+private fun fillAndSubmitCaptcha(webView: WebView, inputSelector: String, buttonSelector: String, captcha: String) {
+    val js = """
+        (function() {
+            const input = document.querySelector("$inputSelector");
+            if (input) { input.value = "$captcha"; input.dispatchEvent(new Event('input', { bubbles: true })); }
+            const btn = document.querySelector("$buttonSelector");
+            if (btn) { btn.click(); }
+        })();
+    """.trimIndent()
+
+    webView.post { webView.evaluateJavascript(js, null) }
+}
+
+private fun refreshCaptcha(webView: WebView, refreshButtonXPath: String) {
+    val js = """
+        (function() {
+            const el = document.evaluate('$refreshButtonXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (el) el.click();
+        })();
+    """.trimIndent()
+
+    webView.post { webView.evaluateJavascript(js, null) }
+}
+
+private fun waitForCaptchaVerification(
+    webView: WebView,
+    waitXPath: String,
+    verifyXPath: String,
+    refreshButtonXPath: String,
+    onResult: (Boolean) -> Unit
+) {
+    CoroutineScope(Dispatchers.Main).launch {
+        delay(2000L)
+
+        val checkJS = """
+            (function() {
+                const waitEl = document.evaluate('$waitXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (waitEl) return "WAITING";
+                const verifyEl = document.evaluate('$verifyXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (verifyEl) return "SUCCESS";
+                return "FAIL";
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(checkJS) { result ->
+            when {
+                result?.contains("WAITING") == true -> {
+                    Log.d("CaptchaSolver", "⏳ Waiting for animation...")
+                    waitForCaptchaVerification(webView, waitXPath, verifyXPath, refreshButtonXPath, onResult)
+                }
+                result?.contains("SUCCESS") == true -> onResult(true)
+                else -> onResult(false)
+            }
+        }
+    }
+}
+

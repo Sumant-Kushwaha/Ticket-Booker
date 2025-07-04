@@ -14,8 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.amigo.ticketbooker.authPage.authViewModel.AuthViewModel
-import com.amigo.ticketbooker.services.automaticBooking.webRun.FlowRun
-import com.amigo.ticketbooker.ui.AppRoot
+import com.amigo.ticketbooker.services.automaticBooking.anotherWeb.IrctcWebViewScreen
 import com.amigo.ticketbooker.ui.theme.TicketBookerTheme
 
 class MainActivity : ComponentActivity() {
@@ -44,7 +43,8 @@ class MainActivity : ComponentActivity() {
 //                    AppRoot(onExitApp = { finish() })
                     Column(Modifier.fillMaxSize()) {
                         Spacer(Modifier.height(50.dp))
-                        FlowRun()
+//                        FlowRun()
+                        IrctcWebViewScreen()
                     }
                 }
             }
