@@ -29,6 +29,7 @@ import java.net.URL
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
 import androidx.core.graphics.set
+import kotlin.coroutines.resume
 
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -36,6 +37,7 @@ import androidx.core.graphics.set
 fun IrctcWebViewScreen(
     inputUserName: String = "anshuabhishek",
     inputPassword: String = "Amigo@2805",
+    inputDate: String="5/07/2025"
 ) {
     var statusMessage by remember { mutableStateOf("Loading...") }
     var hasLoggedIn by remember { mutableStateOf(false) }
@@ -77,124 +79,146 @@ fun IrctcWebViewScreen(
                                         }
                                     }
 
-                                    // 2. Click menu, then login button
-                                    menuClick(this@apply)
-                                    delay(800)
-                                    loginButtonInMenu(this@apply)
-                                    delay(800)
+//                                    // 2. Click menu, then login button
+//                                    menuClick(this@apply)
+//                                    delay(800)
+//                                    loginButtonInMenu(this@apply)
+//                                    delay(800)
+//
+//                                    // 3. Fill username and password ONCE
+//                                    enterUsername(this@apply, inputUserName)
+//                                    delay(400)
+//                                    enterPassword(this@apply, inputPassword)
+//                                    delay(400)
+//
+//                                    // 4. Captcha solve loop
+//                                    val captchaImageSelector = ".captcha-img"
+//                                    val inputFieldSelector = "input[formcontrolname='captcha']"
+//                                    val buttonSelector = "#login_header_disable > div > div > div.ng-tns-c19-13.ui-dialog-content.ui-widget-content > div.irmodal.ng-tns-c19-13 > div > div.login-bg.pull-left > div > div.modal-body > form > span > button"
+//                                    val refreshButtonXPath = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
+//
+//                                    var lastCaptchaUrl: String? = null
+//
+//                                    suspend fun getCaptchaUrl(): String {
+//                                        val js = """
+//                                            (function() {
+//                                                const img = document.querySelector("$captchaImageSelector");
+//                                                if (img) return img.src || img.getAttribute('src');
+//                                                return "";
+//                                            })();
+//                                        """.trimIndent()
+//                                        return suspendCancellableCoroutine { cont ->
+//                                            this@apply.evaluateJavascript(js) { url ->
+//                                                cont.resume(url.trim('"'), null)
+//                                            }
+//                                        }
+//                                    }
+//
+//                                    suspend fun fillCaptchaAndSignIn(captchaText: String) {
+//                                        fillCaptchaInput(this@apply, inputFieldSelector, captchaText)
+//                                        delay(400)
+//                                        clickLoginButton(this@apply, buttonSelector)
+//                                    }
+//
+//                                    suspend fun isSignInButtonPresent(): Boolean {
+//                                        val js = """
+//                                            (function() {
+//                                                const btn = document.querySelector("$buttonSelector");
+//                                                return !!btn;
+//                                            })();
+//                                        """.trimIndent()
+//                                        return suspendCancellableCoroutine { cont ->
+//                                            this@apply.evaluateJavascript(js) { result ->
+//                                                cont.resume(result == "true", null)
+//                                            }
+//                                        }
+//                                    }
+//
+//                                    suspend fun solveCaptchaAndSignIn() {
+//                                        val maxRetries = 5 // Change this value as needed
+//                                        var retries = 0
+//                                        while (retries < maxRetries) {
+//                                            retries++
+//                                            // Download captcha and store link
+//                                            val captchaUrl = getCaptchaUrl()
+//                                            lastCaptchaUrl = captchaUrl
+//
+//                                            // OCR
+//                                            val captchaText = suspendCancellableCoroutine<String> { cont ->
+//                                                downloadAndRecognizeCaptcha(context, captchaUrl) { text ->
+//                                                    cont.resume(text, null)
+//                                                }
+//                                            }
+//                                            if (captchaText.isEmpty()) {
+//                                                refreshCaptcha(this@apply, refreshButtonXPath)
+//                                                delay(1000)
+//                                                continue
+//                                            }
+//
+//                                            // Only fill captcha and sign in
+//                                            fillCaptchaAndSignIn(captchaText)
+//                                            delay(500)
+//
+//                                            // Check if sign in button still present
+//                                            if (isSignInButtonPresent()) {
+//                                                // Get captcha url again
+//                                                val newCaptchaUrl = getCaptchaUrl()
+//                                                if (newCaptchaUrl == lastCaptchaUrl) {
+//                                                    // Refresh until captcha changes
+//                                                    var refreshed = false
+//                                                    repeat(5) {
+//                                                        refreshCaptcha(this@apply, refreshButtonXPath)
+//                                                        delay(1000)
+//                                                        val checkUrl = getCaptchaUrl()
+//                                                        if (checkUrl != lastCaptchaUrl) {
+//                                                            refreshed = true
+//                                                            lastCaptchaUrl = checkUrl
+//                                                            return@repeat
+//                                                        }
+//                                                    }
+//                                                    if (!refreshed) {
+//                                                        // Could not get new captcha, try again
+//                                                        continue
+//                                                    }
+//                                                }
+//                                                // New captcha, repeat solve
+//                                                continue
+//                                            } else {
+//                                                // Sign in button gone, done
+//                                                statusMessage = "Login process finished."
+//                                                break
+//                                            }
+//                                        }
+//                                        if (retries >= maxRetries) {
+//                                            statusMessage = "❌ Max captcha retries reached."
+//                                        }
+//                                    }
+//
+//                                    solveCaptchaAndSignIn()
+//                                    popupJob.cancel()
+//                                    hasLoggedIn = true
 
-                                    // 3. Fill username and password ONCE
-                                    enterUsername(this@apply, inputUserName)
-                                    delay(400)
-                                    enterPassword(this@apply, inputPassword)
-                                    delay(400)
 
-                                    // 4. Captcha solve loop
-                                    val captchaImageSelector = ".captcha-img"
-                                    val inputFieldSelector = "input[formcontrolname='captcha']"
-                                    val buttonSelector = "#login_header_disable > div > div > div.ng-tns-c19-13.ui-dialog-content.ui-widget-content > div.irmodal.ng-tns-c19-13 > div > div.login-bg.pull-left > div > div.modal-body > form > span > button"
-                                    val refreshButtonXPath = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
+                                    val journeyDate = inputDate  // user input in dd/MM/yyyy format
 
-                                    var lastCaptchaUrl: String? = null
+                                    val (targetDay, targetMonthNumber, targetYear) = journeyDate.split("/")
 
-                                    suspend fun getCaptchaUrl(): String {
-                                        val js = """
-                                            (function() {
-                                                const img = document.querySelector("$captchaImageSelector");
-                                                if (img) return img.src || img.getAttribute('src');
-                                                return "";
-                                            })();
-                                        """.trimIndent()
-                                        return suspendCancellableCoroutine { cont ->
-                                            this@apply.evaluateJavascript(js) { url ->
-                                                cont.resume(url.trim('"'), null)
-                                            }
-                                        }
-                                    }
+                                    val monthNames = listOf(
+                                        "January", "February", "March", "April", "May", "June",
+                                        "July", "August", "September", "October", "November", "December"
+                                    )
 
-                                    suspend fun fillCaptchaAndSignIn(captchaText: String) {
-                                        fillCaptchaInput(this@apply, inputFieldSelector, captchaText)
-                                        delay(400)
-                                        clickLoginButton(this@apply, buttonSelector)
-                                    }
+                                    val targetMonthIndex = targetMonthNumber.toInt() - 1
+                                    val targetMonth = monthNames[targetMonthIndex]  // e.g., "August"
 
-                                    suspend fun isSignInButtonPresent(): Boolean {
-                                        val js = """
-                                            (function() {
-                                                const btn = document.querySelector("$buttonSelector");
-                                                return !!btn;
-                                            })();
-                                        """.trimIndent()
-                                        return suspendCancellableCoroutine { cont ->
-                                            this@apply.evaluateJavascript(js) { result ->
-                                                cont.resume(result == "true", null)
-                                            }
-                                        }
-                                    }
+                                    selectJourneyDate(
+                                        webViewRef = this@apply,
+                                        journeyDate = journeyDate,
+                                        targetDay = targetDay,
+                                        targetMonthName = targetMonth,
+                                        targetYear = targetYear
+                                    )
 
-                                    suspend fun solveCaptchaAndSignIn() {
-                                        val maxRetries = 5 // Change this value as needed
-                                        var retries = 0
-                                        while (retries < maxRetries) {
-                                            retries++
-                                            // Download captcha and store link
-                                            val captchaUrl = getCaptchaUrl()
-                                            lastCaptchaUrl = captchaUrl
-
-                                            // OCR
-                                            val captchaText = suspendCancellableCoroutine<String> { cont ->
-                                                downloadAndRecognizeCaptcha(context, captchaUrl) { text ->
-                                                    cont.resume(text, null)
-                                                }
-                                            }
-                                            if (captchaText.isEmpty()) {
-                                                refreshCaptcha(this@apply, refreshButtonXPath)
-                                                delay(1000)
-                                                continue
-                                            }
-
-                                            // Only fill captcha and sign in
-                                            fillCaptchaAndSignIn(captchaText)
-                                            delay(500)
-
-                                            // Check if sign in button still present
-                                            if (isSignInButtonPresent()) {
-                                                // Get captcha url again
-                                                val newCaptchaUrl = getCaptchaUrl()
-                                                if (newCaptchaUrl == lastCaptchaUrl) {
-                                                    // Refresh until captcha changes
-                                                    var refreshed = false
-                                                    repeat(5) {
-                                                        refreshCaptcha(this@apply, refreshButtonXPath)
-                                                        delay(1000)
-                                                        val checkUrl = getCaptchaUrl()
-                                                        if (checkUrl != lastCaptchaUrl) {
-                                                            refreshed = true
-                                                            lastCaptchaUrl = checkUrl
-                                                            return@repeat
-                                                        }
-                                                    }
-                                                    if (!refreshed) {
-                                                        // Could not get new captcha, try again
-                                                        continue
-                                                    }
-                                                }
-                                                // New captcha, repeat solve
-                                                continue
-                                            } else {
-                                                // Sign in button gone, done
-                                                statusMessage = "Login process finished."
-                                                break
-                                            }
-                                        }
-                                        if (retries >= maxRetries) {
-                                            statusMessage = "❌ Max captcha retries reached."
-                                        }
-                                    }
-
-                                    solveCaptchaAndSignIn()
-                                    popupJob.cancel()
-                                    hasLoggedIn = true
                                 }
                             }
                         }
@@ -389,4 +413,129 @@ private fun enterPassword(webView: WebView, inputPassword: String) {
                     })();
                 """.trimIndent()
     webView.evaluateJavascript(js, null)
+}
+
+
+suspend fun selectJourneyDate(
+    webViewRef: WebView,
+    journeyDate: String,
+    targetDay: String,
+    targetMonthName: String,
+    targetYear: String
+) {
+    val dateInputScript = """
+        javascript:(function () {
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"];
+
+            const targetDay = "$targetDay";
+            const targetMonth = "$targetMonthName";
+            const targetYear = parseInt("$targetYear");
+
+            function log(msg) {
+                if (window.Android) Android.sendToAndroid(msg);
+                console.log(msg);
+            }
+
+            const input = document.querySelector(
+                '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
+            );
+            if (!input) { log("❌ Date input not found"); return; }
+
+            input.focus();
+            input.click();
+
+            function waitForCalendar(callback) {
+                if (document.querySelector(".ui-datepicker-calendar")) {
+                    callback();
+                } else {
+                    setTimeout(() => waitForCalendar(callback), 200);
+                }
+            }
+
+            function getMonthIndex(monthName) {
+                return monthNames.indexOf(monthName);
+            }
+
+            function getCurrentMonthYear() {
+                const monthText = document.querySelector(".ui-datepicker-month")?.innerText?.trim();
+                const yearText = document.querySelector(".ui-datepicker-year")?.innerText?.trim();
+                return { monthIndex: getMonthIndex(monthText), year: parseInt(yearText) };
+            }
+
+            function alignMonthYear(callback) {
+                const { monthIndex: currentMonthIndex, year: currentYear } = getCurrentMonthYear();
+                const targetMonthIndex = getMonthIndex(targetMonth);
+
+                if (isNaN(currentMonthIndex) || isNaN(currentYear)) {
+                    setTimeout(() => alignMonthYear(callback), 200);
+                    return;
+                }
+
+                if (currentYear < targetYear || (currentYear === targetYear && currentMonthIndex < targetMonthIndex)) {
+                    document.querySelector(".ui-datepicker-next")?.click();
+                    setTimeout(() => alignMonthYear(callback), 300);
+                } else if (currentYear > targetYear || (currentYear === targetYear && currentMonthIndex > targetMonthIndex)) {
+                    document.querySelector(".ui-datepicker-prev")?.click();
+                    setTimeout(() => alignMonthYear(callback), 300);
+                } else {
+                    callback();
+                }
+            }
+
+            function selectDate() {
+                const calendar = document.querySelector(".ui-datepicker-calendar");
+                if (!calendar) { log("❌ Calendar table not found"); return; }
+
+                const dayLinks = calendar.querySelectorAll("td > a");
+                let found = false;
+                dayLinks.forEach(a => {
+                    const text = a.textContent.trim();
+                    if (text === targetDay || text === String(parseInt(targetDay))) {
+                        a.click();
+                        found = true;
+                    }
+                });
+
+                log(found ? "✅ Day " + targetDay + " clicked successfully" : "❌ Day " + targetDay + " not found in calendar grid");
+            }
+
+            waitForCalendar(() => alignMonthYear(() => setTimeout(selectDate, 300)));
+        })();
+    """.trimIndent()
+
+    // Run date picker script
+    webViewRef.evaluateJavascript(dateInputScript, null)
+
+    // Poll for input confirmation
+    val isDateSelected = suspendCancellableCoroutine<Boolean> { cont ->
+        CoroutineScope(Dispatchers.Main).launch {
+            val checkScript = """
+                javascript:(function(){
+                    const inp = document.querySelector('#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]');
+                    return inp ? inp.value : "";
+                })();
+            """.trimIndent()
+
+            repeat(20) { // Retry 20 times (6 seconds total)
+                val currentVal = suspendCancellableCoroutine<String> { innerCont ->
+                    webViewRef.evaluateJavascript(checkScript) {
+                        innerCont.resume(it?.trim('"') ?: "")
+                    }
+                }
+                if (currentVal.replace("\\s".toRegex(), "") == journeyDate.replace("\\s".toRegex(), "")) {
+                    cont.resume(true)
+                    return@launch
+                }
+                delay(300)
+            }
+            cont.resume(false)
+        }
+    }
+
+    if (isDateSelected) {
+        Log.d("DatePicker", "✅ Date confirmed in input: $journeyDate")
+    } else {
+        Log.d("DatePicker", "❌ Date not selected within timeout")
+    }
 }
