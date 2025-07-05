@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
-import kotlin.random.Random
 import androidx.compose.ui.viewinterop.AndroidView
 import android.content.Context
 import android.graphics.*
@@ -29,7 +28,6 @@ import java.net.URL
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
 import androidx.core.graphics.set
-import java.lang.Math.random
 import kotlin.String
 import kotlin.coroutines.resume
 
@@ -45,7 +43,16 @@ fun IrctcWebViewScreen(
     inputOrigin: String = "NEW DELHI - NDLS (NEW DELHI)",
     inputDestination: String = "GORAKHPUR JN - GKP (GORAKHPUR)",
     targetTrainNumber: String = "12566",
-    targetClassCode: String = "SL"
+    targetClassCode: String = "SL",
+    passengerName:String="Omshree",
+    passengerAge:String="20",
+    passengerGender:String="F",
+    passengerSeatPreference:String="SU",
+    passengerMobileNumber: String = "7302221097",
+    autoUpgradeOption: String = "1", // "1" = check, "0" = leave unchecked
+    confirmBerth: String = "1", // "1" = check, "0" = leave unchecked
+    travelInsurance:String="1",
+    paymentOption:Int=2,
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -279,6 +286,10 @@ fun IrctcWebViewScreen(
                                     delay(a)
                                     searchButton(this@apply)
                                     selectTrain(this@apply,targetTrainNumber,targetClassCode)
+                                    passengerDetails(this@apply,passengerName,passengerAge,passengerGender,passengerSeatPreference)
+                                    mobileNumber(this@apply,passengerMobileNumber)
+                                    autoUpgrade(this@apply,autoUpgradeOption)
+                                    confirmBerth(this@apply, confirmBerth)
                                 }
                             }
                         }
@@ -961,6 +972,159 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
             waitForTrainList(tryFindAndClick);
         })();
     """.trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+
+
+private fun passengerDetails(
+    webView: WebView, passengerName: String, passengerAge: String,
+    passengerGender: String,
+    passengerSeatPreference: String
+) {
+    val js = """
+javascript: (function () {
+    function fillName() {
+        var inputElements = document.querySelectorAll(
+            'input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input'
+        );
+        if (inputElements.length > 0) {
+            inputElements[0].value = "$passengerName";
+            var event = new Event('input', { bubbles: true });
+            inputElements[0].dispatchEvent(event);
+            console.log("Passenger name set.");
+        } else {
+            setTimeout(fillName, 300);
+        }
+    }
+
+    function fillAge() {
+        var inputElements = document.querySelectorAll(
+            'input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]'
+        );
+        if (inputElements.length > 0) {
+            inputElements[0].value = "$passengerAge";
+            var event = new Event('input', { bubbles: true });
+            inputElements[0].dispatchEvent(event);
+            console.log("Passenger age set.");
+        } else {
+            setTimeout(fillAge, 300);
+        }
+    }
+
+    function fillGender() {
+        var selectEl = document.querySelector('select[formcontrolname="passengerGender"]');
+        if (selectEl) {
+            selectEl.value = "$passengerGender"; // M, F, T
+            var event = new Event('change', { bubbles: true });
+            selectEl.dispatchEvent(event);
+            console.log("Passenger gender set.");
+        } else {
+            setTimeout(fillGender, 300);
+        }
+    }
+
+    function fillBerth() {
+        var selectEl = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
+        if (selectEl) {
+            selectEl.value = "";
+            var clearEvent = new Event('change', { bubbles: true });
+            selectEl.dispatchEvent(clearEvent);
+
+            setTimeout(function () {
+                selectEl.value = "$passengerSeatPreference";
+                var changeEvent = new Event('change', { bubbles: true });
+                selectEl.dispatchEvent(changeEvent);
+                console.log("Berth preference set to: $passengerSeatPreference");
+            }, 100);
+        } else {
+            setTimeout(fillBerth, 300);
+        }
+    }
+
+    // Call all functions
+    fillName();
+    fillAge();
+    fillGender();
+    fillBerth();
+})();
+""".trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun mobileNumber(webView: WebView, passengerMobileNumber: String) {
+    val js = """
+javascript: (function () {
+    function waitForInputAndSetValue() {
+        var input = document.querySelector('input[formcontrolname="mobileNumber"]');
+        if (input) {
+            input.value = "$passengerMobileNumber";
+            var event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+            console.log("Passenger mobile number set.");
+        } else {
+            setTimeout(waitForInputAndSetValue, 300);
+        }
+    }
+    waitForInputAndSetValue();
+})();
+""".trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+
+
+private fun autoUpgrade(webView: WebView, autoUpgradeOption: String) {
+    val js = """
+javascript: (function () {
+    function waitAndToggleCheckbox() {
+        var checkbox = document.getElementById("autoUpgradation");
+        if (checkbox) {
+            var shouldCheck = "$autoUpgradeOption" === "1";
+            if (checkbox.checked !== shouldCheck) {
+                checkbox.click();
+                console.log("Auto Upgradation checkbox toggled to: " + shouldCheck);
+            } else {
+                console.log("Auto Upgradation checkbox already in correct state.");
+            }
+        } else {
+            setTimeout(waitAndToggleCheckbox, 300);
+        }
+    }
+    waitAndToggleCheckbox();
+})();
+""".trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+private fun confirmBerth(webView: WebView, confirmBerth: String) {
+    val js = """
+javascript:(function () {
+    function waitAndToggleConfirmBerthBox() {
+        var checkbox = document.getElementById("confirmberths");
+        if (checkbox) {
+            var shouldCheck = "$confirmBerth" === "1";
+            if (shouldCheck && !checkbox.checked) {
+                checkbox.click();
+                console.log("✅ confirmBerth checkbox clicked (set to checked).");
+            } else if (!shouldCheck && checkbox.checked) {
+                checkbox.click();
+                console.log("✅ confirmBerth checkbox clicked (set to unchecked).");
+            } else {
+                console.log("ℹ️ confirmBerth checkbox already in correct state.");
+            }
+        } else {
+            setTimeout(waitAndToggleConfirmBerthBox, 300);
+        }
+    }
+    waitAndToggleConfirmBerthBox();  // ✅ Correct function call
+})();
+""".trimIndent()
 
     webView.evaluateJavascript(js, null)
 }
