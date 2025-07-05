@@ -39,11 +39,13 @@ import kotlin.coroutines.resume
 fun IrctcWebViewScreen(
     inputUserName: String = "Shrisha2808",
     inputPassword: String = "Shrisha@2808",
-    inputDate: String="15/08/2025",
+    inputDate: String="18/08/2025",
     quotaName: String = "1",
     className: String = "12",
-    inputOrigin: String = "DELHI - DLI (NEW DELHI)",
+    inputOrigin: String = "NEW DELHI - NDLS (NEW DELHI)",
     inputDestination: String = "GORAKHPUR JN - GKP (GORAKHPUR)",
+    targetTrainNumber: String = "12566",
+    targetClassCode: String = "SL"
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -132,7 +134,8 @@ fun IrctcWebViewScreen(
                                     // 4. Captcha solve loop
                                     val captchaImageSelector = ".captcha-img"
                                     val inputFieldSelector = "input[formcontrolname='captcha']"
-                                    val buttonSelector = "#login_header_disable > div > div > div.ng-tns-c19-13.ui-dialog-content.ui-widget-content > div.irmodal.ng-tns-c19-13 > div > div.login-bg.pull-left > div > div.modal-body > form > span > button"
+                                    // Use the new XPath for the sign-in button after captcha fill
+                                    val buttonSelector = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/span/button"
                                     val refreshButtonXPath = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
 
                                     var lastCaptchaUrl: String? = null
@@ -161,8 +164,13 @@ fun IrctcWebViewScreen(
                                     suspend fun isSignInButtonPresent(): Boolean {
                                         val js = """
                                             (function() {
-                                                const btn = document.querySelector("$buttonSelector");
-                                                return !!btn;
+                                                // Check if captcha input is still present (means captcha failed)
+                                                var captchaInput = document.querySelector("$inputFieldSelector");
+                                                // Or check if sign-in button is still present (means not logged in)
+                                                var signInBtn = document.evaluate('$buttonSelector', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                                // Or check for error message (optional: customize selector as per IRCTC error)
+                                                var error = document.querySelector('.errormsg, .error, .ng-star-inserted[style*="color:red"]');
+                                                return !!captchaInput || !!signInBtn || !!error;
                                             })();
                                         """.trimIndent()
                                         return suspendCancellableCoroutine { cont ->
@@ -195,9 +203,9 @@ fun IrctcWebViewScreen(
 
                                             // Only fill captcha and sign in
                                             fillCaptchaAndSignIn(captchaText)
-                                            delay(500)
+                                            delay(1200) // Give time for error to appear if captcha is wrong
 
-                                            // Check if sign in button still present
+                                            // Check if sign in button or captcha input still present (captcha failed)
                                             if (isSignInButtonPresent()) {
                                                 // Get captcha url again
                                                 val newCaptchaUrl = getCaptchaUrl()
@@ -236,8 +244,6 @@ fun IrctcWebViewScreen(
                                     popupJob.cancel()
                                     hasLoggedIn = true
 
-
-
                                     val journeyDate = inputDate  // user input in dd/MM/yyyy format
 
                                     val (targetDay, targetMonthNumber, targetYear) = journeyDate.split("/")
@@ -272,6 +278,7 @@ fun IrctcWebViewScreen(
                                     a= (500..1000).random().toLong()
                                     delay(a)
                                     searchButton(this@apply)
+                                    selectTrain(this@apply,targetTrainNumber,targetClassCode)
                                 }
                             }
                         }
@@ -351,11 +358,11 @@ private fun fillCaptchaInput(webView: WebView, inputSelector: String, captcha: S
     webView.post { webView.evaluateJavascript(js, null) }
 }
 
-private fun clickLoginButton(webView: WebView, buttonSelector: String) {
+private fun clickLoginButton(webView: WebView, buttonXPath: String) {
     val js = """
         (function() {
-            const btn = document.querySelector("$buttonSelector");
-            if (btn) { btn.click(); }
+            const el = document.evaluate('$buttonXPath', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (el) { el.click(); }
         })();
     """.trimIndent()
     webView.post { webView.evaluateJavascript(js, null) }
@@ -779,19 +786,181 @@ private fun fillDestination(webView: WebView, inputDestination: String) {
 
 private fun searchButton(webView: WebView) {
     val js = """
-    javascript:(function() {
-        const xpath = "//*[@id='divMain']/div/app-main-page/div/div/div[1]/div[2]/div[1]/app-jp-input/div/form/div[5]/div[1]/button";
-        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-        const el = result.singleNodeValue;
+        javascript:(function() {
+            const btn = document.querySelector(".search_btn.train_Search");
+            if (btn) {
+                btn.click();
+                Android.sendToAndroid("✅ Search Button Clicked using selector");
+            } else {
+                Android.sendToAndroid("❌ Search Button Not Found using selector");
+            }
+        })();
+    """.trimIndent()
 
-        if (el) {
-            el.click();
-            Android.sendToAndroid("✅ Search Button Clicked using XPath");
-        } else {
-            Android.sendToAndroid("❌ Search Button Not Found using XPath");
-        }
-    })();
-""".trimIndent()
+    webView.evaluateJavascript(js, null)
+}
+
+class JSBridge {
+
+    @JavascriptInterface
+    fun sendToAndroid(message: String) {
+        Log.d("JS_LOG", message)  // This prints the log from JavaScript to Logcat
+    }
+}
+
+private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClassCode: String) {
+    webView.addJavascriptInterface(JSBridge(), "Android")  // Ensure JSBridge is set
+
+    val js = """
+        javascript:(function() {
+            const trainNumber = "${targetTrainNumber}";
+            const expectedClass = "${targetClassCode}";
+            const maxAttempts = 30;
+            let attempts = 0;
+
+            function waitForTrainList(readyCallback) {
+                const xpath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[3]/span[1]/button[1]";
+                const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (result) {
+                    Android.sendToAndroid("✅ Train list loaded, starting search...");
+                    readyCallback();
+                } else {
+                    setTimeout(() => waitForTrainList(readyCallback), 300);
+                }
+            }
+
+            function waitForLoaderToDisappear(callback) {
+                const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+                if (!loader || loader.style.display === "none" || loader.hidden ||
+                    getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0") {
+                    Android.sendToAndroid("✅ Loader gone, proceeding...");
+                    callback();
+                } else {
+                    Android.sendToAndroid("⏳ Loader still visible, waiting...");
+                    setTimeout(() => waitForLoaderToDisappear(callback), 200);
+                }
+            }
+
+            function tryFindAndClick() {
+                let foundTrain = false;
+
+                for (let a = 1; a <= 40; a++) {
+                    const trainXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[1]/div[1]/strong";
+                    const trainNode = document.evaluate(trainXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                    if (trainNode && trainNode.textContent.includes(trainNumber)) {
+                        Android.sendToAndroid("✅ Found train '" + trainNumber + "' at index a=" + a);
+                        foundTrain = true;
+
+                        for (let b = 1; b <= 13; b++) {
+                            const classXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[5]/div[1]/table/tr/td[" + b + "]/div/div[1]/strong";
+                            const classNode = document.evaluate(classXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                            if (classNode && classNode.textContent.trim().toUpperCase().includes(expectedClass)) {
+                                Android.sendToAndroid("🔍 Checking a=" + a + ", b=" + b + " for class '" + expectedClass + "'");
+
+                                const clickTarget = classNode.closest("td")?.querySelector("div");
+                                if (clickTarget) {
+                                    clickTarget.click();
+                                    Android.sendToAndroid("✅ Clicked class '" + expectedClass + "'");
+
+                                    const dateDivXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[7]/div[1]/div[3]/table/tr/td[2]/div";
+
+                                    function waitForDateCellAndClick() {
+                                        const dateDivNode = document.evaluate(dateDivXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                        if (dateDivNode) {
+                                            dateDivNode.click();
+                                            Android.sendToAndroid("✅ Clicked date availability div for train " + trainNumber);
+                                            setTimeout(afterDateClick, 500);
+                                        } else {
+                                            Android.sendToAndroid("❌ Date cell not found, retrying...");
+                                            setTimeout(waitForDateCellAndClick, 300);
+                                        }
+                                    }
+
+                                    function afterDateClick() {
+                                        const directBookNowNode = document.querySelector(".btnDefault.train_Search.ng-star-inserted:not(.disable-book)");
+                                        const retryBookNowNode = document.querySelector(".btnDefault.train_Search.ng-star-inserted.disable-book");
+
+                                        if (directBookNowNode) {
+                                            directBookNowNode.click();
+                                            Android.sendToAndroid("✅ Found direct Book Now button by class, clicked");
+                                            return;
+                                        }
+
+                                        if (retryBookNowNode) {
+                                            Android.sendToAndroid("🔁 Book Now not ready (disable-book class), retrying using fallback XPath...");
+                                            Android.sendToAndroid("➡️ Retrying with a=" + a + ", b=" + b);
+
+                                            const fallbackXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[7]/div[1]/p-tabmenu/div/ul/li[" + b + "]/a/div/div/strong/span[2]";
+                                            const fallbackNode = document.evaluate(fallbackXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                                            if (fallbackNode) {
+                                            fallbackNode.closest("li").querySelector("a").click();
+                                            Android.sendToAndroid("✅ Clicked fallback class tab at a=" + a + ", b=" + b);
+                                        
+                                            // ⏳ Wait for loader to disappear, THEN click date cell
+                                            function waitForLoaderToDisappear(callback) {
+                                                setTimeout(() => {
+                                                    const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+                                        
+                                                    if (!loader || loader.style.display === "none" || loader.hidden ||
+                                                        getComputedStyle(loader).visibility === "hidden" ||
+                                                        getComputedStyle(loader).opacity === "0") {
+                                        
+                                                        Android.sendToAndroid("✅ Loader gone, proceeding...");
+                                                        callback();
+                                        
+                                                    } else {
+                                                        Android.sendToAndroid("⏳ Loader still visible, waiting...");
+                                                        setTimeout(() => waitForLoaderToDisappear(callback), 200);
+                                                    }
+                                                }, 500); // ✅ initial wait before first check
+                                            }
+                                        
+                                            // ✅ Now call the wait function and then your logic to click on the date cell
+                                            waitForLoaderToDisappear(() => {
+                                                const dateDivRetryNode = document.evaluate(dateDivXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                                if (dateDivRetryNode) {
+                                                    dateDivRetryNode.click();
+                                                    Android.sendToAndroid("✅ Re-clicked date availability div after fallback");
+                                                    setTimeout(afterDateClick, 500);
+                                                } else {
+                                                    Android.sendToAndroid("❌ Date cell not found during fallback retry");
+                                                }
+                                            });
+                                        
+                                        } else {
+                                            Android.sendToAndroid("❌ Fallback class tab XPath not found");
+                                        }
+                                        
+                                        } else {
+                                            Android.sendToAndroid("❌ No Book Now button found");
+                                        }
+                                    }
+
+                                    waitForDateCellAndClick();
+                                    break;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                if (!foundTrain && attempts < maxAttempts) {
+                    attempts++;
+                    Android.sendToAndroid("🔄 Retrying train search... attempt " + attempts);
+                    setTimeout(tryFindAndClick, 400);
+                } else if (!foundTrain) {
+                    Android.sendToAndroid("❌ Train number '" + trainNumber + "' not found after " + maxAttempts + " attempts");
+                }
+            }
+
+            waitForTrainList(tryFindAndClick);
+        })();
+    """.trimIndent()
 
     webView.evaluateJavascript(js, null)
 }
