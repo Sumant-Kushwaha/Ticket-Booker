@@ -29,6 +29,7 @@ import java.net.URL
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
 import androidx.core.graphics.set
+import java.lang.Math.random
 import kotlin.String
 import kotlin.coroutines.resume
 
@@ -36,11 +37,13 @@ import kotlin.coroutines.resume
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun IrctcWebViewScreen(
-    inputUserName: String = "anshuabhishek",
-    inputPassword: String = "Amigo@2805",
-    inputDate: String="5/08/2025",
-    quotaName: String = "5",
-    className: String = "9",
+    inputUserName: String = "Shrisha2808",
+    inputPassword: String = "Shrisha@2808",
+    inputDate: String="15/08/2025",
+    quotaName: String = "1",
+    className: String = "12",
+    inputOrigin: String = "DELHI - DLI (NEW DELHI)",
+    inputDestination: String = "GORAKHPUR JN - GKP (GORAKHPUR)",
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -254,6 +257,8 @@ fun IrctcWebViewScreen(
                                         targetMonthName = targetMonth
                                     )
 
+                                    var a: Long = (500..1000).random().toLong()
+                                    delay(a)
                                     // Immediately expand and select class after date selection, no delay
                                     expandClass(this@apply)
                                     selectClass(this@apply, classIndex)
@@ -261,6 +266,12 @@ fun IrctcWebViewScreen(
                                     expandQuota(this@apply)
                                     selectQuota(this@apply,quotaIndex)
 
+                                    fillOrigin(this@apply,inputOrigin)
+                                    fillDestination(this@apply,inputDestination)
+
+                                    a= (500..1000).random().toLong()
+                                    delay(a)
+                                    searchButton(this@apply)
                                 }
                             }
                         }
@@ -718,6 +729,69 @@ private fun selectQuota(webView: WebView, quotaIndex: Int) {
             }
         })();
     """.trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun fillOrigin(webView: WebView, inputOrigin: String) {
+    val js = """
+    javascript:(function() {
+        const xpath = "//*[@id='origin']/span/input";
+        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const input = result.singleNodeValue;
+
+        if (input) {
+            input.value = "$inputOrigin";
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.blur();
+            Android.sendToAndroid('✅ Origin input filled using XPath');
+        } else {
+            Android.sendToAndroid('❌ Origin input not found via XPath');
+        }
+    })();
+""".trimIndent()
+    webView.evaluateJavascript(js, null)
+}
+
+private fun fillDestination(webView: WebView, inputDestination: String) {
+    val js = """
+    javascript:(function() {
+        const xpath = "//*[@id='destination']/span/input";
+        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const input = result.singleNodeValue;
+
+        if (input) {
+            input.value = "$inputDestination";
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.blur();
+            Android.sendToAndroid('✅ Destination input filled using XPath');
+        } else {
+            Android.sendToAndroid('❌ Destination input not found via XPath');
+        }
+    })();
+""".trimIndent()
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun searchButton(webView: WebView) {
+    val js = """
+    javascript:(function() {
+        const xpath = "//*[@id='divMain']/div/app-main-page/div/div/div[1]/div[2]/div[1]/app-jp-input/div/form/div[5]/div[1]/button";
+        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        const el = result.singleNodeValue;
+
+        if (el) {
+            el.click();
+            Android.sendToAndroid("✅ Search Button Clicked using XPath");
+        } else {
+            Android.sendToAndroid("❌ Search Button Not Found using XPath");
+        }
+    })();
+""".trimIndent()
 
     webView.evaluateJavascript(js, null)
 }
