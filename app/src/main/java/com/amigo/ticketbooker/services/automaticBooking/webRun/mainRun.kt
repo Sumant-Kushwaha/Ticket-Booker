@@ -589,18 +589,6 @@ fun MainAutomate(
                                     clicked = true;
                                 }
                             });
-
-                            if (clicked) {
-                                setTimeout(() => {
-                                    if (attempt < maxAttempts) {
-                                        tryClickSearchButton(attempt + 1, maxAttempts);
-                                    } else {
-                                        Android.sendToAndroid("❌ Gave up after " + maxAttempts + " attempts.");
-                                    }
-                                }, 1200);
-                            } else {
-                                Android.sendToAndroid("❌ Class block containing '" + targetClassCode + "' not found in fallback area.");
-                            }
                         } else {
                             Android.sendToAndroid("❌ Fallback area not found (attempt " + attempt + ").");
                         }

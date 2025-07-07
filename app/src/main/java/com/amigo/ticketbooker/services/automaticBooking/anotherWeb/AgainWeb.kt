@@ -30,6 +30,7 @@ import androidx.core.graphics.get
 import androidx.core.graphics.set
 import kotlin.String
 import kotlin.coroutines.resume
+import kotlin.random.Random
 
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -37,22 +38,21 @@ import kotlin.coroutines.resume
 fun IrctcWebViewScreen(
     inputUserName: String = "Shrisha2808",
     inputPassword: String = "Shrisha@2808",
-    inputDate: String="18/08/2025",
+    inputDate: String = "17/07/2025",
     quotaName: String = "1",
-    className: String = "12",
-    inputOrigin: String = "NEW DELHI - NDLS (NEW DELHI)",
-    inputDestination: String = "GORAKHPUR JN - GKP (GORAKHPUR)",
-    targetTrainNumber: String = "12566",
-    targetClassCode: String = "SL",
-    passengerName:String="Omshree",
-    passengerAge:String="20",
-    passengerGender:String="F",
-    passengerSeatPreference:String="SU",
+    className: String = "sl",
+    inputOrigin: String = "RANCHI - RNC (HATIA/RANCHI)",
+    inputDestination: String = "ANAND VIHAR TRM - ANVT (NEW DELHI)",
+    targetTrainNumber: String = "12825",
+    passengerName: String = "Omshree",
+    passengerAge: String = "20",
+    passengerGender: String = "F",
+    passengerSeatPreference: String = "SU",
     passengerMobileNumber: String = "7302221097",
     autoUpgradeOption: String = "1", // "1" = check, "0" = leave unchecked
     confirmBerth: String = "1", // "1" = check, "0" = leave unchecked
-    travelInsurance:String="1",
-    paymentOption:Int=2,
+    travelInsurance: String = "2",
+    paymentOptionNo: Int = 2,
 ) {
 
     val quotaIndex = when (quotaName.trim().uppercase()) {
@@ -83,14 +83,36 @@ fun IrctcWebViewScreen(
         else -> 1
     }
 
+    val targetClassCode = when (classIndex) {
+        2 -> "EA"
+        3 -> "1A"
+        4 -> "EV"
+        5 -> "EC"
+        6 -> "2A"
+        7 -> "FC"
+        8 -> "3A"
+        9 -> "3E"
+        10 -> "VC"
+        11 -> "CC"
+        12 -> "SL"
+        13 -> "VS"
+        14 -> "2S"
+        else -> null  // or "UNKNOWN", or throw Exception("Invalid class index")
+    }
+
+    val paymentOption = when (paymentOptionNo) {
+        1 -> "CARD_NETBANKING"
+        2 -> "UPI"
+        else -> null  // or "UNKNOWN", or throw Exception("Invalid class index")
+    }
 
     var statusMessage by remember { mutableStateOf("Loading...") }
     var hasLoggedIn by remember { mutableStateOf(false) }
+    var initialActionsDone by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         AndroidView(
-            modifier = Modifier.weight(1f),
-            factory = { context ->
+            modifier = Modifier.weight(1f), factory = { context ->
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -103,7 +125,7 @@ fun IrctcWebViewScreen(
                     addJavascriptInterface(object {
                         @JavascriptInterface
                         fun sendToAndroid(message: String) {
-                            Log.d("WebViewJS", message)
+                            Log.d("LoginFlow", message)
                             statusMessage = message
                         }
                     }, "Android")
@@ -113,7 +135,8 @@ fun IrctcWebViewScreen(
                             super.onPageFinished(view, url)
                             Log.d("IRCTC_WEBVIEW", "Page loaded: $url")
 
-                            if (!hasLoggedIn) {
+                            if (!hasLoggedIn && !initialActionsDone) {
+                                initialActionsDone = true
                                 CoroutineScope(Dispatchers.Main).launch {
                                     // 1. Remove popup for up to 1 minute or until found and clicked once
                                     val popupJob = launch {
@@ -130,11 +153,10 @@ fun IrctcWebViewScreen(
                                     menuClick(this@apply)
                                     delay(800)
                                     loginButtonInMenu(this@apply)
-                                    delay(800)
+                                    delay(Random.nextLong(100L, 1000L))
 
                                     // 3. Fill username and password ONCE
                                     enterUsername(this@apply, inputUserName)
-                                    delay(400)
                                     enterPassword(this@apply, inputPassword)
                                     delay(400)
 
@@ -142,8 +164,10 @@ fun IrctcWebViewScreen(
                                     val captchaImageSelector = ".captcha-img"
                                     val inputFieldSelector = "input[formcontrolname='captcha']"
                                     // Use the new XPath for the sign-in button after captcha fill
-                                    val buttonSelector = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/span/button"
-                                    val refreshButtonXPath = "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
+                                    val buttonSelector =
+                                        "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/span/button"
+                                    val refreshButtonXPath =
+                                        "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
 
                                     var lastCaptchaUrl: String? = null
 
@@ -163,21 +187,22 @@ fun IrctcWebViewScreen(
                                     }
 
                                     suspend fun fillCaptchaAndSignIn(captchaText: String) {
-                                        fillCaptchaInput(this@apply, inputFieldSelector, captchaText)
-                                        delay(400)
+                                        fillCaptchaInput(
+                                            this@apply, inputFieldSelector, captchaText
+                                        )
+                                        delay(500)
                                         clickLoginButton(this@apply, buttonSelector)
                                     }
 
-                                    suspend fun isSignInButtonPresent(): Boolean {
+                                    suspend fun isSignInElementsPresent(): Boolean {
+                                        delay(500)
                                         val js = """
                                             (function() {
-                                                // Check if captcha input is still present (means captcha failed)
                                                 var captchaInput = document.querySelector("$inputFieldSelector");
-                                                // Or check if sign-in button is still present (means not logged in)
                                                 var signInBtn = document.evaluate('$buttonSelector', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                                                // Or check for error message (optional: customize selector as per IRCTC error)
-                                                var error = document.querySelector('.errormsg, .error, .ng-star-inserted[style*="color:red"]');
-                                                return !!captchaInput || !!signInBtn || !!error;
+                                                var both = !!captchaInput && !!signInBtn;
+                                                if (both && window.Android) Android.sendToAndroid('🔍 Captcha & Sign-in present');
+                                                return both;
                                             })();
                                         """.trimIndent()
                                         return suspendCancellableCoroutine { cont ->
@@ -187,8 +212,39 @@ fun IrctcWebViewScreen(
                                         }
                                     }
 
-                                    suspend fun solveCaptchaAndSignIn() {
-                                        val maxRetries = 5 // Change this value as needed
+                                    suspend fun WebView.isLoggedIn(): Boolean {
+                                        delay(500)
+                                        val js = """
+                                            (function(){
+                                                const cssSel = "#slide-menu > p-sidebar > div > nav > div > div > span:nth-child(3) > a > span > label > b";
+                                                const xpathSel = "//*[@id='slide-menu']/p-sidebar/div/nav/div/div/span[2]/a/span/label/b";
+                                                var logout = document.querySelector(cssSel);
+                                                if (!logout) {
+                                                    logout = document.evaluate(xpathSel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                                }
+                                                if (logout) {
+                                                    var style = window.getComputedStyle(logout);
+                                                    var visible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && logout.offsetParent !== null);
+                                                    if (visible) {
+                                                        if (window.Android) Android.sendToAndroid('🔍 Logout button is visible');
+                                                        return true;
+                                                    }
+                                                }
+                                                return false;
+                                            })();
+                                        """.trimIndent()
+
+                                        return suspendCancellableCoroutine { cont ->
+                                            this.evaluateJavascript(js) { result ->
+                                                cont.resume(result == "true", null)
+                                            }
+                                        }
+                                    }
+
+
+                                    suspend fun solveCaptchaAndSignIn(): Boolean {
+                                        val maxRetries = 15 // Change this value as needed
+                                        var loggedIn = false
                                         var retries = 0
                                         while (retries < maxRetries) {
                                             retries++
@@ -197,30 +253,39 @@ fun IrctcWebViewScreen(
                                             lastCaptchaUrl = captchaUrl
 
                                             // OCR
-                                            val captchaText = suspendCancellableCoroutine<String> { cont ->
-                                                downloadAndRecognizeCaptcha(context, captchaUrl) { text ->
-                                                    cont.resume(text, null)
+                                            val captchaText =
+                                                suspendCancellableCoroutine<String> { cont ->
+                                                    downloadAndRecognizeCaptcha(
+                                                        context, captchaUrl
+                                                    ) { text ->
+                                                        cont.resume(text, null)
+                                                    }
                                                 }
-                                            }
                                             if (captchaText.isEmpty()) {
                                                 refreshCaptcha(this@apply, refreshButtonXPath)
                                                 delay(1000)
                                                 continue
                                             }
 
-                                            // Only fill captcha and sign in
+                                            statusMessage = "Retry #$retries"
+                                            // Fill captcha and attempt sign-in
                                             fillCaptchaAndSignIn(captchaText)
-                                            delay(1200) // Give time for error to appear if captcha is wrong
+                                            // Wait for the IRCTC loader animation to finish
+                                            this@apply.waitForLoaderToFinish()
+                                            // Small buffer after loader disappears
+                                            delay(100)
 
                                             // Check if sign in button or captcha input still present (captcha failed)
-                                            if (isSignInButtonPresent()) {
+                                            if (isSignInElementsPresent()) {
                                                 // Get captcha url again
                                                 val newCaptchaUrl = getCaptchaUrl()
                                                 if (newCaptchaUrl == lastCaptchaUrl) {
                                                     // Refresh until captcha changes
                                                     var refreshed = false
                                                     repeat(5) {
-                                                        refreshCaptcha(this@apply, refreshButtonXPath)
+                                                        refreshCaptcha(
+                                                            this@apply, refreshButtonXPath
+                                                        )
                                                         delay(1000)
                                                         val checkUrl = getCaptchaUrl()
                                                         if (checkUrl != lastCaptchaUrl) {
@@ -237,32 +302,60 @@ fun IrctcWebViewScreen(
                                                 // New captcha, repeat solve
                                                 continue
                                             } else {
-                                                // Sign in button gone, done
-                                                statusMessage = "Login process finished."
-                                                break
+                                                // Open sidebar menu so logout button becomes visible
+                                                menuClick(this@apply)
+                                                delay(600)
+                                                if (isLoggedIn()) {
+                                                    statusMessage = "✅ Logged in successfully."
+                                                    loggedIn = true
+                                                    menuClick(this@apply)
+                                                    break
+                                                } else {
+                                                    // New captcha logged in yet, retry
+                                                    continue
+                                                }
                                             }
                                         }
                                         if (retries >= maxRetries) {
                                             statusMessage = "❌ Max captcha retries reached."
                                         }
+                                        return loggedIn
                                     }
 
-                                    solveCaptchaAndSignIn()
+                                    val loginSuccess = solveCaptchaAndSignIn()
+                                    if (!loginSuccess) {
+                                        statusMessage = "Login failed. Stopping automation"
+                                        return@launch
+                                    }
                                     popupJob.cancel()
                                     hasLoggedIn = true
 
                                     val journeyDate = inputDate  // user input in dd/MM/yyyy format
 
-                                    val (targetDay, targetMonthNumber, targetYear) = journeyDate.split("/")
+                                    val (targetDay, targetMonthNumber, targetYear) = journeyDate.split(
+                                        "/"
+                                    )
 
                                     val monthNames = listOf(
-                                        "January", "February", "March", "April", "May", "June",
-                                        "July", "August", "September", "October", "November", "December"
+                                        "January",
+                                        "February",
+                                        "March",
+                                        "April",
+                                        "May",
+                                        "June",
+                                        "July",
+                                        "August",
+                                        "September",
+                                        "October",
+                                        "November",
+                                        "December"
                                     )
 
                                     val targetMonthIndex = targetMonthNumber.toInt() - 1
-                                    val targetMonth = monthNames[targetMonthIndex]  // e.g., "August"
+                                    val targetMonth =
+                                        monthNames[targetMonthIndex]  // e.g., "August"
 
+                                    delay(Random.nextLong(100L, 1000L))
                                     selectJourneyDate(
                                         webViewRef = this@apply,
                                         journeyDate = journeyDate,
@@ -270,34 +363,45 @@ fun IrctcWebViewScreen(
                                         targetMonthName = targetMonth
                                     )
 
-                                    var a: Long = (500..1000).random().toLong()
-                                    delay(a)
-                                    // Immediately expand and select class after date selection, no delay
                                     expandClass(this@apply)
                                     selectClass(this@apply, classIndex)
 
                                     expandQuota(this@apply)
-                                    selectQuota(this@apply,quotaIndex)
+                                    selectQuota(this@apply, quotaIndex)
 
-                                    fillOrigin(this@apply,inputOrigin)
-                                    fillDestination(this@apply,inputDestination)
+                                    delay(Random.nextLong(100L, 1000L))
+                                    fillOrigin(this@apply, inputOrigin)
+                                    fillDestination(this@apply, inputDestination)
 
-                                    a= (500..1000).random().toLong()
-                                    delay(a)
+                                    delay(Random.nextLong(100L, 1000L))
                                     searchButton(this@apply)
-                                    selectTrain(this@apply,targetTrainNumber,targetClassCode)
-                                    passengerDetails(this@apply,passengerName,passengerAge,passengerGender,passengerSeatPreference)
-                                    mobileNumber(this@apply,passengerMobileNumber)
-                                    autoUpgrade(this@apply,autoUpgradeOption)
+                                    this@apply.waitForLoaderToFinish()
+                                    selectTrain(this@apply, targetTrainNumber, targetClassCode)
+                                    passengerDetails(
+                                        this@apply,
+                                        passengerName,
+                                        passengerAge,
+                                        passengerGender,
+                                        passengerSeatPreference
+                                    )
+                                    mobileNumber(this@apply, passengerMobileNumber)
+                                    autoUpgrade(this@apply, autoUpgradeOption)
                                     confirmBerth(this@apply, confirmBerth)
+                                    selectTravelInsurance(this@apply, travelInsurance)
+                                    selectPaymentOption(this@apply, paymentOption)
+                                    delay(Random.nextLong(100L, 1000L))
+//                                    continueAfterPassengerDetails(this@apply)
+                                    this@apply.waitForLoaderToFinish()
+
+//                                    statusMessage = "🎉 Automation flow finished"
+                                    return@launch
                                 }
                             }
                         }
                     }
                     loadUrl("https://www.irctc.co.in/nget/train-search")
                 }
-            }
-        )
+            })
         Text(
             text = statusMessage,
             color = Color.White,
@@ -308,11 +412,12 @@ fun IrctcWebViewScreen(
     }
 }
 
-private const val CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 13; Pixel 6 Pro) " +
-        "AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/114.0.5735.199 Mobile Safari/537.36"
+private const val CHROME_USER_AGENT =
+    "Mozilla/5.0 (Linux; Android 13; Pixel 6 Pro) " + "AppleWebKit/537.36 (KHTML, like Gecko) " + "Chrome/114.0.5735.199 Mobile Safari/537.36"
 
-private fun downloadAndRecognizeCaptcha(context: Context, imageUrl: String, onResult: (String) -> Unit) {
+private fun downloadAndRecognizeCaptcha(
+    context: Context, imageUrl: String, onResult: (String) -> Unit
+) {
     CoroutineScope(Dispatchers.IO).launch {
         try {
             val bitmap = if (imageUrl.startsWith("data:image")) {
@@ -351,12 +456,75 @@ private fun preprocessBitmap(bitmap: Bitmap): Bitmap {
         for (y in 0 until grayBitmap.height) {
             val pixel = grayBitmap[x, y]
             val brightness = android.graphics.Color.red(pixel) // <-- use fully qualified name
-            val binarizedColor = if (brightness < 128) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+            val binarizedColor =
+                if (brightness < 128) android.graphics.Color.BLACK else android.graphics.Color.WHITE
             binarized[x, y] = binarizedColor
         }
     }
 
     return binarized
+}
+
+// Extension to wait for IRCTC loading animation to disappear before proceeding.
+suspend fun WebView.waitForLoaderToFinish(
+    loaderSelector: String = ".my-loading.ng-star-inserted",
+    appearTimeoutMs: Long = 500L,
+    checkIntervalMs: Long = 10L
+) {
+    withContext(Dispatchers.Main) {
+        val appearStart = System.currentTimeMillis()
+
+        // 1. Wait up to 500ms for loader to appear
+        while (System.currentTimeMillis() - appearStart < appearTimeoutMs) {
+            val js = """
+                (function() {
+                    const loader = document.querySelector("$loaderSelector");
+                    if (!loader) return "not_found";
+                    const style = window.getComputedStyle(loader);
+                    return (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') ? "visible" : "hidden";
+                })();
+            """.trimIndent()
+
+            val status = suspendCancellableCoroutine<String> { cont ->
+                evaluateJavascript(js) { result ->
+                    cont.resume(result.trim('"'), null)
+                }
+            }
+
+            if (status == "visible") {
+                Log.d("LoginFlow", "✅ Loader appeared — now waiting for it to disappear.")
+
+                // 2. Wait indefinitely for loader to disappear
+                while (true) {
+                    val disappearJs = """
+                        (function() {
+                            const loader = document.querySelector("$loaderSelector");
+                            if (!loader) return "not_found";
+                            const style = window.getComputedStyle(loader);
+                            return (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') ? "visible" : "hidden";
+                        })();
+                    """.trimIndent()
+
+                    val disappearStatus = suspendCancellableCoroutine<String> { cont2 ->
+                        evaluateJavascript(disappearJs) { result ->
+                            cont2.resume(result.trim('"'), null)
+                        }
+                    }
+
+                    if (disappearStatus == "hidden" || disappearStatus == "not_found") {
+                        Log.d("LoginFlow", "✅ Loader disappeared.")
+                        return@withContext
+                    }
+
+                    delay(checkIntervalMs)
+                }
+            }
+
+            delay(checkIntervalMs)
+        }
+
+        Log.d("LoginFlow", "⏩ Loader never appeared within 500ms — skipping wait.")
+    }
 }
 
 private fun fillCaptchaInput(webView: WebView, inputSelector: String, captcha: String) {
@@ -390,21 +558,6 @@ private fun refreshCaptcha(webView: WebView, refreshButtonXPath: String) {
     webView.post { webView.evaluateJavascript(js, null) }
 }
 
-private fun removePopup(webView: WebView) {
-    val js = """
-        javascript:(function() {
-            const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > p-dialog.ng-tns-c19-2 > div > div > div.ng-tns-c19-2.ui-dialog-content.ui-widget-content > div > form > div.text-center.col-xs-12 > button");
-            if (el) {
-                el.click();
-                window.Android.sendToAndroid("✅ Popup Removed");
-            } else {
-                window.Android.sendToAndroid("❌ Popup not found");
-            }
-        })();
-    """.trimIndent()
-    webView.evaluateJavascript(js, null)
-}
-
 // Replace removePopup with removePopupOnce:
 private fun removePopupOnce(webView: WebView): Boolean {
     var foundAndClicked = false
@@ -434,9 +587,9 @@ private fun removePopupOnce(webView: WebView): Boolean {
     }
     return foundAndClicked
 }
+
 private fun menuClick(webView: WebView) {
-    CoroutineScope(Dispatchers.Main).launch {
-        val js = """
+    val js = """
             (function() {
                 const el = document.querySelector("body > app-root > app-home > div.header-fix > app-header > div.h_container_sm > div.h_menu_drop_button.moblogo.hidden-sm > a > i");
                 if (el) {
@@ -450,18 +603,8 @@ private fun menuClick(webView: WebView) {
             })();
         """.trimIndent()
 
-        webView.evaluateJavascript(js) { result ->
-            if (result?.contains("NOT_FOUND") == true) {
-                Log.d("MenuClick", "Menu button not found, retrying...")
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(500L)
-                    menuClick(webView) // Retry until success
-                }
-            }
-        }
-    }
+    webView.evaluateJavascript(js, null)
 }
-
 
 
 private fun loginButtonInMenu(webView: WebView) {
@@ -515,112 +658,115 @@ private fun enterPassword(webView: WebView, inputPassword: String) {
     webView.evaluateJavascript(js, null)
 }
 
-
 suspend fun selectJourneyDate(
     webViewRef: WebView,
     journeyDate: String,
     targetDay: String,
     targetMonthName: String
 ) {
-    // Step 1: Click the input to open calendar (your working code)
+// Step 1: Open the calendar
     val openCalendarScript = """
-        javascript:(function () {
-            const input = document.querySelector(
-                '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
-            );
-            if (input) {
-                input.focus();
-                input.click();
-                Android.sendToAndroid("✅ Calendar input clicked");
-            } else {
-                Android.sendToAndroid("❌ Calendar input not found");
-            }
-        })();
+    javascript: (function () {
+        const input = document.querySelector(
+            '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
+        );
+        if (input) {
+            input.focus();
+            input.click();
+            Android.sendToAndroid("✅ Calendar input clicked");
+        } else {
+            Android.sendToAndroid("❌ Calendar input not found");
+        }
+    })();
     """.trimIndent()
     webViewRef.evaluateJavascript(openCalendarScript, null)
+    delay(500) // Give the calendar time to open
 
-    delay(500) // ✅ Give the calendar time to load
-
-    // Step 2: Run month adjust + date picker
+// Step 2: Select the correct date
     val dateSelectionScript = """
-        javascript:(function() {
-            const targetMonth = "$targetMonthName";
-            const targetDate = $targetDay;
+    javascript: (function () {
+        const targetMonth = "$targetMonthName";
+        const targetDate = $targetDay;
 
-            function log(msg) {
-                if (window.Android) Android.sendToAndroid(msg);
-                console.log(msg);
+        function log(msg) {
+            if (window.Android) Android.sendToAndroid(msg);
+            console.log(msg);
+        }
+
+        const monthXPath = "//*[@id='jDate']/span/div/div/div[1]/div/span[1]";
+        const result = document.evaluate(monthXPath, document, null, XPathResult.STRING_TYPE, null);
+        const currentMonth = result.stringValue.trim();
+
+        log(`📅 Current month: ${'$'}{currentMonth}`);
+
+        if (currentMonth !== targetMonth) {
+            log(`🔁 Month mismatch (${'$'}{currentMonth} ≠ ${'$'}{targetMonth}). Switching month...`);
+            const nextMonthXPath = "//*[@id='jDate']/span/div/div/div[1]/a[2]/span";
+            const nextMonthNode = document.evaluate(nextMonthXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (nextMonthNode) {
+                nextMonthNode.click();
+                setTimeout(arguments.callee, 500);
+                return;
+            } else {
+                log("❌ Next month arrow not found");
+                return;
             }
+        }
 
-            const monthXPath = "//*[@id='jDate']/span/div/div/div[1]/div/span[1]";
-            const result = document.evaluate(monthXPath, document, null, XPathResult.STRING_TYPE, null);
-            const currentMonth = result.stringValue.trim();
+        log(`✅ Month matches. Searching dates...`);
 
-            log(`📅 Current month: ${'$'}{currentMonth}`);
+        let firstDate = null;
+        let firstTd = -1;
+        let firstRow = -1;
 
-            if (currentMonth !== targetMonth) {
-                log(`🔁 Month mismatch (${'$'}{currentMonth} ≠ ${'$'}{targetMonth}). Switching month...`);
-                const nextMonthXPath = "//*[@id='jDate']/span/div/div/div[1]/a[2]/span";
-                const nextMonthNode = document.evaluate(nextMonthXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if (nextMonthNode) {
-                    nextMonthNode.click();
-                    setTimeout(arguments.callee, 500);
-                    return;
-                } else {
-                    log("❌ Next month arrow not found");
-                    return;
-                }
-            }
-
-            log(`✅ Month matches. Finding date...`);
-
-            const baseXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[1]/td";
-            let firstDate = null;
-            let firstTd = -1;
-
+        outer: for (let row = 1; row <= 5; row++) {
             for (let td = 1; td <= 7; td++) {
-                const enabledXPath = baseXPath + "[" + td + "]/a";
-                const node = document.evaluate(enabledXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                const cellXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + row + "]/td[" + td + "]/a";
+                const node = document.evaluate(cellXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 if (node) {
                     firstDate = parseInt(node.textContent.trim());
                     firstTd = td;
-                    break;
+                    firstRow = row;
+                    break outer;
                 }
             }
+        }
 
-            if (firstDate === null) {
-                log("❌ No enabled date found in first row");
-                return;
-            }
+        if (firstDate === null) {
+            log("❌ No enabled date found in calendar");
+            return;
+        }
 
-            const dayOffset = targetDate - firstDate;
-            const cellIndex = firstTd - 1 + dayOffset;
-            const row = Math.floor(cellIndex / 7) + 1;
-            const col = (cellIndex % 7) + 1;
+        const totalOffset = targetDate - firstDate;
+        const startIndex = (firstRow - 1) * 7 + (firstTd - 1);
+        const targetIndex = startIndex + totalOffset;
 
-            const targetXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + row + "]/td[" + col + "]/a";
-            const targetNode = document.evaluate(targetXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        const targetRow = Math.floor(targetIndex / 7) + 1;
+        const targetCol = (targetIndex % 7) + 1;
 
-            if (targetNode) {
-                targetNode.click();
-                log(`✅ Clicked on date ${'$'}{targetNode.textContent.trim()} at tr[${'$'}{row}], td[${'$'}{col}]`);
-            } else {
-                log(`❌ Date $targetDay not found at tr[${'$'}{row}], td[${'$'}{col}]`);
-            }
-        })();
+        const targetXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + targetRow + "]/td[" + targetCol + "]/a";
+        const targetNode = document.evaluate(targetXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+        if (targetNode) {
+            targetNode.click();
+            log(`✅ Clicked on date ${'$'}{targetNode.textContent.trim()} at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
+        } else {
+            log(`❌ Date $targetDay not found at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
+        }
+    })();
     """.trimIndent()
     webViewRef.evaluateJavascript(dateSelectionScript, null)
 
-    // Step 3: Confirm the input is filled
+// Step 3: Confirm the input was updated with the selected date
     val isDateSelected = suspendCancellableCoroutine<Boolean> { cont ->
         CoroutineScope(Dispatchers.Main).launch {
             repeat(20) {
                 val checkScript = """
-                    javascript:(function(){
-                        const inp = document.querySelector('#jDate input');
-                        return inp ? inp.value : "";
-                    })();
-                """.trimIndent()
+            javascript: (function () {
+                const inp = document.querySelector('#jDate input');
+                return inp ? inp.value : "";
+            })();
+            """.trimIndent()
 
                 val currentVal = suspendCancellableCoroutine<String> { innerCont ->
                     webViewRef.evaluateJavascript(checkScript) { result ->
@@ -794,7 +940,6 @@ private fun fillDestination(webView: WebView, inputDestination: String) {
     webView.evaluateJavascript(js, null)
 }
 
-
 private fun searchButton(webView: WebView) {
     val js = """
         javascript:(function() {
@@ -812,20 +957,19 @@ private fun searchButton(webView: WebView) {
 }
 
 class JSBridge {
-
     @JavascriptInterface
     fun sendToAndroid(message: String) {
         Log.d("JS_LOG", message)  // This prints the log from JavaScript to Logcat
     }
 }
 
-private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClassCode: String) {
+private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClassCode: String?) {
     webView.addJavascriptInterface(JSBridge(), "Android")  // Ensure JSBridge is set
 
     val js = """
         javascript:(function() {
-            const trainNumber = "${targetTrainNumber}";
-            const expectedClass = "${targetClassCode}";
+            const trainNumber = "$targetTrainNumber";
+            const expectedClass = "$targetClassCode";
             const maxAttempts = 30;
             let attempts = 0;
 
@@ -848,14 +992,14 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                     callback();
                 } else {
                     Android.sendToAndroid("⏳ Loader still visible, waiting...");
-                    setTimeout(() => waitForLoaderToDisappear(callback), 200);
+                    setTimeout(() => waitForLoaderToDisappear(callback), 100);
                 }
             }
 
             function tryFindAndClick() {
                 let foundTrain = false;
 
-                for (let a = 1; a <= 40; a++) {
+                for (let a = 1; a <= 50; a++) {
                     const trainXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[1]/div[1]/strong";
                     const trainNode = document.evaluate(trainXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
@@ -903,11 +1047,11 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                                             Android.sendToAndroid("🔁 Book Now not ready (disable-book class), retrying using fallback XPath...");
                                             Android.sendToAndroid("➡️ Retrying with a=" + a + ", b=" + b);
 
-                                            const fallbackXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[7]/div[1]/p-tabmenu/div/ul/li[" + b + "]/a/div/div/strong/span[2]";
+                                            const fallbackXPath = "//*[@id='divMain']/div/app-train-list/div[4]/div[3]/div[5]/div[" + a + "]/div[1]/app-train-avl-enq/div[1]/div[7]/div[1]/p-tabmenu/div/ul/li[" + b + "]/a/div/div";
                                             const fallbackNode = document.evaluate(fallbackXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
                                             if (fallbackNode) {
-                                            fallbackNode.closest("li").querySelector("a").click();
+                                            fallbackNode.click();
                                             Android.sendToAndroid("✅ Clicked fallback class tab at a=" + a + ", b=" + b);
                                         
                                             // ⏳ Wait for loader to disappear, THEN click date cell
@@ -977,77 +1121,69 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
 }
 
 
-
 private fun passengerDetails(
-    webView: WebView, passengerName: String, passengerAge: String,
+    webView: WebView,
+    passengerName: String,
+    passengerAge: String,
     passengerGender: String,
     passengerSeatPreference: String
 ) {
     val js = """
-javascript: (function () {
-    function fillName() {
-        var inputElements = document.querySelectorAll(
-            'input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input'
-        );
-        if (inputElements.length > 0) {
-            inputElements[0].value = "$passengerName";
-            var event = new Event('input', { bubbles: true });
-            inputElements[0].dispatchEvent(event);
-            console.log("Passenger name set.");
-        } else {
-            setTimeout(fillName, 300);
+javascript:(function () {
+    function fillAllFields() {
+        // Fill Name (retry until success)
+        function fillName() {
+            var nameInput = document.querySelector('input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input');
+            if (nameInput) {
+                nameInput.value = "$passengerName";
+                nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                Android.sendToAndroid("✅ Passenger name set to $passengerName");
+
+                // After name is filled, call the rest
+                fillAge();
+                fillGender();
+                fillBerth();
+            } else {
+                setTimeout(fillName, 300);
+            }
         }
+
+        function fillAge() {
+            var ageInput = document.querySelector('input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]');
+            if (ageInput) {
+                ageInput.value = "$passengerAge";
+                ageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                Android.sendToAndroid("✅ Passenger age set to $passengerAge");
+            }
+        }
+
+        function fillGender() {
+            var genderSelect = document.querySelector('select[formcontrolname="passengerGender"]');
+            if (genderSelect) {
+                genderSelect.value = "$passengerGender";
+                genderSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                Android.sendToAndroid("✅ Passenger gender set to $passengerGender");
+            }
+        }
+
+        function fillBerth() {
+            var berthSelect = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
+            if (berthSelect) {
+                berthSelect.value = "";
+                berthSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                setTimeout(function () {
+                    berthSelect.value = "$passengerSeatPreference";
+                    berthSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    Android.sendToAndroid("✅ Passenger berth preference set to $passengerSeatPreference");
+                }, 100);
+            }
+        }
+
+        fillName();
     }
 
-    function fillAge() {
-        var inputElements = document.querySelectorAll(
-            'input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]'
-        );
-        if (inputElements.length > 0) {
-            inputElements[0].value = "$passengerAge";
-            var event = new Event('input', { bubbles: true });
-            inputElements[0].dispatchEvent(event);
-            console.log("Passenger age set.");
-        } else {
-            setTimeout(fillAge, 300);
-        }
-    }
-
-    function fillGender() {
-        var selectEl = document.querySelector('select[formcontrolname="passengerGender"]');
-        if (selectEl) {
-            selectEl.value = "$passengerGender"; // M, F, T
-            var event = new Event('change', { bubbles: true });
-            selectEl.dispatchEvent(event);
-            console.log("Passenger gender set.");
-        } else {
-            setTimeout(fillGender, 300);
-        }
-    }
-
-    function fillBerth() {
-        var selectEl = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
-        if (selectEl) {
-            selectEl.value = "";
-            var clearEvent = new Event('change', { bubbles: true });
-            selectEl.dispatchEvent(clearEvent);
-
-            setTimeout(function () {
-                selectEl.value = "$passengerSeatPreference";
-                var changeEvent = new Event('change', { bubbles: true });
-                selectEl.dispatchEvent(changeEvent);
-                console.log("Berth preference set to: $passengerSeatPreference");
-            }, 100);
-        } else {
-            setTimeout(fillBerth, 300);
-        }
-    }
-
-    // Call all functions
-    fillName();
-    fillAge();
-    fillGender();
-    fillBerth();
+    fillAllFields();
 })();
 """.trimIndent()
 
@@ -1059,12 +1195,12 @@ private fun mobileNumber(webView: WebView, passengerMobileNumber: String) {
     val js = """
 javascript: (function () {
     function waitForInputAndSetValue() {
-        var input = document.querySelector('input[formcontrolname="mobileNumber"]');
+        var input = document.getElementById("mobileNumber");
         if (input) {
             input.value = "$passengerMobileNumber";
             var event = new Event('input', { bubbles: true });
             input.dispatchEvent(event);
-            console.log("Passenger mobile number set.");
+            if (window.Android) Android.sendToAndroid("📱 Passenger mobile number set.");
         } else {
             setTimeout(waitForInputAndSetValue, 300);
         }
@@ -1072,11 +1208,8 @@ javascript: (function () {
     waitForInputAndSetValue();
 })();
 """.trimIndent()
-
     webView.evaluateJavascript(js, null)
 }
-
-
 
 private fun autoUpgrade(webView: WebView, autoUpgradeOption: String) {
     val js = """
@@ -1087,9 +1220,9 @@ javascript: (function () {
             var shouldCheck = "$autoUpgradeOption" === "1";
             if (checkbox.checked !== shouldCheck) {
                 checkbox.click();
-                console.log("Auto Upgradation checkbox toggled to: " + shouldCheck);
+                Android.sendToAndroid("✅ Auto Upgradation checkbox toggled to: " + shouldCheck);
             } else {
-                console.log("Auto Upgradation checkbox already in correct state.");
+                Android.sendToAndroid("✅ Auto Upgradation checkbox already in correct state.");
             }
         } else {
             setTimeout(waitAndToggleCheckbox, 300);
@@ -1111,18 +1244,136 @@ javascript:(function () {
             var shouldCheck = "$confirmBerth" === "1";
             if (shouldCheck && !checkbox.checked) {
                 checkbox.click();
-                console.log("✅ confirmBerth checkbox clicked (set to checked).");
+                Android.sendToAndroid("✅ confirmBerth checkbox clicked (set to checked).");
             } else if (!shouldCheck && checkbox.checked) {
                 checkbox.click();
-                console.log("✅ confirmBerth checkbox clicked (set to unchecked).");
+                Android.sendToAndroid("✅ confirmBerth checkbox clicked (set to unchecked).");
             } else {
-                console.log("ℹ️ confirmBerth checkbox already in correct state.");
+                Android.sendToAndroid("ℹ️ confirmBerth checkbox already in correct state.");
             }
         } else {
             setTimeout(waitAndToggleConfirmBerthBox, 300);
         }
     }
     waitAndToggleConfirmBerthBox();  // ✅ Correct function call
+})();
+""".trimIndent()
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun selectTravelInsurance(webView: WebView, travelInsurance: String) {
+    val js = """
+javascript:(function () {
+    function selectByXPath(xpath) {
+        try {
+            var result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            return result.singleNodeValue;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function waitAndSelectInsurance() {
+        var yesXPath = "//*[@id='travelInsuranceOptedYes-0']/div/div[2]/span";
+        var noXPath = "//*[@id='travelInsuranceOptedNo-0']/div/div[2]/span";
+
+        var yesSpan = selectByXPath(yesXPath);
+        var noSpan = selectByXPath(noXPath);
+
+        if (yesSpan && noSpan) {
+            if ("$travelInsurance" === "1") {
+                yesSpan.click();
+                Android.sendToAndroid("✅ Travel insurance: YES selected");
+            } else {
+                noSpan.click();
+                Android.sendToAndroid("❌ Travel insurance: NO selected");
+            }
+        } else {
+            setTimeout(waitAndSelectInsurance, 300);
+        }
+    }
+
+    waitAndSelectInsurance();
+})();
+""".trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun selectPaymentOption1(webView: WebView, paymentOption: Int) {
+    val js = """
+    javascript: (function () {
+        let attempt = 0;
+        function trySelect() {
+            attempt++;
+            if ($paymentOption === 1) {
+                if (window.Android) Android.sendToAndroid("✅ Card NetBanking selected by default.");
+                return;
+            }
+            const upiBox = document.querySelector('p-radiobutton[id="2"] .ui-radiobutton-box');
+            if (upiBox) {
+                upiBox.click();
+                if (window.Android) Android.sendToAndroid("✅ UPI option selected.");
+            } else if (attempt < 3) {
+                setTimeout(trySelect, 300);
+            } else {
+                if (window.Android) Android.sendToAndroid("⚠️ UPI option not found after 3 attempts.");
+            }
+        }
+        trySelect();
+    })();
+    """.trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
+private fun selectPaymentOption(webView: WebView, paymentOption: String?) {
+    val js = """
+javascript: (function () {
+    function waitAndSelectPayment() {
+        var cardNetbankingRadio = document.querySelector('p-radiobutton[id="3"] input[type="radio"][name="paymentType"]');
+        var upiRadio = document.querySelector('p-radiobutton[id="2"] input[type="radio"][name="paymentType"]');
+
+        if (cardNetbankingRadio && upiRadio) {
+            if ("$paymentOption" === "CARD_NETBANKING") {
+                cardNetbankingRadio.click();
+                Android.sendToAndroid("✅ Car NetBanking option selected.");
+            } else if ("$paymentOption" === "UPI") {
+                upiRadio.click();
+                Android.sendToAndroid("✅ UPI option selected.");
+            } else {
+                console.log("Invalid payment option: " + "$paymentOption");
+            }
+        } else {
+            setTimeout(waitAndSelectPayment, 300); // Retry every 300ms
+        }
+    }
+    waitAndSelectPayment();
+})();
+""".trimIndent()
+    webView.evaluateJavascript(js, null)
+}
+
+
+private fun continueAfterPassengerDetails(webView: WebView) {
+    val js = """
+javascript:(function () {
+    let attempts = 0;
+    function tryClickContinue() {
+        attempts++;
+        var continueBtn = document.querySelector("#psgn-form > form > div > div.col-lg-9.col-md-9.col-sm-12.remove-padding > div.col-xs-12.hidden-xs > div > button.train_Search.btnDefault");
+        if (continueBtn) {
+            continueBtn.click();
+            Android.sendToAndroid("✅ Continue button clicked after passenger details.");
+        } else if (attempts < 5) {
+            setTimeout(tryClickContinue, 300);
+        } else {
+            Android.sendToAndroid("❌ Continue button not found after 5 attempts.");
+        }
+    }
+    tryClickContinue();
 })();
 """.trimIndent()
 
