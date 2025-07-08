@@ -44,31 +44,31 @@ fun IrctcWebViewScreen(
     inputOrigin: String = "BAPUDM MOTIHARI - BMKI",
     inputDestination: String = "ANAND VIHAR TRM - ANVT (NEW DELHI)",
     targetTrainNumber: String = "12557",
-    passengerCount: Int = 2,
+    passengerCount: Int = 6,
     p1Name: String = "Omshree",
-    p1Age: String = "20",
-    p1Gender: String = "F",
-    p1Seat: String = "SL",
+    p1Age: String = "23",
+    p1Gender: String = "M",
+    p1Seat: String = "L",
     p2Name: String = "Omshree",
     p2Age: String = "20",
     p2Gender: String = "F",
-    p2Seat: String = "SL",
-    p3Name: String = "Omshree",
+    p2Seat: String = "L",
+    p3Name: String = "Abhishek",
     p3Age: String = "20",
-    p3Gender: String = "F",
+    p3Gender: String = "M",
     p3Seat: String = "SU",
-    p4Name: String = "Omshree",
-    p4Age: String = "20",
+    p4Name: String = "Mina Devi",
+    p4Age: String = "47",
     p4Gender: String = "F",
     p4Seat: String = "SL",
-    p5Name: String = "Omshree",
-    p5Age: String = "20",
-    p5Gender: String = "F",
-    p5Seat: String = "SL",
-    p6Name: String = "Omshree",
-    p6Age: String = "20",
+    p5Name: String = "Ram Pravesh",
+    p5Age: String = "54",
+    p5Gender: String = "M",
+    p5Seat: String = "M",
+    p6Name: String = "Nishu",
+    p6Age: String = "30",
     p6Gender: String = "F",
-    p6Seat: String = "SL",
+    p6Seat: String = "U",
     passengerMobileNumber: String = "7302221097",
     autoUpgradeOption: String = "1", // "1" = check, "0" = leave unchecked
     confirmBerth: String = "1", // "1" = check, "0" = leave unchecked
@@ -433,211 +433,46 @@ fun IrctcWebViewScreen(
                                     this@apply.waitForLoaderToFinish()
                                     selectTrain(this@apply, targetTrainNumber, targetClassCode)
                                     this@apply.waitForLoaderToFinish()
-                                    if (passengerCount == 1) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                    }
 
-                                    else if (passengerCount == 2) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            2,
-                                            p2Name,
-                                            p2Age,
-                                            p2GenderNo,
-                                            p2SeatNo
-                                        )
-                                    }
 
-                                    else if (passengerCount == 3) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            2,
-                                            p2Name,
-                                            p2Age,
-                                            p2GenderNo,
-                                            p2SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            3,
-                                            p3Name,
-                                            p3Age,
-                                            p3GenderNo,
-                                            p3SeatNo
-                                        )
-                                    }
-                                    else if (passengerCount == 4) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            2,
-                                            p2Name,
-                                            p2Age,
-                                            p2GenderNo,
-                                            p2SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            3,
-                                            p3Name,
-                                            p3Age,
-                                            p3GenderNo,
-                                            p3SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            4,
-                                            p4Name,
-                                            p4Age,
-                                            p4GenderNo,
-                                            p4SeatNo
-                                        )
-                                    }
-                                    else if (passengerCount == 5) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            2,
-                                            p2Name,
-                                            p2Age,
-                                            p2GenderNo,
-                                            p2SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            3,
-                                            p3Name,
-                                            p3Age,
-                                            p3GenderNo,
-                                            p3SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            4,
-                                            p4Name,
-                                            p4Age,
-                                            p4GenderNo,
-                                            p4SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            5,
-                                            p5Name,
-                                            p5Age,
-                                            p5GenderNo,
-                                            p5SeatNo
-                                        )
-                                    }
-                                    else if (passengerCount == 6) {
-                                        passengerDetails(
-                                            this@apply,
-                                            1,
-                                            p1Name,
-                                            p1Age,
-                                            p1GenderNo,
-                                            p1SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            2,
-                                            p2Name,
-                                            p2Age,
-                                            p2GenderNo,
-                                            p2SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            3,
-                                            p3Name,
-                                            p3Age,
-                                            p3GenderNo,
-                                            p3SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            4,
-                                            p4Name,
-                                            p4Age,
-                                            p4GenderNo,
-                                            p4SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            5,
-                                            p5Name,
-                                            p5Age,
-                                            p5GenderNo,
-                                            p5SeatNo
-                                        )
-                                        addNewPassenger(this@apply)
-                                        passengerDetails(
-                                            this@apply,
-                                            6,
-                                            p6Name,
-                                            p6Age,
-                                            p6GenderNo,
-                                            p6SeatNo
-                                        )
-                                    }
                                     mobileNumber(this@apply, passengerMobileNumber)
                                     autoUpgrade(this@apply, autoUpgradeOption)
                                     confirmBerth(this@apply, confirmBerth)
                                     selectTravelInsurance(this@apply, travelInsurance)
                                     selectPaymentOption(this@apply, paymentOption)
-                                    delay(Random.nextLong(100L, 1000L))
-                                    continueAfterPassengerDetails(this@apply)
-                                    this@apply.waitForLoaderToFinish()
+
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        val passengerList = listOf(
+                                            Triple(p1Name, p1Age, p1GenderNo) to p1SeatNo,
+                                            Triple(p2Name, p2Age, p2GenderNo) to p2SeatNo,
+                                            Triple(p3Name, p3Age, p3GenderNo) to p3SeatNo,
+                                            Triple(p4Name, p4Age, p4GenderNo) to p4SeatNo,
+                                            Triple(p5Name, p5Age, p5GenderNo) to p5SeatNo,
+                                            Triple(p6Name, p6Age, p6GenderNo) to p6SeatNo
+                                        )
+
+                                        for (i in 0 until passengerCount) {
+                                            if (i > 0) {
+                                                delay(Random.nextLong(100L, 500L))
+                                                addNewPassenger(this@apply)
+                                                delay(Random.nextLong(100L, 800L))
+                                            }
+
+                                            val (nameAgeGender, seat) = passengerList[i]
+                                            val (name, age, gender) = nameAgeGender
+
+                                            passengerDetails(
+                                                this@apply,
+                                                i + 1,
+                                                name,
+                                                age,
+                                                gender,
+                                                seat
+                                            )
+                                        }
+                                        continueAfterPassengerDetails(this@apply)
+                                        this@apply.waitForLoaderToFinish()
+                                    }
 
 //                                    statusMessage = "🎉 Automation flow finished"
                                     return@launch
