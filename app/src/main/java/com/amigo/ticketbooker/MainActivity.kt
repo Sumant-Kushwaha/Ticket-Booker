@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                     Column(Modifier.fillMaxSize()) {
                         Spacer(Modifier.height(50.dp))
 //                        FlowRun()
-                        IrctcWebViewScreen()
+                        IrctcWebViewScreen(p1Name="Abhishek",p1Seat="L")
                     }
                 }
             }

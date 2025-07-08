@@ -38,16 +38,37 @@ import kotlin.random.Random
 fun IrctcWebViewScreen(
     inputUserName: String = "Shrisha2808",
     inputPassword: String = "Shrisha@2808",
-    inputDate: String = "17/07/2025",
+    inputDate: String = "02/09/2025",
     quotaName: String = "1",
-    className: String = "sl",
-    inputOrigin: String = "RANCHI - RNC (HATIA/RANCHI)",
+    className: String = "SL",
+    inputOrigin: String = "BAPUDM MOTIHARI - BMKI",
     inputDestination: String = "ANAND VIHAR TRM - ANVT (NEW DELHI)",
-    targetTrainNumber: String = "12825",
-    passengerName: String = "Omshree",
-    passengerAge: String = "20",
-    passengerGender: String = "F",
-    passengerSeatPreference: String = "SU",
+    targetTrainNumber: String = "12557",
+    passengerCount: Int = 2,
+    p1Name: String = "Omshree",
+    p1Age: String = "20",
+    p1Gender: String = "F",
+    p1Seat: String = "SL",
+    p2Name: String = "Omshree",
+    p2Age: String = "20",
+    p2Gender: String = "F",
+    p2Seat: String = "SL",
+    p3Name: String = "Omshree",
+    p3Age: String = "20",
+    p3Gender: String = "F",
+    p3Seat: String = "SU",
+    p4Name: String = "Omshree",
+    p4Age: String = "20",
+    p4Gender: String = "F",
+    p4Seat: String = "SL",
+    p5Name: String = "Omshree",
+    p5Age: String = "20",
+    p5Gender: String = "F",
+    p5Seat: String = "SL",
+    p6Name: String = "Omshree",
+    p6Age: String = "20",
+    p6Gender: String = "F",
+    p6Seat: String = "SL",
     passengerMobileNumber: String = "7302221097",
     autoUpgradeOption: String = "1", // "1" = check, "0" = leave unchecked
     confirmBerth: String = "1", // "1" = check, "0" = leave unchecked
@@ -105,6 +126,40 @@ fun IrctcWebViewScreen(
         2 -> "UPI"
         else -> null  // or "UNKNOWN", or throw Exception("Invalid class index")
     }
+
+    fun getGenderCode(gender: String?): String {
+        return when (gender?.uppercase()) {
+            "M" -> "2"
+            "F" -> "3"
+            "T" -> "4"
+            else -> "1"
+        }
+    }
+
+    val p1GenderNo = getGenderCode(p1Gender)
+    val p2GenderNo = getGenderCode(p2Gender)
+    val p3GenderNo = getGenderCode(p3Gender)
+    val p4GenderNo = getGenderCode(p4Gender)
+    val p5GenderNo = getGenderCode(p5Gender)
+    val p6GenderNo = getGenderCode(p6Gender)
+
+    fun getSeatCode(seat: String?): String {
+        return when (seat?.uppercase()) {
+            "L" -> "2"
+            "M" -> "3"
+            "U" -> "4"
+            "SL" -> "5"
+            "SU" -> "6"
+            else -> "1"
+        }
+    }
+
+    val p1SeatNo = getSeatCode(p1Seat)
+    val p2SeatNo = getSeatCode(p2Seat)
+    val p3SeatNo = getSeatCode(p3Seat)
+    val p4SeatNo = getSeatCode(p4Seat)
+    val p5SeatNo = getSeatCode(p5Seat)
+    val p6SeatNo = getSeatCode(p6Seat)
 
     var statusMessage by remember { mutableStateOf("Loading...") }
     var hasLoggedIn by remember { mutableStateOf(false) }
@@ -373,24 +428,215 @@ fun IrctcWebViewScreen(
                                     fillOrigin(this@apply, inputOrigin)
                                     fillDestination(this@apply, inputDestination)
 
-                                    delay(Random.nextLong(100L, 1000L))
+                                    delay(Random.nextLong(800L, 1000L))
                                     searchButton(this@apply)
                                     this@apply.waitForLoaderToFinish()
                                     selectTrain(this@apply, targetTrainNumber, targetClassCode)
-                                    passengerDetails(
-                                        this@apply,
-                                        passengerName,
-                                        passengerAge,
-                                        passengerGender,
-                                        passengerSeatPreference
-                                    )
+                                    this@apply.waitForLoaderToFinish()
+                                    if (passengerCount == 1) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                    }
+
+                                    else if (passengerCount == 2) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            2,
+                                            p2Name,
+                                            p2Age,
+                                            p2GenderNo,
+                                            p2SeatNo
+                                        )
+                                    }
+
+                                    else if (passengerCount == 3) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            2,
+                                            p2Name,
+                                            p2Age,
+                                            p2GenderNo,
+                                            p2SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            3,
+                                            p3Name,
+                                            p3Age,
+                                            p3GenderNo,
+                                            p3SeatNo
+                                        )
+                                    }
+                                    else if (passengerCount == 4) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            2,
+                                            p2Name,
+                                            p2Age,
+                                            p2GenderNo,
+                                            p2SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            3,
+                                            p3Name,
+                                            p3Age,
+                                            p3GenderNo,
+                                            p3SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            4,
+                                            p4Name,
+                                            p4Age,
+                                            p4GenderNo,
+                                            p4SeatNo
+                                        )
+                                    }
+                                    else if (passengerCount == 5) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            2,
+                                            p2Name,
+                                            p2Age,
+                                            p2GenderNo,
+                                            p2SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            3,
+                                            p3Name,
+                                            p3Age,
+                                            p3GenderNo,
+                                            p3SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            4,
+                                            p4Name,
+                                            p4Age,
+                                            p4GenderNo,
+                                            p4SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            5,
+                                            p5Name,
+                                            p5Age,
+                                            p5GenderNo,
+                                            p5SeatNo
+                                        )
+                                    }
+                                    else if (passengerCount == 6) {
+                                        passengerDetails(
+                                            this@apply,
+                                            1,
+                                            p1Name,
+                                            p1Age,
+                                            p1GenderNo,
+                                            p1SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            2,
+                                            p2Name,
+                                            p2Age,
+                                            p2GenderNo,
+                                            p2SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            3,
+                                            p3Name,
+                                            p3Age,
+                                            p3GenderNo,
+                                            p3SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            4,
+                                            p4Name,
+                                            p4Age,
+                                            p4GenderNo,
+                                            p4SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            5,
+                                            p5Name,
+                                            p5Age,
+                                            p5GenderNo,
+                                            p5SeatNo
+                                        )
+                                        addNewPassenger(this@apply)
+                                        passengerDetails(
+                                            this@apply,
+                                            6,
+                                            p6Name,
+                                            p6Age,
+                                            p6GenderNo,
+                                            p6SeatNo
+                                        )
+                                    }
                                     mobileNumber(this@apply, passengerMobileNumber)
                                     autoUpgrade(this@apply, autoUpgradeOption)
                                     confirmBerth(this@apply, confirmBerth)
                                     selectTravelInsurance(this@apply, travelInsurance)
                                     selectPaymentOption(this@apply, paymentOption)
                                     delay(Random.nextLong(100L, 1000L))
-//                                    continueAfterPassengerDetails(this@apply)
+                                    continueAfterPassengerDetails(this@apply)
                                     this@apply.waitForLoaderToFinish()
 
 //                                    statusMessage = "🎉 Automation flow finished"
@@ -523,7 +769,7 @@ suspend fun WebView.waitForLoaderToFinish(
             delay(checkIntervalMs)
         }
 
-        Log.d("LoginFlow", "⏩ Loader never appeared within 500ms — skipping wait.")
+        Log.d("LoginFlow", "⏩ Loader never appeared within 100ms — skipping wait.")
     }
 }
 
@@ -970,7 +1216,7 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
         javascript:(function() {
             const trainNumber = "$targetTrainNumber";
             const expectedClass = "$targetClassCode";
-            const maxAttempts = 30;
+            const maxAttempts = 50;
             let attempts = 0;
 
             function waitForTrainList(readyCallback) {
@@ -1026,10 +1272,10 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                                         if (dateDivNode) {
                                             dateDivNode.click();
                                             Android.sendToAndroid("✅ Clicked date availability div for train " + trainNumber);
-                                            setTimeout(afterDateClick, 500);
+                                            setTimeout(afterDateClick, 100);
                                         } else {
                                             Android.sendToAndroid("❌ Date cell not found, retrying...");
-                                            setTimeout(waitForDateCellAndClick, 300);
+                                            setTimeout(waitForDateCellAndClick, 100);
                                         }
                                     }
 
@@ -1040,6 +1286,10 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                                         if (directBookNowNode) {
                                             directBookNowNode.click();
                                             Android.sendToAndroid("✅ Found direct Book Now button by class, clicked");
+                                            waitForLoaderToDisappear(() => {
+                                                Android.sendToAndroid("✅ Proceeded after direct Book Now loader");
+                                                // You can continue to next steps here, if needed
+                                            });
                                             return;
                                         }
 
@@ -1068,9 +1318,9 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                                         
                                                     } else {
                                                         Android.sendToAndroid("⏳ Loader still visible, waiting...");
-                                                        setTimeout(() => waitForLoaderToDisappear(callback), 200);
+                                                        setTimeout(() => waitForLoaderToDisappear(callback), 100);
                                                     }
-                                                }, 500); // ✅ initial wait before first check
+                                                }, 100); // ✅ initial wait before first check
                                             }
                                         
                                             // ✅ Now call the wait function and then your logic to click on the date cell
@@ -1079,7 +1329,7 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
                                                 if (dateDivRetryNode) {
                                                     dateDivRetryNode.click();
                                                     Android.sendToAndroid("✅ Re-clicked date availability div after fallback");
-                                                    setTimeout(afterDateClick, 500);
+                                                    setTimeout(afterDateClick, 200);
                                                 } else {
                                                     Android.sendToAndroid("❌ Date cell not found during fallback retry");
                                                 }
@@ -1123,66 +1373,86 @@ private fun selectTrain(webView: WebView, targetTrainNumber: String, targetClass
 
 private fun passengerDetails(
     webView: WebView,
+    passengerCount: Int,
     passengerName: String,
     passengerAge: String,
-    passengerGender: String,
-    passengerSeatPreference: String
+    passengerGender: String?,
+    passengerSeatPreference: String?
 ) {
     val js = """
 javascript:(function () {
     function fillAllFields() {
         // Fill Name (retry until success)
         function fillName() {
-            var nameInput = document.querySelector('input[placeholder="Name"][maxlength="16"][type="text"][autocomplete="off"].ui-autocomplete-input');
-            if (nameInput) {
-                nameInput.value = "$passengerName";
-                nameInput.dispatchEvent(new Event('input', { bubbles: true }));
-                Android.sendToAndroid("✅ Passenger name set to $passengerName");
+    const xpath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[1]/p-autocomplete/span/input";
+    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-                // After name is filled, call the rest
-                fillAge();
-                fillGender();
-                fillBerth();
-            } else {
-                setTimeout(fillName, 300);
-            }
-        }
+    if (result) {
+        result.value = "$passengerName";
+        result.dispatchEvent(new Event('input', { bubbles: true }));
+        Android.sendToAndroid("✅ Passenger name set to $passengerName");
+
+        // Proceed to next fields
+        fillAge();
+        fillGender();
+        fillBerth();
+    } else {
+        Android.sendToAndroid("❌ Name input not found, retrying...");
+        setTimeout(fillName, 300);
+    }
+}
+
 
         function fillAge() {
-            var ageInput = document.querySelector('input[placeholder="Age"][maxlength="3"][type="number"][min="1"][max="125"]');
-            if (ageInput) {
-                ageInput.value = "$passengerAge";
-                ageInput.dispatchEvent(new Event('input', { bubbles: true }));
-                Android.sendToAndroid("✅ Passenger age set to $passengerAge");
-            }
-        }
+    const xpath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[2]/input";
+    const ageInput = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+    if (ageInput) {
+        ageInput.value = "$passengerAge";
+        ageInput.dispatchEvent(new Event('input', { bubbles: true }));
+        Android.sendToAndroid("✅ Passenger age set to $passengerAge");
+    } else {
+        Android.sendToAndroid("❌ Age input not found, retrying...");
+        setTimeout(fillAge, 300);
+    }
+}
+
 
         function fillGender() {
-            var genderSelect = document.querySelector('select[formcontrolname="passengerGender"]');
-            if (genderSelect) {
-                genderSelect.value = "$passengerGender";
-                genderSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                Android.sendToAndroid("✅ Passenger gender set to $passengerGender");
-            }
-        }
+    const g = $passengerGender; // Replace this from Kotlin side (e.g., 1 for MALE, 2 for FEMALE, etc.)
+    const optionXPath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[3]/select/option[" + g + "]";
+    const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+    if (optionNode && optionNode.parentElement) {
+        const selectElement = optionNode.parentElement;
+        selectElement.value = optionNode.value;
+        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+        Android.sendToAndroid("✅ Gender option selected using index " + g + " with value: " + optionNode.value);
+    } else {
+        Android.sendToAndroid("❌ Gender option not found for index " + g + ", retrying...");
+        setTimeout(fillGender, 300);
+    }
+}
+
+
 
         function fillBerth() {
-            var berthSelect = document.querySelector('select[formcontrolname="passengerBerthChoice"]');
-            if (berthSelect) {
-                berthSelect.value = "";
-                berthSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    const b = $passengerSeatPreference; // Replace this from Kotlin side (e.g., 1 for MALE, 2 for FEMALE, etc.)
+    const optionXPath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/div[1]/select/option[" + b + "]";
+    const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-                setTimeout(function () {
-                    berthSelect.value = "$passengerSeatPreference";
-                    berthSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    Android.sendToAndroid("✅ Passenger berth preference set to $passengerSeatPreference");
-                }, 100);
-            }
-        }
-
+    if (optionNode && optionNode.parentElement) {
+        const selectElement = optionNode.parentElement;
+        selectElement.value = optionNode.value;
+        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+        Android.sendToAndroid("✅ Berth option selected using index " + b + " with value: " + optionNode.value);
+    } else {
+        Android.sendToAndroid("❌ Berth option not found for index " + b + ", retrying...");
+        setTimeout(fillGender, 300);
+    }
+}
         fillName();
     }
-
     fillAllFields();
 })();
 """.trimIndent()
@@ -1302,33 +1572,6 @@ javascript:(function () {
 }
 
 
-private fun selectPaymentOption1(webView: WebView, paymentOption: Int) {
-    val js = """
-    javascript: (function () {
-        let attempt = 0;
-        function trySelect() {
-            attempt++;
-            if ($paymentOption === 1) {
-                if (window.Android) Android.sendToAndroid("✅ Card NetBanking selected by default.");
-                return;
-            }
-            const upiBox = document.querySelector('p-radiobutton[id="2"] .ui-radiobutton-box');
-            if (upiBox) {
-                upiBox.click();
-                if (window.Android) Android.sendToAndroid("✅ UPI option selected.");
-            } else if (attempt < 3) {
-                setTimeout(trySelect, 300);
-            } else {
-                if (window.Android) Android.sendToAndroid("⚠️ UPI option not found after 3 attempts.");
-            }
-        }
-        trySelect();
-    })();
-    """.trimIndent()
-
-    webView.evaluateJavascript(js, null)
-}
-
 private fun selectPaymentOption(webView: WebView, paymentOption: String?) {
     val js = """
 javascript: (function () {
@@ -1356,25 +1599,40 @@ javascript: (function () {
     webView.evaluateJavascript(js, null)
 }
 
+private fun addNewPassenger(webView: WebView) {
+    val js = """
+        javascript:(function retryAddPassenger() {
+            const xpath = "//span[contains(text(), 'Add Passenger')]/parent::a";
+            const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+            if (result) {
+                Android.sendToAndroid("✅ New Passenger Button Found");
+                result.click();
+            } else {
+                Android.sendToAndroid("⏳ 'Add Passenger' button not found, retrying...");
+                setTimeout(retryAddPassenger, 300);
+            }
+        })();
+    """.trimIndent()
+
+    webView.evaluateJavascript(js, null)
+}
+
 
 private fun continueAfterPassengerDetails(webView: WebView) {
     val js = """
-javascript:(function () {
-    let attempts = 0;
-    function tryClickContinue() {
-        attempts++;
-        var continueBtn = document.querySelector("#psgn-form > form > div > div.col-lg-9.col-md-9.col-sm-12.remove-padding > div.col-xs-12.hidden-xs > div > button.train_Search.btnDefault");
-        if (continueBtn) {
-            continueBtn.click();
-            Android.sendToAndroid("✅ Continue button clicked after passenger details.");
-        } else if (attempts < 5) {
-            setTimeout(tryClickContinue, 300);
+    javascript:(function clickByXPath() {
+        const xpath = "//*[@id='psgn-form']/form/div/div[1]/div[16]/div/button[2]";
+        const node = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+        if (node) {
+            node.click();
+            Android.sendToAndroid("✅ Button clicked via XPath");
         } else {
-            Android.sendToAndroid("❌ Continue button not found after 5 attempts.");
+            Android.sendToAndroid("❌ Button not found via XPath, retrying...");
+            setTimeout(clickByXPath, 300);
         }
-    }
-    tryClickContinue();
-})();
+    })();
 """.trimIndent()
 
     webView.evaluateJavascript(js, null)
