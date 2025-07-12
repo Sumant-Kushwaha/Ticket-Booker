@@ -435,7 +435,7 @@ fun IrctcWebViewScreen(
                                     this@apply.waitForLoaderToFinish()
 
                                     // Wait for verification text before filling mobile number
-                                    val verificationSuccess = verificationTextPassengerDetails(this@apply)
+                                    val verificationSuccess = verificationInPassengerDetails(this@apply)
                                     if (verificationSuccess) {
                                         addNewPassenger(this@apply,passengerCount)
                                         mobileNumber(this@apply, passengerMobileNumber)
@@ -1516,23 +1516,49 @@ private fun continueAfterPassengerDetails(webView: WebView) {
         javascript:(function mainLoop() {
             const xpathButton = "//*[@id='psgn-form']/form/div/div[1]/div[16]/div/button[2]";
             const xpathVerification = "//*[@id='divMain']/div/app-review-booking/div[1]/div/div[2]/strong";
-            
+
             function getElementByXPath(xpath) {
                 return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             }
 
-            function isLoaderVisible() {
-                const loader = document.querySelector('.loader') || document.querySelector('.loading') || document.querySelector('app-loader');
-                return loader && loader.offsetParent !== null; // visible
+            function waitForLoaderOrTimeout(callback) {
+                const start = Date.now();
+
+                function check() {
+                    const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+                    const invisible = !loader || loader.style.display === "none" || loader.hidden ||
+                        getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
+
+                    if (!invisible) {
+                        Android.sendToAndroid("⏳ Loader is visible, waiting until it disappears...");
+                        waitForLoaderToDisappear(callback); // full loader wait if it shows up
+                    } else if (Date.now() - start > 500) {
+                        Android.sendToAndroid("⚠️ Loader not visible after 500ms. Proceeding anyway.");
+                        callback();
+                    } else {
+                        setTimeout(check, 50);
+                    }
+                }
+
+                check();
+            }
+
+            function waitForLoaderToDisappear(callback) {
+                const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+
+                const invisible = !loader || loader.style.display === "none" || loader.hidden ||
+                    getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
+
+                if (invisible) {
+                    Android.sendToAndroid("✅ Loader gone, proceeding...");
+                    callback();
+                } else {
+                    Android.sendToAndroid("⏳ Loader still visible, waiting...");
+                    setTimeout(() => waitForLoaderToDisappear(callback), 100);
+                }
             }
 
             function process() {
-                if (isLoaderVisible()) {
-                    Android.sendToAndroid("⏳ Loader visible, waiting...");
-                    setTimeout(mainLoop, 300);
-                    return;
-                }
-
                 const verifyEl = getElementByXPath(xpathVerification);
                 if (verifyEl) {
                     Android.sendToAndroid("✅ Verification element found. Stopping.");
@@ -1543,11 +1569,15 @@ private fun continueAfterPassengerDetails(webView: WebView) {
                 if (button) {
                     button.click();
                     Android.sendToAndroid("✅ Button clicked via XPath");
+
+                    // Wait for loader or timeout after 500ms
+                    waitForLoaderOrTimeout(() => {
+                        setTimeout(mainLoop, 500);
+                    });
                 } else {
                     Android.sendToAndroid("❌ Button not found, retrying...");
+                    setTimeout(mainLoop, 500);
                 }
-
-                setTimeout(mainLoop, 500);
             }
 
             process();
@@ -1559,7 +1589,10 @@ private fun continueAfterPassengerDetails(webView: WebView) {
 
 
 
-suspend fun verificationTextPassengerDetails(webView: WebView): Boolean {
+
+
+
+suspend fun verificationInPassengerDetails(webView: WebView): Boolean {
     return withContext(Dispatchers.Main) {
         val js = """
             (function() {
