@@ -44,7 +44,7 @@ fun IrctcWebViewScreen(
     inputOrigin: String = "BAPUDM MOTIHARI - BMKI",
     inputDestination: String = "ANAND VIHAR TRM - ANVT (NEW DELHI)",
     targetTrainNumber: String = "12557",
-    passengerCount: Int = 6,
+    passengerCount: Int = 2,
     p1Name: String = "Omshree",
     p1Age: String = "23",
     p1Gender: String = "M",
@@ -434,12 +434,20 @@ fun IrctcWebViewScreen(
                                     selectTrain(this@apply, targetTrainNumber, targetClassCode)
                                     this@apply.waitForLoaderToFinish()
 
+                                    // Wait for verification text before filling mobile number
+                                    val verificationSuccess = verificationTextPassengerDetails(this@apply)
+                                    if (verificationSuccess) {
+                                        mobileNumber(this@apply, passengerMobileNumber)
+                                        autoUpgrade(this@apply, autoUpgradeOption)
+                                        confirmBerth(this@apply, confirmBerth)
+                                        selectTravelInsurance(this@apply, travelInsurance)
+                                        selectPaymentOption(this@apply, paymentOption)
+                                    } else {
+                                        statusMessage = "❌ Passenger details verification text not found."
+                                        return@launch
+                                    }
 
-                                    mobileNumber(this@apply, passengerMobileNumber)
-                                    autoUpgrade(this@apply, autoUpgradeOption)
-                                    confirmBerth(this@apply, confirmBerth)
-                                    selectTravelInsurance(this@apply, travelInsurance)
-                                    selectPaymentOption(this@apply, paymentOption)
+
 
                                     CoroutineScope(Dispatchers.Main).launch {
                                         val passengerList = listOf(
@@ -461,6 +469,8 @@ fun IrctcWebViewScreen(
                                             val (nameAgeGender, seat) = passengerList[i]
                                             val (name, age, gender) = nameAgeGender
 
+                                            // Await until all fields are filled for this passenger
+                                            // (passengerDetails must be a suspend function)
                                             passengerDetails(
                                                 this@apply,
                                                 i + 1,
@@ -470,6 +480,7 @@ fun IrctcWebViewScreen(
                                                 seat
                                             )
                                         }
+                                        // Only after all passengers are filled, continue
                                         continueAfterPassengerDetails(this@apply)
                                         this@apply.waitForLoaderToFinish()
                                     }
@@ -1471,4 +1482,37 @@ private fun continueAfterPassengerDetails(webView: WebView) {
 """.trimIndent()
 
     webView.evaluateJavascript(js, null)
+}
+
+
+suspend fun verificationTextPassengerDetails(webView: WebView): Boolean {
+    return withContext(Dispatchers.Main) {
+        val js = """
+            (function() {
+                const xpath = '//*[@id="divMain"]/div/app-passenger-input/div[1]/div/div[2]/strong';
+                var result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return !!result;
+            })();
+        """.trimIndent()
+        repeat(20) {
+            val found = suspendCancellableCoroutine<Boolean> { cont ->
+                webView.evaluateJavascript(js) { res ->
+                    cont.resume(res == "true")
+                }
+            }
+            if (found) {
+                webView.evaluateJavascript(
+                    """if(window.Android) Android.sendToAndroid("✅ Passenger details Text found");""",
+                    null
+                )
+                return@withContext true
+            }
+            delay(500)
+        }
+        webView.evaluateJavascript(
+            """if(window.Android) Android.sendToAndroid("❌ Max attempts reached while waiting for passenger text.");""",
+            null
+        )
+        false
+    }
 }
