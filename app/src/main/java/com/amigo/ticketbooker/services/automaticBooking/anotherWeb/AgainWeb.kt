@@ -38,7 +38,7 @@ import kotlin.random.Random
 fun IrctcWebViewScreen(
     inputUserName: String = "Shrisha2808",
     inputPassword: String = "Shrisha@2808",
-    inputDate: String = "02/09/2025",
+    inputDate: String = "09/09/2025",
     quotaName: String = "1",
     className: String = "SL",
     inputOrigin: String = "BAPUDM MOTIHARI - BMKI",
@@ -753,109 +753,122 @@ suspend fun selectJourneyDate(
     targetDay: String,
     targetMonthName: String
 ) {
-// Step 1: Open the calendar
+    // Step 1: Open the calendar
     val openCalendarScript = """
-    javascript: (function () {
-        const input = document.querySelector(
-            '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
-        );
-        if (input) {
-            input.focus();
-            input.click();
-            Android.sendToAndroid("✅ Calendar input clicked");
-        } else {
-            Android.sendToAndroid("❌ Calendar input not found");
-        }
-    })();
+        javascript: (function () {
+            const input = document.querySelector(
+                '#jDate input, input[placeholder="DD/MM/YYYY"], input[formcontrolname="journeyDate"], input[formcontrolname="journeyDateInput"], input.ui-inputtext[role="textbox"]'
+            );
+            if (input) {
+                input.focus();
+                input.click();
+                Android.sendToAndroid("✅ Calendar input clicked");
+            } else {
+                Android.sendToAndroid("❌ Calendar input not found");
+            }
+        })();
     """.trimIndent()
     webViewRef.evaluateJavascript(openCalendarScript, null)
-    delay(500) // Give the calendar time to open
+    delay(500)
 
-// Step 2: Select the correct date
+    // Step 2: Inject optimized date selection logic
     val dateSelectionScript = """
-    javascript: (function () {
-        const targetMonth = "$targetMonthName";
-        const targetDate = $targetDay;
+        javascript: (function () {
+            const targetMonth = "$targetMonthName";
+            const targetDate = $targetDay;
 
-        function log(msg) {
-            if (window.Android) Android.sendToAndroid(msg);
-            console.log(msg);
-        }
-
-        const monthXPath = "//*[@id='jDate']/span/div/div/div[1]/div/span[1]";
-        const result = document.evaluate(monthXPath, document, null, XPathResult.STRING_TYPE, null);
-        const currentMonth = result.stringValue.trim();
-
-        log(`📅 Current month: ${'$'}{currentMonth}`);
-
-        if (currentMonth !== targetMonth) {
-            log(`🔁 Month mismatch (${'$'}{currentMonth} ≠ ${'$'}{targetMonth}). Switching month...`);
-            const nextMonthXPath = "//*[@id='jDate']/span/div/div/div[1]/a[2]/span";
-            const nextMonthNode = document.evaluate(nextMonthXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if (nextMonthNode) {
-                nextMonthNode.click();
-                setTimeout(arguments.callee, 500);
-                return;
-            } else {
-                log("❌ Next month arrow not found");
-                return;
+            function log(msg) {
+                if (window.Android) Android.sendToAndroid(msg);
+                console.log(msg);
             }
-        }
 
-        log(`✅ Month matches. Searching dates...`);
+            function getCurrentMonth() {
+                const monthXPath = "//*[@id='jDate']/span/div/div/div[1]/div/span[1]";
+                const result = document.evaluate(monthXPath, document, null, XPathResult.STRING_TYPE, null);
+                return result.stringValue.trim();
+            }
 
-        let firstDate = null;
-        let firstTd = -1;
-        let firstRow = -1;
+            function changeMonthFastUntilMatch(onComplete) {
+                const nextMonthXPath = "//*[@id='jDate']/span/div/div/div[1]/a[2]/span";
 
-        outer: for (let row = 1; row <= 5; row++) {
-            for (let td = 1; td <= 7; td++) {
-                const cellXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + row + "]/td[" + td + "]/a";
-                const node = document.evaluate(cellXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if (node) {
-                    firstDate = parseInt(node.textContent.trim());
-                    firstTd = td;
-                    firstRow = row;
-                    break outer;
+                function loop() {
+                    const current = getCurrentMonth();
+                    if (current === targetMonth) {
+                        onComplete();
+                        return;
+                    }
+
+                    const nextBtn = document.evaluate(nextMonthXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (nextBtn) {
+                        nextBtn.click();
+                        setTimeout(loop, 100); // Faster loop
+                    } else {
+                        log("❌ Next month button not found.");
+                    }
+                }
+
+                loop();
+            }
+
+            function selectDateInCalendar() {
+                log(`✅ Month matches. Searching dates...`);
+
+                let firstDate = null;
+                let firstTd = -1;
+                let firstRow = -1;
+
+                outer: for (let row = 1; row <= 5; row++) {
+                    for (let td = 1; td <= 7; td++) {
+                        const cellXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + row + "]/td[" + td + "]/a";
+                        const node = document.evaluate(cellXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        if (node) {
+                            firstDate = parseInt(node.textContent.trim());
+                            firstTd = td;
+                            firstRow = row;
+                            break outer;
+                        }
+                    }
+                }
+
+                if (firstDate === null) {
+                    log("❌ No enabled date found in calendar");
+                    return;
+                }
+
+                const totalOffset = targetDate - firstDate;
+                const startIndex = (firstRow - 1) * 7 + (firstTd - 1);
+                const targetIndex = startIndex + totalOffset;
+
+                const targetRow = Math.floor(targetIndex / 7) + 1;
+                const targetCol = (targetIndex % 7) + 1;
+
+                const targetXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + targetRow + "]/td[" + targetCol + "]/a";
+                const targetNode = document.evaluate(targetXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                if (targetNode) {
+                    targetNode.click();
+                    log(`✅ Clicked on date ${'$'}{targetNode.textContent.trim()} at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
+                } else {
+                    log(`❌ Date $targetDay not found at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
                 }
             }
-        }
 
-        if (firstDate === null) {
-            log("❌ No enabled date found in calendar");
-            return;
-        }
-
-        const totalOffset = targetDate - firstDate;
-        const startIndex = (firstRow - 1) * 7 + (firstTd - 1);
-        const targetIndex = startIndex + totalOffset;
-
-        const targetRow = Math.floor(targetIndex / 7) + 1;
-        const targetCol = (targetIndex % 7) + 1;
-
-        const targetXPath = "//*[@id='jDate']/span/div/div/div[2]/table/tbody/tr[" + targetRow + "]/td[" + targetCol + "]/a";
-        const targetNode = document.evaluate(targetXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
-        if (targetNode) {
-            targetNode.click();
-            log(`✅ Clicked on date ${'$'}{targetNode.textContent.trim()} at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
-        } else {
-            log(`❌ Date $targetDay not found at tr[${'$'}{targetRow}], td[${'$'}{targetCol}]`);
-        }
-    })();
+            // Begin the logic
+            changeMonthFastUntilMatch(selectDateInCalendar);
+        })();
     """.trimIndent()
     webViewRef.evaluateJavascript(dateSelectionScript, null)
 
-// Step 3: Confirm the input was updated with the selected date
+    // Step 3: Confirm that input is updated
     val isDateSelected = suspendCancellableCoroutine<Boolean> { cont ->
         CoroutineScope(Dispatchers.Main).launch {
             repeat(20) {
                 val checkScript = """
-            javascript: (function () {
-                const inp = document.querySelector('#jDate input');
-                return inp ? inp.value : "";
-            })();
-            """.trimIndent()
+                    javascript: (function () {
+                        const inp = document.querySelector('#jDate input');
+                        return inp ? inp.value : "";
+                    })();
+                """.trimIndent()
 
                 val currentVal = suspendCancellableCoroutine<String> { innerCont ->
                     webViewRef.evaluateJavascript(checkScript) { result ->
@@ -880,6 +893,7 @@ suspend fun selectJourneyDate(
         Log.d("DatePicker", "❌ Date not selected within timeout")
     }
 }
+
 
 private fun expandClass(webView: WebView) {
     val js = """
@@ -1585,10 +1599,10 @@ private fun continueAfterPassengerDetails(webView: WebView) {
     """.trimIndent()
 
     webView.evaluateJavascript(js, null)
+    CoroutineScope(Dispatchers.Main).launch {
+        webView.solveCaptchaAndContinue()
+    }
 }
-
-
-
 
 
 
@@ -1623,3 +1637,223 @@ suspend fun verificationInPassengerDetails(webView: WebView): Boolean {
         false
     }
 }
+
+
+
+suspend fun WebView.solveCaptchaAndContinue(): Boolean {
+    val captchaImageSelector = ".captcha-img"
+    val continueButtonSelector =
+        "#review > div.col-lg-9.col-md-9.col-sm-12.remove-padding > p-sidebar > div > div > div.pull-right > button"
+    val inputFieldSelector = "input[formcontrolname='captcha']"
+    val paymentSuccessSelector =
+        "#divMain > div > app-payment-options > div.top-header.hidden-lg.hidden-md.hidden-sm > div > div.pull-right > strong"
+
+    var lastCaptchaUrl: String? = null
+    val maxRetries = 15
+    var retries = 0
+
+    while (retries < maxRetries) {
+        retries++
+
+        // Step 1: Get captcha image URL
+        val captchaUrl = getCaptchaUrlSecond()
+        lastCaptchaUrl = captchaUrl
+
+        // Step 2: OCR captcha
+        val captchaText = suspendCancellableCoroutine<String> { cont ->
+            downloadAndRecognizeCaptcha(context, captchaUrl) { text ->
+                cont.resume(text, null)
+            }
+        }
+
+        if (captchaText.isEmpty()) {
+            refreshCaptcha()
+            delay(1000)
+            continue
+        }
+
+        // Step 3: Fill captcha & click continue
+        fillCaptchaInputSecond(inputFieldSelector, captchaText)
+        delay(300)
+        clickContinueButtonAfterCaptcha(continueButtonSelector)
+
+        // Step 4: Wait for loader to disappear
+        waitForLoaderToDisappearForCaptcha()
+
+        delay(500)
+
+        // Step 5: Check if captcha passed or failed
+        val result = checkCaptchaOutcome(inputFieldSelector, paymentSuccessSelector)
+
+        if (result == "captcha") {
+            val newCaptchaUrl = getCaptchaUrlSecond()
+            if (newCaptchaUrl == lastCaptchaUrl) {
+                repeat(5) {
+                    refreshCaptcha()
+                    delay(1000)
+                    val refreshedUrl = getCaptchaUrlSecond()
+                    if (refreshedUrl != lastCaptchaUrl) {
+                        lastCaptchaUrl = refreshedUrl
+                        return@repeat
+                    }
+                }
+            }
+            continue
+        } else if (result == "payment") {
+            Log.d("LoginFlow", "✅ Captcha success, payment screen loaded")
+            return true
+        }
+    }
+
+    Log.d("LoginFlow", "❌ Max retries reached for captcha after passenger continue")
+    return false
+}
+
+
+suspend fun WebView.getCaptchaUrlSecond(): String {
+    val js = """
+        (function() {
+            const img = document.querySelector(".captcha-img");
+            return img ? img.src || img.getAttribute("src") : "";
+        })();
+    """.trimIndent()
+    return suspendCancellableCoroutine { cont ->
+        evaluateJavascript(js) { url -> cont.resume(url.trim('"'), null) }
+    }
+}
+
+fun WebView.fillCaptchaInputSecond(selector: String, text: String) {
+    val js = """
+        (function() {
+            var input = document.querySelector("$selector");
+            if (input) {
+                input.value = "$text";
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        })();
+    """.trimIndent()
+    evaluateJavascript(js, null)
+}
+
+fun WebView.clickContinueButtonAfterCaptcha(selector: String) {
+    val js = """
+        (function() {
+            const button = document.querySelector("$selector");
+            if (button) {
+                button.click();
+                if (window.Android) Android.sendToAndroid("✅ Continue button clicked.");
+            } else {
+                if (window.Android) Android.sendToAndroid("❌ Continue button not found.");
+            }
+        })();
+    """.trimIndent()
+
+    evaluateJavascript(js, null)
+}
+
+
+fun WebView.refreshCaptcha() {
+    val refreshButtonXPath =
+        "//*[@id=\"review\"]/div[1]/form/div[1]/div/div/app-captcha/div/div/div[2]/span[2]/a/span"
+
+    val js = """
+        (function() {
+            const xpath = "$refreshButtonXPath";
+            const refreshBtn = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (refreshBtn) {
+                refreshBtn.click();
+                if (window.Android) Android.sendToAndroid("🔄 Captcha refresh clicked.");
+            } else {
+                if (window.Android) Android.sendToAndroid("⚠️ Captcha refresh button not found.");
+            }
+        })();
+    """.trimIndent()
+
+    this.evaluateJavascript(js, null)
+}
+
+
+fun WebView.waitForLoaderToDisappearForCaptcha() {
+    val js = """
+        (function waitForLoaderOrTimeout(callback) {
+            const start = Date.now();
+
+            function check() {
+                const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+                const invisible = !loader || loader.style.display === "none" || loader.hidden ||
+                    getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
+
+                if (!invisible) {
+                    if (window.Android) Android.sendToAndroid("⏳ Loader is visible, waiting until it disappears...");
+                    waitForLoaderToDisappear(callback); // full loader wait
+                } else if (Date.now() - start > 500) {
+                    if (window.Android) Android.sendToAndroid("⚠️ Loader not visible after 500ms. Proceeding anyway.");
+                    callback();
+                } else {
+                    setTimeout(check, 50);
+                }
+            }
+
+            check();
+        })(function() {
+            if (window.Android) Android.sendToAndroid("✅ Loader check completed.");
+        });
+
+        function waitForLoaderToDisappear(callback) {
+            const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
+
+            const invisible = !loader || loader.style.display === "none" || loader.hidden ||
+                getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
+
+            if (invisible) {
+                if (window.Android) Android.sendToAndroid("✅ Loader gone, proceeding...");
+                callback();
+            } else {
+                if (window.Android) Android.sendToAndroid("⏳ Loader still visible, waiting...");
+                setTimeout(() => waitForLoaderToDisappear(callback), 100);
+            }
+        }
+    """.trimIndent()
+
+    evaluateJavascript(js, null)
+}
+
+suspend fun WebView.checkCaptchaOutcome(captchaSelector: String, paymentSelector: String): String {
+    val js = """
+        (function() {
+            function isVisible(el) {
+                if (!el) return false;
+                const style = getComputedStyle(el);
+                return (
+                    style.display !== "none" &&
+                    style.visibility !== "hidden" &&
+                    style.opacity !== "0" &&
+                    el.offsetParent !== null
+                );
+            }
+
+            const captchaEl = document.querySelector("$captchaSelector");
+            if (isVisible(captchaEl)) {
+                if (window.Android) Android.sendToAndroid("🟥 Captcha input field is still visible – captcha likely failed.");
+                return "captcha";
+            }
+
+            const paymentEl = document.querySelector("$paymentSelector");
+            if (isVisible(paymentEl)) {
+                if (window.Android) Android.sendToAndroid("✅ Payment confirmation element is visible – captcha passed.");
+                return "payment";
+            }
+
+            if (window.Android) Android.sendToAndroid("❓ Neither captcha nor payment element visible – unknown state.");
+            return "unknown";
+        })();
+    """.trimIndent()
+
+    return suspendCancellableCoroutine { cont ->
+        evaluateJavascript(js) { result ->
+            cont.resume(result.trim('"'), null)
+        }
+    }
+}
+
+
