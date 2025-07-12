@@ -1513,22 +1513,50 @@ private suspend fun addNewPassenger(webView: WebView, passengerCount: Int) {
 
 private fun continueAfterPassengerDetails(webView: WebView) {
     val js = """
-    javascript:(function clickByXPath() {
-        const xpath = "//*[@id='psgn-form']/form/div/div[1]/div[16]/div/button[2]";
-        const node = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        javascript:(function mainLoop() {
+            const xpathButton = "//*[@id='psgn-form']/form/div/div[1]/div[16]/div/button[2]";
+            const xpathVerification = "//*[@id='divMain']/div/app-review-booking/div[1]/div/div[2]/strong";
+            
+            function getElementByXPath(xpath) {
+                return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            }
 
-        if (node) {
-            node.click();
-            Android.sendToAndroid("✅ Button clicked via XPath");
-        } else {
-            Android.sendToAndroid("❌ Button not found via XPath, retrying...");
-            setTimeout(clickByXPath, 300);
-        }
-    })();
-""".trimIndent()
+            function isLoaderVisible() {
+                const loader = document.querySelector('.loader') || document.querySelector('.loading') || document.querySelector('app-loader');
+                return loader && loader.offsetParent !== null; // visible
+            }
+
+            function process() {
+                if (isLoaderVisible()) {
+                    Android.sendToAndroid("⏳ Loader visible, waiting...");
+                    setTimeout(mainLoop, 300);
+                    return;
+                }
+
+                const verifyEl = getElementByXPath(xpathVerification);
+                if (verifyEl) {
+                    Android.sendToAndroid("✅ Verification element found. Stopping.");
+                    return;
+                }
+
+                const button = getElementByXPath(xpathButton);
+                if (button) {
+                    button.click();
+                    Android.sendToAndroid("✅ Button clicked via XPath");
+                } else {
+                    Android.sendToAndroid("❌ Button not found, retrying...");
+                }
+
+                setTimeout(mainLoop, 500);
+            }
+
+            process();
+        })();
+    """.trimIndent()
 
     webView.evaluateJavascript(js, null)
 }
+
 
 
 suspend fun verificationTextPassengerDetails(webView: WebView): Boolean {
