@@ -44,7 +44,7 @@ fun IrctcWebViewScreen(
     inputOrigin: String = "BAPUDM MOTIHARI - BMKI",
     inputDestination: String = "ANAND VIHAR TRM - ANVT (NEW DELHI)",
     targetTrainNumber: String = "12557",
-    passengerCount: Int = 2,
+    passengerCount: Int = 6,
     p1Name: String = "Omshree",
     p1Age: String = "23",
     p1Gender: String = "M",
@@ -437,11 +437,13 @@ fun IrctcWebViewScreen(
                                     // Wait for verification text before filling mobile number
                                     val verificationSuccess = verificationTextPassengerDetails(this@apply)
                                     if (verificationSuccess) {
+                                        addNewPassenger(this@apply,passengerCount)
                                         mobileNumber(this@apply, passengerMobileNumber)
                                         autoUpgrade(this@apply, autoUpgradeOption)
                                         confirmBerth(this@apply, confirmBerth)
                                         selectTravelInsurance(this@apply, travelInsurance)
                                         selectPaymentOption(this@apply, paymentOption)
+                                        delay(Random.nextLong(100L, 700L))
                                     } else {
                                         statusMessage = "❌ Passenger details verification text not found."
                                         return@launch
@@ -460,12 +462,6 @@ fun IrctcWebViewScreen(
                                         )
 
                                         for (i in 0 until passengerCount) {
-                                            if (i > 0) {
-                                                delay(Random.nextLong(100L, 500L))
-                                                addNewPassenger(this@apply)
-                                                delay(Random.nextLong(100L, 800L))
-                                            }
-
                                             val (nameAgeGender, seat) = passengerList[i]
                                             val (name, age, gender) = nameAgeGender
 
@@ -480,6 +476,7 @@ fun IrctcWebViewScreen(
                                                 seat
                                             )
                                         }
+                                        delay(Random.nextLong(900L, 1300L))
                                         // Only after all passengers are filled, continue
                                         continueAfterPassengerDetails(this@apply)
                                         this@apply.waitForLoaderToFinish()
@@ -1228,77 +1225,96 @@ private fun passengerDetails(
     val js = """
 javascript:(function () {
     function fillAllFields() {
-        // Fill Name (retry until success)
+        function fillNameCharByChar(name, index, input) {
+            if (index < name.length) {
+                input.value += name.charAt(index);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                setTimeout(function () {
+                    fillNameCharByChar(name, index + 1, input);
+                }, 10); // delay between characters
+            } else {
+                Android.sendToAndroid("✅ Passenger name fully typed as: " + name);
+                // Proceed to next fields
+                fillAge();
+                fillGender();
+                fillBerth();
+            }
+        }
+
         function fillName() {
-    const xpath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[1]/p-autocomplete/span/input";
-    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            const xpath = "//*[@id='ui-panel-13-content']/div/div[${passengerCount}]/div[2]/div/app-passenger/div/div[1]/span/div[1]/p-autocomplete/span/input";
+            const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-    if (result) {
-        result.value = "$passengerName";
-        result.dispatchEvent(new Event('input', { bubbles: true }));
-        Android.sendToAndroid("✅ Passenger name set to $passengerName");
-
-        // Proceed to next fields
-        fillAge();
-        fillGender();
-        fillBerth();
-    } else {
-        Android.sendToAndroid("❌ Name input not found, retrying...");
-        setTimeout(fillName, 300);
-    }
-}
-
+            if (result) {
+                result.value = ""; // clear field
+                result.focus();
+                Android.sendToAndroid("✍️ Typing name character-by-character...");
+                fillNameCharByChar("${passengerName}", 0, result);
+            } else {
+                Android.sendToAndroid("❌ Name input not found, retrying...");
+                setTimeout(fillName, 300);
+            }
+        }
 
         function fillAge() {
-    const xpath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[2]/input";
-    const ageInput = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            const xpath = "//*[@id='ui-panel-13-content']/div/div[${passengerCount}]/div[2]/div/app-passenger/div/div[1]/span/div[2]/input";
+            const ageInput = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-    if (ageInput) {
-        ageInput.value = "$passengerAge";
-        ageInput.dispatchEvent(new Event('input', { bubbles: true }));
-        Android.sendToAndroid("✅ Passenger age set to $passengerAge");
-    } else {
-        Android.sendToAndroid("❌ Age input not found, retrying...");
-        setTimeout(fillAge, 300);
-    }
-}
-
+            if (ageInput) {
+                ageInput.value = "${passengerAge}";
+                ageInput.dispatchEvent(new Event('input', { bubbles: true }));
+                Android.sendToAndroid("✅ Passenger age set to ${passengerAge}");
+            } else {
+                Android.sendToAndroid("❌ Age input not found, retrying...");
+                setTimeout(fillAge, 300);
+            }
+        }
 
         function fillGender() {
-    const g = $passengerGender; // Replace this from Kotlin side (e.g., 1 for MALE, 2 for FEMALE, etc.)
-    const optionXPath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/span/div[3]/select/option[" + g + "]";
-    const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            const g = ${passengerGender ?: "null"};
+            if (!g) {
+                Android.sendToAndroid("⚠️ Gender not provided, skipping gender selection.");
+                return;
+            }
 
-    if (optionNode && optionNode.parentElement) {
-        const selectElement = optionNode.parentElement;
-        selectElement.value = optionNode.value;
-        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-        Android.sendToAndroid("✅ Gender option selected using index " + g + " with value: " + optionNode.value);
-    } else {
-        Android.sendToAndroid("❌ Gender option not found for index " + g + ", retrying...");
-        setTimeout(fillGender, 300);
-    }
-}
+            const optionXPath = "//*[@id='ui-panel-13-content']/div/div[${passengerCount}]/div[2]/div/app-passenger/div/div[1]/span/div[3]/select/option[" + g + "]";
+            const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-
+            if (optionNode && optionNode.parentElement) {
+                const selectElement = optionNode.parentElement;
+                selectElement.value = optionNode.value;
+                selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                Android.sendToAndroid("✅ Gender selected index " + g + ": " + optionNode.value);
+            } else {
+                Android.sendToAndroid("❌ Gender option not found, retrying...");
+                setTimeout(fillGender, 300);
+            }
+        }
 
         function fillBerth() {
-    const b = $passengerSeatPreference; // Replace this from Kotlin side (e.g., 1 for MALE, 2 for FEMALE, etc.)
-    const optionXPath = "//*[@id='ui-panel-13-content']/div/div[$passengerCount]/div[2]/div/app-passenger/div/div[1]/div[1]/select/option[" + b + "]";
-    const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            const b = ${passengerSeatPreference ?: "null"};
+            if (!b) {
+                Android.sendToAndroid("⚠️ Seat preference not provided, skipping berth selection.");
+                return;
+            }
 
-    if (optionNode && optionNode.parentElement) {
-        const selectElement = optionNode.parentElement;
-        selectElement.value = optionNode.value;
-        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-        Android.sendToAndroid("✅ Berth option selected using index " + b + " with value: " + optionNode.value);
-    } else {
-        Android.sendToAndroid("❌ Berth option not found for index " + b + ", retrying...");
-        setTimeout(fillGender, 300);
-    }
-}
+            const optionXPath = "//*[@id='ui-panel-13-content']/div/div[${passengerCount}]/div[2]/div/app-passenger/div/div[1]/div[1]/select/option[" + b + "]";
+            const optionNode = document.evaluate(optionXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+            if (optionNode && optionNode.parentElement) {
+                const selectElement = optionNode.parentElement;
+                selectElement.value = optionNode.value;
+                selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                Android.sendToAndroid("✅ Berth selected index " + b + ": " + optionNode.value);
+            } else {
+                Android.sendToAndroid("❌ Berth option not found, retrying...");
+                setTimeout(fillBerth, 300);
+            }
+        }
+
         fillName();
     }
+
     fillAllFields();
 })();
 """.trimIndent()
@@ -1445,23 +1461,53 @@ javascript: (function () {
     webView.evaluateJavascript(js, null)
 }
 
-private fun addNewPassenger(webView: WebView) {
-    val js = """
-        javascript:(function retryAddPassenger() {
-            const xpath = "//span[contains(text(), 'Add Passenger')]/parent::a";
-            const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+private suspend fun addNewPassenger(webView: WebView, passengerCount: Int) {
+    if (passengerCount <= 1) return
 
-            if (result) {
-                Android.sendToAndroid("✅ New Passenger Button Found");
-                result.click();
-            } else {
-                Android.sendToAndroid("⏳ 'Add Passenger' button not found, retrying...");
-                setTimeout(retryAddPassenger, 300);
+    withContext(Dispatchers.Main) {
+        suspend fun clickAndWait(index: Int) {
+            val jsClick = """
+                (function() {
+                    const xpath = "//span[contains(text(), 'Add Passenger')]/parent::a";
+                    const btn = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (btn) {
+                        btn.click();
+                        return true;
+                    }
+                    return false;
+                })();
+            """.trimIndent()
+
+            // Try clicking until button is found and clicked
+            while (true) {
+                val clicked = suspendCancellableCoroutine<Boolean> { cont ->
+                    webView.evaluateJavascript(jsClick) { res -> cont.resume(res == "true") }
+                }
+                if (clicked) break
+                delay(100)
             }
-        })();
-    """.trimIndent()
 
-    webView.evaluateJavascript(js, null)
+            // Wait for the new passenger input to appear before next click
+            val jsInput = """
+                (function() {
+                    const nameXpath = "//*[@id='ui-panel-13-content']/div/div[${index + 1}]/div[2]/div/app-passenger/div/div[1]/span/div[1]/p-autocomplete/span/input";
+                    const input = document.evaluate(nameXpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return !!input;
+                })();
+            """.trimIndent()
+            while (true) {
+                val found = suspendCancellableCoroutine<Boolean> { cont ->
+                    webView.evaluateJavascript(jsInput) { res -> cont.resume(res == "true") }
+                }
+                if (found) break
+                delay(50)
+            }
+        }
+
+        for (i in 1 until passengerCount) {
+            clickAndWait(i)
+        }
+    }
 }
 
 
