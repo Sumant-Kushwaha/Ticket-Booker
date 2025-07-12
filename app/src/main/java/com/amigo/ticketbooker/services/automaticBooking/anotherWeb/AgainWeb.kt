@@ -6,14 +6,14 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
@@ -21,6 +21,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.content.Context
 import android.graphics.*
 import android.util.Base64
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.sp
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -164,340 +167,376 @@ fun IrctcWebViewScreen(
     var statusMessage by remember { mutableStateOf("Loading...") }
     var hasLoggedIn by remember { mutableStateOf(false) }
     var initialActionsDone by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier.weight(1f), factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.userAgentString = CHROME_USER_AGENT
-                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = true
-                    settings.cacheMode = WebSettings.LOAD_NO_CACHE
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                modifier = Modifier.weight(1f),
+                factory = { context ->
+                    WebView(context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.userAgentString = CHROME_USER_AGENT
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                        settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
+                        settings.cacheMode = WebSettings.LOAD_NO_CACHE
 
-                    addJavascriptInterface(object {
-                        @JavascriptInterface
-                        fun sendToAndroid(message: String) {
-                            Log.d("LoginFlow", message)
-                            statusMessage = message
-                        }
-                    }, "Android")
+                        addJavascriptInterface(object {
+                            @JavascriptInterface
+                            fun sendToAndroid(message: String) {
+                                Log.d("LoginFlow", message)
+                                statusMessage = message
+                            }
+                        }, "Android")
 
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            super.onPageFinished(view, url)
-                            Log.d("IRCTC_WEBVIEW", "Page loaded: $url")
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                super.onPageStarted(view, url, favicon)
+                                isLoading = true
+                            }
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                isLoading = false
+                                Log.d("IRCTC_WEBVIEW", "Page loaded: $url")
 
-                            if (!hasLoggedIn && !initialActionsDone) {
-                                initialActionsDone = true
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    // 1. Remove popup for up to 1 minute or until found and clicked once
-                                    val popupJob = launch {
-                                        val end = System.currentTimeMillis() + 60 * 1000 // 1 minute
-                                        var popupClicked = false
-                                        while (System.currentTimeMillis() < end && !popupClicked) {
-                                            popupClicked = removePopupOnce(this@apply)
-                                            if (popupClicked) break
-                                            delay(2000)
-                                        }
-                                    }
-
-                                    // 2. Click menu, then login button
-                                    menuClick(this@apply)
-                                    delay(800)
-                                    loginButtonInMenu(this@apply)
-                                    delay(Random.nextLong(100L, 1000L))
-
-                                    // 3. Fill username and password ONCE
-                                    enterUsername(this@apply, inputUserName)
-                                    enterPassword(this@apply, inputPassword)
-                                    delay(400)
-
-                                    // 4. Captcha solve loop
-                                    val captchaImageSelector = ".captcha-img"
-                                    val inputFieldSelector = "input[formcontrolname='captcha']"
-                                    // Use the new XPath for the sign-in button after captcha fill
-                                    val buttonSelector =
-                                        "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/span/button"
-                                    val refreshButtonXPath =
-                                        "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
-
-                                    var lastCaptchaUrl: String? = null
-
-                                    suspend fun getCaptchaUrl(): String {
-                                        val js = """
-                                            (function() {
-                                                const img = document.querySelector("$captchaImageSelector");
-                                                if (img) return img.src || img.getAttribute('src');
-                                                return "";
-                                            })();
-                                        """.trimIndent()
-                                        return suspendCancellableCoroutine { cont ->
-                                            this@apply.evaluateJavascript(js) { url ->
-                                                cont.resume(url.trim('"'), null)
+                                if (!hasLoggedIn && !initialActionsDone) {
+                                    initialActionsDone = true
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        // 1. Remove popup for up to 1 minute or until found and clicked once
+                                        val popupJob = launch {
+                                            val end = System.currentTimeMillis() + 60 * 1000 // 1 minute
+                                            var popupClicked = false
+                                            while (System.currentTimeMillis() < end && !popupClicked) {
+                                                popupClicked = removePopupOnce(this@apply)
+                                                if (popupClicked) break
+                                                delay(2000)
                                             }
                                         }
-                                    }
 
-                                    suspend fun fillCaptchaAndSignIn(captchaText: String) {
-                                        fillCaptchaInput(
-                                            this@apply, inputFieldSelector, captchaText
-                                        )
-                                        delay(500)
-                                        clickLoginButton(this@apply, buttonSelector)
-                                    }
+                                        // 2. Click menu, then login button
+                                        menuClick(this@apply)
+                                        delay(800)
+                                        loginButtonInMenu(this@apply)
+                                        delay(Random.nextLong(100L, 1000L))
 
-                                    suspend fun isSignInElementsPresent(): Boolean {
-                                        delay(500)
-                                        val js = """
-                                            (function() {
-                                                var captchaInput = document.querySelector("$inputFieldSelector");
-                                                var signInBtn = document.evaluate('$buttonSelector', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                                                var both = !!captchaInput && !!signInBtn;
-                                                if (both && window.Android) Android.sendToAndroid('🔍 Captcha & Sign-in present');
-                                                return both;
-                                            })();
-                                        """.trimIndent()
-                                        return suspendCancellableCoroutine { cont ->
-                                            this@apply.evaluateJavascript(js) { result ->
-                                                cont.resume(result == "true", null)
-                                            }
-                                        }
-                                    }
+                                        // 3. Fill username and password ONCE
+                                        enterUsername(this@apply, inputUserName)
+                                        enterPassword(this@apply, inputPassword)
+                                        delay(400)
 
-                                    suspend fun WebView.isLoggedIn(): Boolean {
-                                        delay(500)
-                                        val js = """
-                                            (function(){
-                                                const cssSel = "#slide-menu > p-sidebar > div > nav > div > div > span:nth-child(3) > a > span > label > b";
-                                                const xpathSel = "//*[@id='slide-menu']/p-sidebar/div/nav/div/div/span[2]/a/span/label/b";
-                                                var logout = document.querySelector(cssSel);
-                                                if (!logout) {
-                                                    logout = document.evaluate(xpathSel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                        // 4. Captcha solve loop
+                                        val captchaImageSelector = ".captcha-img"
+                                        val inputFieldSelector = "input[formcontrolname='captcha']"
+                                        // Use the new XPath for the sign-in button after captcha fill
+                                        val buttonSelector =
+                                            "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/span/button"
+                                        val refreshButtonXPath =
+                                            "//*[@id=\"login_header_disable\"]/div/div/div[2]/div[2]/div/div[2]/div/div[2]/form/div[5]/div/app-captcha/div/div/div[2]/span[2]/a/span"
+
+                                        var lastCaptchaUrl: String? = null
+
+                                        suspend fun getCaptchaUrl(): String {
+                                            val js = """
+                                                (function() {
+                                                    const img = document.querySelector("$captchaImageSelector");
+                                                    if (img) return img.src || img.getAttribute('src');
+                                                    return "";
+                                                })();
+                                            """.trimIndent()
+                                            return suspendCancellableCoroutine { cont ->
+                                                this@apply.evaluateJavascript(js) { url ->
+                                                    cont.resume(url.trim('"'), null)
                                                 }
-                                                if (logout) {
-                                                    var style = window.getComputedStyle(logout);
-                                                    var visible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && logout.offsetParent !== null);
-                                                    if (visible) {
-                                                        if (window.Android) Android.sendToAndroid('🔍 Logout button is visible');
-                                                        return true;
+                                            }
+                                        }
+
+                                        suspend fun fillCaptchaAndSignIn(captchaText: String) {
+                                            fillCaptchaInput(
+                                                this@apply, inputFieldSelector, captchaText
+                                            )
+                                            delay(500)
+                                            clickLoginButton(this@apply, buttonSelector)
+                                        }
+
+                                        suspend fun isSignInElementsPresent(): Boolean {
+                                            delay(500)
+                                            val js = """
+                                                (function() {
+                                                    var captchaInput = document.querySelector("$inputFieldSelector");
+                                                    var signInBtn = document.evaluate('$buttonSelector', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                                                    var both = !!captchaInput && !!signInBtn;
+                                                    if (both && window.Android) Android.sendToAndroid('🔍 Captcha & Sign-in present');
+                                                    return both;
+                                                })();
+                                            """.trimIndent()
+                                            return suspendCancellableCoroutine { cont ->
+                                                this@apply.evaluateJavascript(js) { result ->
+                                                    cont.resume(result == "true", null)
+                                                }
+                                            }
+                                        }
+
+                                        suspend fun WebView.isLoggedIn(): Boolean {
+                                            delay(500)
+                                            val js = """
+                                                (function(){
+                                                    const cssSel = "#slide-menu > p-sidebar > div > nav > div > div > span:nth-child(3) > a > span > label > b";
+                                                    const xpathSel = "//*[@id='slide-menu']/p-sidebar/div/nav/div/div/span[2]/a/span/label/b";
+                                                    var logout = document.querySelector(cssSel);
+                                                    if (!logout) {
+                                                        logout = document.evaluate(xpathSel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                                                     }
-                                                }
-                                                return false;
-                                            })();
-                                        """.trimIndent()
-
-                                        return suspendCancellableCoroutine { cont ->
-                                            this.evaluateJavascript(js) { result ->
-                                                cont.resume(result == "true", null)
-                                            }
-                                        }
-                                    }
-
-
-                                    suspend fun solveCaptchaAndSignIn(): Boolean {
-                                        val maxRetries = 15 // Change this value as needed
-                                        var loggedIn = false
-                                        var retries = 0
-                                        while (retries < maxRetries) {
-                                            retries++
-                                            // Download captcha and store link
-                                            val captchaUrl = getCaptchaUrl()
-                                            lastCaptchaUrl = captchaUrl
-
-                                            // OCR
-                                            val captchaText =
-                                                suspendCancellableCoroutine<String> { cont ->
-                                                    downloadAndRecognizeCaptcha(
-                                                        context, captchaUrl
-                                                    ) { text ->
-                                                        cont.resume(text, null)
-                                                    }
-                                                }
-                                            if (captchaText.isEmpty()) {
-                                                refreshCaptcha(this@apply, refreshButtonXPath)
-                                                delay(1000)
-                                                continue
-                                            }
-
-                                            statusMessage = "Retry #$retries"
-                                            // Fill captcha and attempt sign-in
-                                            fillCaptchaAndSignIn(captchaText)
-                                            // Wait for the IRCTC loader animation to finish
-                                            this@apply.waitForLoaderToFinish()
-                                            // Small buffer after loader disappears
-                                            delay(100)
-
-                                            // Check if sign in button or captcha input still present (captcha failed)
-                                            if (isSignInElementsPresent()) {
-                                                // Get captcha url again
-                                                val newCaptchaUrl = getCaptchaUrl()
-                                                if (newCaptchaUrl == lastCaptchaUrl) {
-                                                    // Refresh until captcha changes
-                                                    var refreshed = false
-                                                    repeat(5) {
-                                                        refreshCaptcha(
-                                                            this@apply, refreshButtonXPath
-                                                        )
-                                                        delay(1000)
-                                                        val checkUrl = getCaptchaUrl()
-                                                        if (checkUrl != lastCaptchaUrl) {
-                                                            refreshed = true
-                                                            lastCaptchaUrl = checkUrl
-                                                            return@repeat
+                                                    if (logout) {
+                                                        var style = window.getComputedStyle(logout);
+                                                        var visible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && logout.offsetParent !== null);
+                                                        if (visible) {
+                                                            if (window.Android) Android.sendToAndroid('🔍 Logout button is visible');
+                                                            return true;
                                                         }
                                                     }
-                                                    if (!refreshed) {
-                                                        // Could not get new captcha, try again
+                                                    return false;
+                                                })();
+                                            """.trimIndent()
+
+                                            return suspendCancellableCoroutine { cont ->
+                                                this.evaluateJavascript(js) { result ->
+                                                    cont.resume(result == "true", null)
+                                                }
+                                            }
+                                        }
+
+
+                                        suspend fun solveCaptchaAndSignIn(): Boolean {
+                                            val maxRetries = 15 // Change this value as needed
+                                            var loggedIn = false
+                                            var retries = 0
+                                            while (retries < maxRetries) {
+                                                retries++
+                                                // Download captcha and store link
+                                                val captchaUrl = getCaptchaUrl()
+                                                lastCaptchaUrl = captchaUrl
+
+                                                // OCR
+                                                val captchaText =
+                                                    suspendCancellableCoroutine<String> { cont ->
+                                                        downloadAndRecognizeCaptcha(
+                                                            context, captchaUrl
+                                                        ) { text ->
+                                                            cont.resume(text, null)
+                                                        }
+                                                    }
+                                                if (captchaText.isEmpty()) {
+                                                    refreshCaptcha(this@apply, refreshButtonXPath)
+                                                    delay(1000)
+                                                    continue
+                                                }
+
+                                                statusMessage = "Retry #$retries"
+                                                // Fill captcha and attempt sign-in
+                                                fillCaptchaAndSignIn(captchaText)
+                                                // Wait for the IRCTC loader animation to finish
+                                                this@apply.waitForLoaderToFinish()
+                                                // Small buffer after loader disappears
+                                                delay(100)
+
+                                                // Check if sign in button or captcha input still present (captcha failed)
+                                                if (isSignInElementsPresent()) {
+                                                    // Get captcha url again
+                                                    val newCaptchaUrl = getCaptchaUrl()
+                                                    if (newCaptchaUrl == lastCaptchaUrl) {
+                                                        // Refresh until captcha changes
+                                                        var refreshed = false
+                                                        repeat(5) {
+                                                            refreshCaptcha(
+                                                                this@apply, refreshButtonXPath
+                                                            )
+                                                            delay(1000)
+                                                            val checkUrl = getCaptchaUrl()
+                                                            if (checkUrl != lastCaptchaUrl) {
+                                                                refreshed = true
+                                                                lastCaptchaUrl = checkUrl
+                                                                return@repeat
+                                                            }
+                                                        }
+                                                        if (!refreshed) {
+                                                            // Could not get new captcha, try again
+                                                            continue
+                                                        }
+                                                    }
+                                                    // New captcha, repeat solve
+                                                    continue
+                                                } else {
+                                                    // Open sidebar menu so logout button becomes visible
+                                                    menuClick(this@apply)
+                                                    delay(600)
+                                                    if (isLoggedIn()) {
+                                                        statusMessage = "✅ Logged in successfully."
+                                                        loggedIn = true
+                                                        menuClick(this@apply)
+                                                        break
+                                                    } else {
+                                                        // New captcha logged in yet, retry
                                                         continue
                                                     }
                                                 }
-                                                // New captcha, repeat solve
-                                                continue
-                                            } else {
-                                                // Open sidebar menu so logout button becomes visible
-                                                menuClick(this@apply)
-                                                delay(600)
-                                                if (isLoggedIn()) {
-                                                    statusMessage = "✅ Logged in successfully."
-                                                    loggedIn = true
-                                                    menuClick(this@apply)
-                                                    break
-                                                } else {
-                                                    // New captcha logged in yet, retry
-                                                    continue
-                                                }
                                             }
+                                            if (retries >= maxRetries) {
+                                                statusMessage = "❌ Max captcha retries reached."
+                                            }
+                                            return loggedIn
                                         }
-                                        if (retries >= maxRetries) {
-                                            statusMessage = "❌ Max captcha retries reached."
+
+                                        val loginSuccess = solveCaptchaAndSignIn()
+                                        if (!loginSuccess) {
+                                            statusMessage = "Login failed. Stopping automation"
+                                            return@launch
                                         }
-                                        return loggedIn
-                                    }
+                                        popupJob.cancel()
+                                        hasLoggedIn = true
 
-                                    val loginSuccess = solveCaptchaAndSignIn()
-                                    if (!loginSuccess) {
-                                        statusMessage = "Login failed. Stopping automation"
-                                        return@launch
-                                    }
-                                    popupJob.cancel()
-                                    hasLoggedIn = true
+                                        val journeyDate = inputDate  // user input in dd/MM/yyyy format
 
-                                    val journeyDate = inputDate  // user input in dd/MM/yyyy format
-
-                                    val (targetDay, targetMonthNumber, targetYear) = journeyDate.split(
-                                        "/"
-                                    )
-
-                                    val monthNames = listOf(
-                                        "January",
-                                        "February",
-                                        "March",
-                                        "April",
-                                        "May",
-                                        "June",
-                                        "July",
-                                        "August",
-                                        "September",
-                                        "October",
-                                        "November",
-                                        "December"
-                                    )
-
-                                    val targetMonthIndex = targetMonthNumber.toInt() - 1
-                                    val targetMonth =
-                                        monthNames[targetMonthIndex]  // e.g., "August"
-
-                                    delay(Random.nextLong(100L, 1000L))
-                                    selectJourneyDate(
-                                        webViewRef = this@apply,
-                                        journeyDate = journeyDate,
-                                        targetDay = targetDay,
-                                        targetMonthName = targetMonth
-                                    )
-
-                                    expandClass(this@apply)
-                                    selectClass(this@apply, classIndex)
-
-                                    expandQuota(this@apply)
-                                    selectQuota(this@apply, quotaIndex)
-
-                                    delay(Random.nextLong(100L, 1000L))
-                                    fillOrigin(this@apply, inputOrigin)
-                                    fillDestination(this@apply, inputDestination)
-
-                                    delay(Random.nextLong(800L, 1000L))
-                                    searchButton(this@apply)
-                                    this@apply.waitForLoaderToFinish()
-                                    selectTrain(this@apply, targetTrainNumber, targetClassCode)
-                                    this@apply.waitForLoaderToFinish()
-
-                                    // Wait for verification text before filling mobile number
-                                    val verificationSuccess = verificationInPassengerDetails(this@apply)
-                                    if (verificationSuccess) {
-                                        addNewPassenger(this@apply,passengerCount)
-                                        mobileNumber(this@apply, passengerMobileNumber)
-                                        autoUpgrade(this@apply, autoUpgradeOption)
-                                        confirmBerth(this@apply, confirmBerth)
-                                        selectTravelInsurance(this@apply, travelInsurance)
-                                        selectPaymentOption(this@apply, paymentOption)
-                                        delay(Random.nextLong(100L, 700L))
-                                    } else {
-                                        statusMessage = "❌ Passenger details verification text not found."
-                                        return@launch
-                                    }
-
-
-
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        val passengerList = listOf(
-                                            Triple(p1Name, p1Age, p1GenderNo) to p1SeatNo,
-                                            Triple(p2Name, p2Age, p2GenderNo) to p2SeatNo,
-                                            Triple(p3Name, p3Age, p3GenderNo) to p3SeatNo,
-                                            Triple(p4Name, p4Age, p4GenderNo) to p4SeatNo,
-                                            Triple(p5Name, p5Age, p5GenderNo) to p5SeatNo,
-                                            Triple(p6Name, p6Age, p6GenderNo) to p6SeatNo
+                                        val (targetDay, targetMonthNumber, targetYear) = journeyDate.split(
+                                            "/"
                                         )
 
-                                        for (i in 0 until passengerCount) {
-                                            val (nameAgeGender, seat) = passengerList[i]
-                                            val (name, age, gender) = nameAgeGender
+                                        val monthNames = listOf(
+                                            "January",
+                                            "February",
+                                            "March",
+                                            "April",
+                                            "May",
+                                            "June",
+                                            "July",
+                                            "August",
+                                            "September",
+                                            "October",
+                                            "November",
+                                            "December"
+                                        )
 
-                                            // Await until all fields are filled for this passenger
-                                            // (passengerDetails must be a suspend function)
-                                            passengerDetails(
-                                                this@apply,
-                                                i + 1,
-                                                name,
-                                                age,
-                                                gender,
-                                                seat
-                                            )
-                                        }
-                                        delay(Random.nextLong(900L, 1300L))
-                                        // Only after all passengers are filled, continue
-                                        continueAfterPassengerDetails(this@apply)
+                                        val targetMonthIndex = targetMonthNumber.toInt() - 1
+                                        val targetMonth =
+                                            monthNames[targetMonthIndex]  // e.g., "August"
+
+                                        delay(Random.nextLong(100L, 1000L))
+                                        selectJourneyDate(
+                                            webViewRef = this@apply,
+                                            journeyDate = journeyDate,
+                                            targetDay = targetDay,
+                                            targetMonthName = targetMonth
+                                        )
+
+                                        expandClass(this@apply)
+                                        selectClass(this@apply, classIndex)
+
+                                        expandQuota(this@apply)
+                                        selectQuota(this@apply, quotaIndex)
+
+                                        delay(Random.nextLong(100L, 1000L))
+                                        fillOrigin(this@apply, inputOrigin)
+                                        fillDestination(this@apply, inputDestination)
+
+                                        delay(Random.nextLong(800L, 1000L))
+                                        searchButton(this@apply)
                                         this@apply.waitForLoaderToFinish()
-                                    }
+                                        selectTrain(this@apply, targetTrainNumber, targetClassCode)
+                                        this@apply.waitForLoaderToFinish()
+
+                                        // Wait for verification text before filling mobile number
+                                        val verificationSuccess = verificationInPassengerDetails(this@apply)
+                                        if (verificationSuccess) {
+                                            addNewPassenger(this@apply,passengerCount)
+                                            mobileNumber(this@apply, passengerMobileNumber)
+                                            autoUpgrade(this@apply, autoUpgradeOption)
+                                            confirmBerth(this@apply, confirmBerth)
+                                            selectTravelInsurance(this@apply, travelInsurance)
+                                            selectPaymentOption(this@apply, paymentOption)
+                                            delay(Random.nextLong(100L, 700L))
+                                        } else {
+                                            statusMessage = "❌ Passenger details verification text not found."
+                                            return@launch
+                                        }
+
+
+
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            val passengerList = listOf(
+                                                Triple(p1Name, p1Age, p1GenderNo) to p1SeatNo,
+                                                Triple(p2Name, p2Age, p2GenderNo) to p2SeatNo,
+                                                Triple(p3Name, p3Age, p3GenderNo) to p3SeatNo,
+                                                Triple(p4Name, p4Age, p4GenderNo) to p4SeatNo,
+                                                Triple(p5Name, p5Age, p5GenderNo) to p5SeatNo,
+                                                Triple(p6Name, p6Age, p6GenderNo) to p6SeatNo
+                                            )
+
+                                            for (i in 0 until passengerCount) {
+                                                val (nameAgeGender, seat) = passengerList[i]
+                                                val (name, age, gender) = nameAgeGender
+
+                                                // Await until all fields are filled for this passenger
+                                                // (passengerDetails must be a suspend function)
+                                                passengerDetails(
+                                                    this@apply,
+                                                    i + 1,
+                                                    name,
+                                                    age,
+                                                    gender,
+                                                    seat
+                                                )
+                                            }
+                                            delay(Random.nextLong(900L, 1300L))
+                                            // Only after all passengers are filled, continue
+                                            continueAfterPassengerDetails(this@apply)
+                                            this@apply.waitForLoaderToFinish()
+                                        }
 
 //                                    statusMessage = "🎉 Automation flow finished"
-                                    return@launch
+                                        return@launch
+                                    }
                                 }
                             }
                         }
+                        loadUrl("https://www.irctc.co.in/nget/train-search")
                     }
-                    loadUrl("https://www.irctc.co.in/nget/train-search")
                 }
-            })
-        Text(
-            text = statusMessage,
-            color = Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
+            )
+            Text(
+                text = statusMessage,
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent), // transparent background
+                contentAlignment = Alignment.Center
+            ) {
+                Column (
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ){
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(6.dp)
+                            .alpha(0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Starting Soon...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red,
+                        fontSize = 20.sp
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -1674,7 +1713,7 @@ suspend fun WebView.solveCaptchaAndContinue(): Boolean {
 
         // Step 3: Fill captcha & click continue
         fillCaptchaInputSecond(inputFieldSelector, captchaText)
-        delay(300)
+        delay(15000)
         clickContinueButtonAfterCaptcha(continueButtonSelector)
 
         // Step 4: Wait for loader to disappear
