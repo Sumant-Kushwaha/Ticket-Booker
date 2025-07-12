@@ -1564,7 +1564,7 @@ private suspend fun addNewPassenger(webView: WebView, passengerCount: Int) {
 }
 
 
-private fun continueAfterPassengerDetails(webView: WebView) {
+private suspend fun continueAfterPassengerDetails(webView: WebView) {
     val js = """
         javascript:(function mainLoop() {
             const xpathButton = "//*[@id='psgn-form']/form/div/div[1]/div[16]/div/button[2]";
@@ -1638,9 +1638,8 @@ private fun continueAfterPassengerDetails(webView: WebView) {
     """.trimIndent()
 
     webView.evaluateJavascript(js, null)
-    CoroutineScope(Dispatchers.Main).launch {
-        webView.solveCaptchaAndContinue()
-    }
+    delay(500)
+    webView.solveCaptchaAndContinue()
 }
 
 
@@ -1713,13 +1712,14 @@ suspend fun WebView.solveCaptchaAndContinue(): Boolean {
 
         // Step 3: Fill captcha & click continue
         fillCaptchaInputSecond(inputFieldSelector, captchaText)
-        delay(15000)
+        delay(300)
         clickContinueButtonAfterCaptcha(continueButtonSelector)
 
         // Step 4: Wait for loader to disappear
-        waitForLoaderToDisappearForCaptcha()
+//        waitForLoaderToDisappearForCaptcha()
+        waitForLoaderToFinish()
 
-        delay(500)
+        delay(300)
 
         // Step 5: Check if captcha passed or failed
         val result = checkCaptchaOutcome(inputFieldSelector, paymentSuccessSelector)
@@ -1811,51 +1811,6 @@ fun WebView.refreshCaptcha() {
     this.evaluateJavascript(js, null)
 }
 
-
-fun WebView.waitForLoaderToDisappearForCaptcha() {
-    val js = """
-        (function waitForLoaderOrTimeout(callback) {
-            const start = Date.now();
-
-            function check() {
-                const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
-                const invisible = !loader || loader.style.display === "none" || loader.hidden ||
-                    getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
-
-                if (!invisible) {
-                    if (window.Android) Android.sendToAndroid("⏳ Loader is visible, waiting until it disappears...");
-                    waitForLoaderToDisappear(callback); // full loader wait
-                } else if (Date.now() - start > 500) {
-                    if (window.Android) Android.sendToAndroid("⚠️ Loader not visible after 500ms. Proceeding anyway.");
-                    callback();
-                } else {
-                    setTimeout(check, 50);
-                }
-            }
-
-            check();
-        })(function() {
-            if (window.Android) Android.sendToAndroid("✅ Loader check completed.");
-        });
-
-        function waitForLoaderToDisappear(callback) {
-            const loader = document.getElementById("loaderP") || document.getElementById("preloaderP");
-
-            const invisible = !loader || loader.style.display === "none" || loader.hidden ||
-                getComputedStyle(loader).visibility === "hidden" || getComputedStyle(loader).opacity === "0";
-
-            if (invisible) {
-                if (window.Android) Android.sendToAndroid("✅ Loader gone, proceeding...");
-                callback();
-            } else {
-                if (window.Android) Android.sendToAndroid("⏳ Loader still visible, waiting...");
-                setTimeout(() => waitForLoaderToDisappear(callback), 100);
-            }
-        }
-    """.trimIndent()
-
-    evaluateJavascript(js, null)
-}
 
 suspend fun WebView.checkCaptchaOutcome(captchaSelector: String, paymentSelector: String): String {
     val js = """
