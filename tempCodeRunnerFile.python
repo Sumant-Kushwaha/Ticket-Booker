@@ -1,0 +1,19 @@
+import json
+
+# Load the stations.json file
+with open("stationList.json", "r", encoding="utf-8") as f:
+    stations = json.load(f)
+
+# Filter stations with empty or missing name
+invalid_stations = [
+    station for station in stations
+    if "name" not in station or not station["name"].strip()
+]
+
+# Print the results
+print(f"Total stations with empty/missing name: {len(invalid_stations)}\n")
+
+for i, station in enumerate(invalid_stations, start=1):
+    print(f"{i}. Station code: {station.get('code', 'N/A')}, "
+          f"District: {station.get('district', 'N/A')}, "
+          f"State: {station.get('state', 'N/A')}")

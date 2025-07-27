@@ -66,3 +66,17 @@ object DataLists {
     // List of age ranges for adults (5-120 years)
     val adultAges = (5..120).toList()
 }
+
+
+
+data class Station(
+    val name: String?,
+    val code: String?,
+    val district: String?,
+    val state: String?,
+    val trainCount: String?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val address: String?
+)
+

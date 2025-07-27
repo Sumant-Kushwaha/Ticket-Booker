@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "IRCTC Automation",
+  "version": "1.0",
+  "description": "Automates IRCTC website interactions",
+  
+  "applications": {
+    "gecko": {
+      "id": "automation@irctc.com"
+    }
+  },
+  
+  "permissions": [
+    "activeTab",
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "https://www.irctc.co.in/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": ["https://www.irctc.co.in/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  }
+}

@@ -19,8 +19,8 @@ fun ThirdRow() {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         ServiceCard(
-            title = "Platform Locator",
-            icon = R.drawable.ic_platform_locator,
+            title = "Station Locator",
+            icon = R.drawable.ic_station_locator,
             modifier = Modifier.weight(1f),
             index = 1, // Outlined design
             onClick = { navController.navigate(Routes.PLATFORM_LOCATOR) }
