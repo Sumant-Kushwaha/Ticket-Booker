@@ -32,7 +32,8 @@ fun PlatformLocatorScreen() {
     }
 
     val states = remember(stationList) {
-        stationList.mapNotNull { it.state?.takeIf { state -> state.isNotBlank() } }.distinct().sorted()
+        stationList.mapNotNull { it.state?.takeIf { state -> state.isNotBlank() } }.distinct()
+            .sorted()
     }
 
     var selectedState by remember { mutableStateOf<String?>(null) }
@@ -81,7 +82,9 @@ fun PlatformLocatorScreen() {
                         selectedState = it
                         selectedDistrict = null
                     },
-                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 )
 
                 DropdownSelector(
@@ -90,7 +93,9 @@ fun PlatformLocatorScreen() {
                     selectedOption = selectedDistrict,
                     onOptionSelected = { selectedDistrict = it },
                     enabled = selectedState != null,
-                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
                 )
             }
 
@@ -126,27 +131,11 @@ fun StationListCard(stations: List<Station>) {
                         .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        Text(
-                            text = "📍 ${station.name ?: "Unknown"}: ",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1.3f)
-                            .horizontalScroll(rememberScrollState())
-                            .padding(start = 10.dp)
-                    ) {
-                        Text(
-                            text = station.address ?: "No Address",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Text(
+                        text = "📍 ${station.name ?: "Unknown"} ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 20.sp
+                    )
                 }
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
             }
@@ -210,7 +199,6 @@ fun DropdownSelector(
         }
     }
 }
-
 
 
 fun loadStationsFromAssets(context: Context): List<Station> {
