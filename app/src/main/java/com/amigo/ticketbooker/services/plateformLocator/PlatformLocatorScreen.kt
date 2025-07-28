@@ -31,6 +31,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,7 +206,8 @@ fun StationListCard(stations: List<Station>, userLocation: Pair<Double, Double>?
                             if (station.latitude != null && station.longitude != null) {
                                 try {
                                     // Try Google Maps app first
-                                    val uri = Uri.parse("google.navigation:q=${station.latitude},${station.longitude}&mode=d")
+                                    val uri =
+                                        "google.navigation:q=${station.latitude},${station.longitude}&mode=d".toUri()
                                     val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                                         setPackage("com.google.android.apps.maps")
                                     }
@@ -214,7 +216,8 @@ fun StationListCard(stations: List<Station>, userLocation: Pair<Double, Double>?
                                         context.startActivity(intent)
                                     } else {
                                         // Fallback to web Google Maps
-                                        val fallbackUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}")
+                                        val fallbackUri =
+                                            "https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}".toUri()
                                         val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackUri)
                                         context.startActivity(fallbackIntent)
                                     }
@@ -223,7 +226,7 @@ fun StationListCard(stations: List<Station>, userLocation: Pair<Double, Double>?
                                     val destination = station.address?.takeIf { it.isNotBlank() }
                                         ?: "${station.name}, ${station.district}, ${station.state}"
 
-                                    val searchUri = Uri.parse("geo:0,0?q=${Uri.encode(destination)}")
+                                    val searchUri = "geo:0,0?q=${Uri.encode(destination)}".toUri()
                                     val searchIntent = Intent(Intent.ACTION_VIEW, searchUri)
                                     try {
                                         context.startActivity(searchIntent)
@@ -237,7 +240,7 @@ fun StationListCard(stations: List<Station>, userLocation: Pair<Double, Double>?
                                     ?: "${station.name}, ${station.district}, ${station.state}"
 
                                 try {
-                                    val searchUri = Uri.parse("geo:0,0?q=${Uri.encode(destination)}")
+                                    val searchUri = "geo:0,0?q=${Uri.encode(destination)}".toUri()
                                     val searchIntent = Intent(Intent.ACTION_VIEW, searchUri)
                                     context.startActivity(searchIntent)
                                 } catch (e: Exception) {
