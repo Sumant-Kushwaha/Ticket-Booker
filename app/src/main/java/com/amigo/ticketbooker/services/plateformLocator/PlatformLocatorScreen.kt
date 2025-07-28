@@ -1,7 +1,16 @@
 package com.amigo.ticketbooker.services.plateformLocator
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import androidx.compose.foundation.horizontalScroll
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.net.Uri
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,17 +21,68 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.amigo.ticketbooker.data.model.Station
 import com.amigo.ticketbooker.navigation.LocalNavController
 import com.amigo.ticketbooker.ui.ServiceTopBar
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlatformLocatorScreen() {
     val navController = LocalNavController.current
     val context = LocalContext.current
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    var userLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var locationPermissionGranted by remember { mutableStateOf(false) }
+
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        locationPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    // Check and request location permissions
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionGranted = true
+        } else {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // Fetch user location if permission is granted
+    LaunchedEffect(locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            coroutineScope.launch {
+                fetchUserLocation(fusedLocationClient) { location ->
+                    userLocation = location
+                }
+            }
+        }
+    }
 
     var stationList by remember { mutableStateOf(emptyList<Station>()) }
 
@@ -70,6 +130,16 @@ fun PlatformLocatorScreen() {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = if (locationPermissionGranted) {
+                    userLocation?.let { "Your Location: ${it.first}, ${it.second}" } ?: "Fetching location..."
+                } else {
+                    "Location permission not granted"
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -102,14 +172,15 @@ fun PlatformLocatorScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             if (selectedDistrict != null) {
-                StationListCard(stations = stations)
+                StationListCard(stations = stations, userLocation = userLocation)
             }
         }
     }
 }
 
 @Composable
-fun StationListCard(stations: List<Station>) {
+fun StationListCard(stations: List<Station>, userLocation: Pair<Double, Double>?) {
+    val context = LocalContext.current
     val sortedStations = stations.sortedByDescending { it.trainCount?.toIntOrNull() ?: 0 }
 
     Card(
@@ -124,11 +195,56 @@ fun StationListCard(stations: List<Station>) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()) // Add vertical scrolling
         ) {
-            sortedStations.forEach { station -> // Remove `take(5)` to show all stations
+            sortedStations.forEach { station ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 2.dp),
+                        .padding(vertical = 2.dp)
+                        .clickable {
+                            // Check if station has coordinates
+                            if (station.latitude != null && station.longitude != null) {
+                                try {
+                                    // Try Google Maps app first
+                                    val uri = Uri.parse("google.navigation:q=${station.latitude},${station.longitude}&mode=d")
+                                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                        setPackage("com.google.android.apps.maps")
+                                    }
+
+                                    if (intent.resolveActivity(context.packageManager) != null) {
+                                        context.startActivity(intent)
+                                    } else {
+                                        // Fallback to web Google Maps
+                                        val fallbackUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}")
+                                        val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackUri)
+                                        context.startActivity(fallbackIntent)
+                                    }
+                                } catch (e: Exception) {
+                                    // Last fallback - use address if available
+                                    val destination = station.address?.takeIf { it.isNotBlank() }
+                                        ?: "${station.name}, ${station.district}, ${station.state}"
+
+                                    val searchUri = Uri.parse("geo:0,0?q=${Uri.encode(destination)}")
+                                    val searchIntent = Intent(Intent.ACTION_VIEW, searchUri)
+                                    try {
+                                        context.startActivity(searchIntent)
+                                    } catch (ex: Exception) {
+                                        android.widget.Toast.makeText(context, "Unable to open navigation", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else {
+                                // Use address-based navigation if coordinates are not available
+                                val destination = station.address?.takeIf { it.isNotBlank() }
+                                    ?: "${station.name}, ${station.district}, ${station.state}"
+
+                                try {
+                                    val searchUri = Uri.parse("geo:0,0?q=${Uri.encode(destination)}")
+                                    val searchIntent = Intent(Intent.ACTION_VIEW, searchUri)
+                                    context.startActivity(searchIntent)
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "Unable to open navigation", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -200,6 +316,17 @@ fun DropdownSelector(
     }
 }
 
+@SuppressLint("MissingPermission")
+private fun fetchUserLocation(
+    fusedLocationClient: FusedLocationProviderClient,
+    onLocationFetched: (Pair<Double, Double>) -> Unit
+) {
+    fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+        location?.let {
+            onLocationFetched(Pair(it.latitude, it.longitude))
+        }
+    }
+}
 
 fun loadStationsFromAssets(context: Context): List<Station> {
     val jsonString = context.assets.open("stationList.json").bufferedReader().use { it.readText() }
@@ -209,14 +336,22 @@ fun loadStationsFromAssets(context: Context): List<Station> {
 
     return rawList.map { rawStation ->
         Station(
-            name = rawStation["name"] as String,
-            code = rawStation["code"] as String,
-            district = rawStation["district"] as String,
-            state = rawStation["state"] as String,
-            trainCount = rawStation["trainCount"] as String,
-            latitude = (rawStation["latitude"] as? String)?.toDoubleOrNull(),
-            longitude = (rawStation["longitude"] as? String)?.toDoubleOrNull(),
-            address = rawStation["address"] as String
+            name = rawStation["name"] as? String,
+            code = rawStation["code"] as? String,
+            district = rawStation["district"] as? String,
+            state = rawStation["state"] as? String,
+            trainCount = rawStation["trainCount"] as? String,
+            latitude = when (val lat = rawStation["latitude"]) {
+                is Number -> lat.toDouble()
+                is String -> lat.toDoubleOrNull()
+                else -> null
+            },
+            longitude = when (val lng = rawStation["longitude"]) {
+                is Number -> lng.toDouble()
+                is String -> lng.toDoubleOrNull()
+                else -> null
+            },
+            address = rawStation["address"] as? String
         )
     }
 }
