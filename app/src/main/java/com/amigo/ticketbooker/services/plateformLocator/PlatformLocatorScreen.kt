@@ -129,8 +129,12 @@ fun PlatformLocatorScreen() {
             .sortedBy { it.name }
     }
 
-    // Calculate nearby stations
-    val nearbyStations = remember(userLocation, stationList) {
+    // Distance filter state
+    var distanceFilter by remember { mutableStateOf("50") }
+
+    // Calculate nearby stations using distanceFilter
+    val nearbyStations = remember(userLocation, stationList, distanceFilter) {
+        val maxDistance = distanceFilter.toDoubleOrNull() ?: 50.0
         if (userLocation != null) {
             stationList.filter { station ->
                 station.latitude != null && station.longitude != null
@@ -140,7 +144,7 @@ fun PlatformLocatorScreen() {
                     station.latitude!!, station.longitude!!
                 )
                 station to distance
-            }.filter { it.second <= 50 } // Within 50 km
+            }.filter { it.second <= maxDistance }
                 .sortedBy { it.second }
                 .take(20)
                 .map { it.first }
@@ -311,14 +315,35 @@ fun PlatformLocatorScreen() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Header
-                    Text(
-                        text = "Nearby Stations",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+                    // Header row with "Nearby Stations" and distance filter
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Nearby Stations",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Distance filter EditText
+                        OutlinedTextField(
+                            value = distanceFilter,
+                            onValueChange = {
+                                // Only allow numbers
+                                if (it.all { c -> c.isDigit() } && it.length <= 3) {
+                                    distanceFilter = it
+                                }
+                            },
+                            label = { Text("Within") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .width(100.dp)
+                                .padding(start = 8.dp),
+                            trailingIcon = { Text("km") }
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
