@@ -1,5 +1,7 @@
 package com.amigo.ticketbooker.services.pnrStatusCheckerUi
 
+import android.annotation.SuppressLint
+import android.webkit.CookieManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -32,8 +34,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.navigation.LocalNavController
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.util.UUID
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
+// Extension function for Google Play Services Tasks
+suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T = suspendCancellableCoroutine { cont ->
+    addOnCompleteListener { task ->
+        if (task.exception == null) {
+            if (task.isCanceled) {
+                cont.cancel()
+            } else {
+                cont.resume(task.result)
+            }
+        } else {
+            cont.resumeWithException(task.exception!!)
+        }
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun PnrStatusScreen() {
@@ -45,6 +71,8 @@ fun PnrStatusScreen() {
     var pnrNumber by remember { mutableStateOf("") }
     var showResults by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var loadWebView by remember { mutableStateOf(false) }
+    var reloadWebViewKey by remember { mutableStateOf(0) }
     
     Scaffold(
         topBar = {
@@ -157,9 +185,12 @@ fun PnrStatusScreen() {
                                 if (pnrNumber.length == 10) {
                                     isLoading = true
                                     showResults = true
+                                    // First hide the WebView, then show it again to force recreation
+                                    loadWebView = false
+                                    reloadWebViewKey++
                                 }
                             },
-                            enabled = pnrNumber.length == 10 && !isLoading,
+                            enabled = pnrNumber.length == 10,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -177,65 +208,120 @@ fun PnrStatusScreen() {
                                 )
                             } else {
                                 Text(
-                                    text = "Check Status",
+                                    text = "Show PNR Status",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Sample PNR hint
-                        Text(
-                            text = "Sample PNR: 6652078931",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.align(Alignment.End)
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Mock PNR result for UI demonstration
-                if (showResults) {
-                    // Simulate loading for 1.5 seconds, then show result
-                    LaunchedEffect(showResults) {
-                        delay(1500)
-                        isLoading = false
-                    }
-                    
-                    if (isLoading) {
-                        // Loading indicator
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                                
-                                Spacer(modifier = Modifier.height(16.dp))
-                                
-                                Text(
-                                    text = "Fetching PNR Status...",
-                                    fontSize = 16.sp,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+
+                        // WebView for PNR Status (visible to user)
+                        // Use LaunchedEffect to delay showing WebView to ensure proper recreation
+                        LaunchedEffect(reloadWebViewKey) {
+                            if (reloadWebViewKey > 0) {
+                                delay(100) // Small delay to ensure state is reset
+                                loadWebView = true
+                            }
+                        }
+
+                        if (loadWebView) {
+                            var webViewRef by remember(reloadWebViewKey) { mutableStateOf<android.webkit.WebView?>(null) }
+                            val composableScope = rememberCoroutineScope()
+                            val context = androidx.compose.ui.platform.LocalContext.current
+
+                            // Clear cookies and local storage before each load
+                            DisposableEffect(reloadWebViewKey) {
+                                CookieManager.getInstance().removeAllCookies(null)
+                                CookieManager.getInstance().flush()
+                                onDispose { }
+                            }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(600.dp)
+                                    .padding(vertical = 8.dp),
+                                elevation = CardDefaults.cardElevation(4.dp)
+                            ) {
+                                androidx.compose.ui.viewinterop.AndroidView(
+                                    factory = { ctx ->
+                                        android.webkit.WebView(ctx).apply {
+                                            settings.javaScriptEnabled = true
+                                            settings.domStorageEnabled = true
+                                            settings.loadWithOverviewMode = true
+                                            settings.useWideViewPort = true
+                                            settings.setSupportZoom(true)
+                                            settings.builtInZoomControls = true
+                                            settings.displayZoomControls = false
+                                            // Randomize User-Agent
+                                            settings.userAgentString = settings.userAgentString + " " + UUID.randomUUID().toString()
+                                            webViewRef = this
+                                            addJavascriptInterface(object {
+                                                @android.webkit.JavascriptInterface
+                                                fun log(msg: String) {
+                                                    android.util.Log.d("PNRWebView", msg)
+                                                }
+                                            }, "AndroidLog")
+                                            // Load the PNR status page directly
+                                            loadUrl("https://www.confirmtkt.com/pnr-status/$pnrNumber")
+                                        }
+                                    },
+                                    update = { webView ->
+                                        webViewRef = webView
+                                        webView.clearCache(true)
+                                        webView.clearHistory()
+                                        webView.loadUrl("https://www.confirmtkt.com/pnr-status/$pnrNumber")
+                                        
+                                        // Always set the WebViewClient to ensure onPageFinished is called
+                                        webView.webViewClient = object : android.webkit.WebViewClient() {
+                                            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                                                // Stop loading animation after page load
+                                                isLoading = false
+                                                
+                                                // Inject JavaScript to continuously search for and click the popup close button
+                                                val js = """
+                                                    javascript:(function() {
+                                                        function clickPopupClose() {
+                                                            var closeButton = document.querySelector('#popup > div.BottomSheetPopup_circleOverlay__sYea6 > button > svg > path');
+                                                            if (closeButton) {
+                                                                // Click the parent button element instead of the path
+                                                                var buttonElement = closeButton.closest('button');
+                                                                if (buttonElement) {
+                                                                    buttonElement.click();
+                                                                    window.AndroidLog.log('Popup close button clicked successfully');
+                                                                    return true;
+                                                                }
+                                                            }
+                                                            return false;
+                                                        }
+                                                        
+                                                        // Try to click immediately
+                                                        if (!clickPopupClose()) {
+                                                            // If not found, set up continuous checking
+                                                            var checkInterval = setInterval(function() {
+                                                                if (clickPopupClose()) {
+                                                                    clearInterval(checkInterval);
+                                                                }
+                                                            }, 1000); // Check every second
+                                                
+                                                            // Stop checking after 30 seconds to avoid infinite loop
+                                                            setTimeout(function() {
+                                                                clearInterval(checkInterval);
+                                                                window.AndroidLog.log('Stopped checking for popup after 30 seconds');
+                                                            }, 30000);
+                                                        }
+                                                    })();
+                                                """.trimIndent()
+                                                view?.evaluateJavascript(js, null)
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
                         }
-                    } else {
-                        // Mock PNR result card
-                        PnrResultCard()
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -316,312 +402,3 @@ fun PnrStatusHeader() {
         )
     }
 }
-
-@Composable
-fun PnrResultCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // PNR number and chart status
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "PNR Number",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "6652078931",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "CHART PREPARED",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-            )
-            
-            // Train details
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_train),
-                    contentDescription = "Train",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Column {
-                    Text(
-                        text = "Rajdhani Express (12301)",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    
-                    Text(
-                        text = "Date of Journey: 10 Jun 2025",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Journey details
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // From station
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "From",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = "NDLS",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    
-                    Text(
-                        text = "New Delhi",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-                
-                // Journey line
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    )
-                    
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "To",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = 4.dp)
-                    )
-                }
-                
-                // To station
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "To",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = "HWH",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    
-                    Text(
-                        text = "Howrah Junction",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Class and boarding point
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Class
-                Column {
-                    Text(
-                        text = "Class",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = "3A",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-                
-                // Boarding point
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Boarding",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    
-                    Text(
-                        text = "NDLS",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-            }
-            
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-            )
-            
-            // Passenger details
-            Text(
-                text = "Passenger Details",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
-            // Passenger 1
-            PassengerRow(
-                passengerNo = 1,
-                currentStatus = "Confirmed (B3, 24)",
-                bookingStatus = "Waitlist #4"
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Passenger 2
-            PassengerRow(
-                passengerNo = 2,
-                currentStatus = "Confirmed (B3, 25)",
-                bookingStatus = "Waitlist #5"
-            )
-        }
-    }
-}
-
-@Composable
-fun PassengerRow(passengerNo: Int, currentStatus: String, bookingStatus: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Passenger number
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = passengerNo.toString(),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        // Status details
-        Column(modifier = Modifier.weight(1f)) {
-            // Current status
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Current Status: ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                
-                Text(
-                    text = currentStatus,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = if (currentStatus.startsWith("Confirmed")) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
-                        MaterialTheme.colorScheme.error
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            // Booking status
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Booking Status: ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                
-                Text(
-                    text = bookingStatus,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                )
-            }
-        }
-    }
-}
-
