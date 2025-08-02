@@ -1,6 +1,7 @@
 package com.amigo.ticketbooker.services.pnrStatusCheckerUi
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.webkit.CookieManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,12 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.amigo.ticketbooker.R
 import com.amigo.ticketbooker.navigation.LocalNavController
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -59,6 +58,40 @@ suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T = suspendCancell
     }
 }
 
+// Helper functions for SharedPreferences
+private fun savePnrToHistory(context: Context, pnr: String) {
+    val sharedPref = context.getSharedPreferences("pnr_history", Context.MODE_PRIVATE)
+    
+    // Get existing PNRs as a comma-separated string to maintain order
+    val existingPnrsString = sharedPref.getString("pnr_list_ordered", "") ?: ""
+    val existingPnrs = if (existingPnrsString.isBlank()) {
+        mutableListOf<String>()
+    } else {
+        existingPnrsString.split(",").toMutableList()
+    }
+    
+    // Remove the PNR if it already exists (to avoid duplicates)
+    existingPnrs.remove(pnr)
+    // Add the PNR to the beginning (most recent)
+    existingPnrs.add(0, pnr)
+    
+    // Keep only last 5 PNRs
+    val recentPnrs = existingPnrs.take(5)
+    
+    // Save as comma-separated string
+    sharedPref.edit().putString("pnr_list_ordered", recentPnrs.joinToString(",")).apply()
+}
+
+private fun getPnrHistory(context: Context): List<String> {
+    val sharedPref = context.getSharedPreferences("pnr_history", Context.MODE_PRIVATE)
+    val pnrString = sharedPref.getString("pnr_list_ordered", "") ?: ""
+    return if (pnrString.isBlank()) {
+        emptyList()
+    } else {
+        pnrString.split(",").filter { it.isNotBlank() }
+    }
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -66,6 +99,9 @@ fun PnrStatusScreen() {
     val navController = LocalNavController.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     // State for PNR number input
     var pnrNumber by remember { mutableStateOf("") }
@@ -73,6 +109,16 @@ fun PnrStatusScreen() {
     var isLoading by remember { mutableStateOf(false) }
     var loadWebView by remember { mutableStateOf(false) }
     var reloadWebViewKey by remember { mutableStateOf(0) }
+    
+    // Get PNR history for hints
+    val pnrHistory = remember { getPnrHistory(context) }
+    val hintText = remember(pnrHistory) {
+        if (pnrHistory.isNotEmpty()) {
+            "Recent: ${pnrHistory.first()}"
+        } else {
+            "Enter 10-digit PNR"
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -105,7 +151,7 @@ fun PnrStatusScreen() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header section
@@ -176,6 +222,51 @@ fun PnrStatusScreen() {
                             shape = RoundedCornerShape(12.dp)
                         )
                         
+                        // Recent PNR hints - only show if history exists and current field is empty
+                        if (pnrHistory.isNotEmpty() && pnrNumber.isEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Recent PNRs:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Scrollable row of hint chips
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                pnrHistory.take(2).forEach { historyPnr ->
+                                    AssistChip(
+                                        onClick = {
+                                            pnrNumber = historyPnr
+                                            keyboardController?.hide()
+                                        },
+                                        label = { 
+                                            Text(
+                                                text = historyPnr,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            ) 
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.History,
+                                                contentDescription = "Recent PNR",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            leadingIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         // Submit button
@@ -183,11 +274,20 @@ fun PnrStatusScreen() {
                             onClick = {
                                 keyboardController?.hide()
                                 if (pnrNumber.length == 10) {
+                                    // Save PNR to history
+                                    savePnrToHistory(context, pnrNumber)
+                                    
                                     isLoading = true
                                     showResults = true
                                     // First hide the WebView, then show it again to force recreation
                                     loadWebView = false
                                     reloadWebViewKey++
+                                    
+                                    // Auto-scroll to show WebView after a short delay
+                                    coroutineScope.launch {
+                                        delay(500) // Wait for WebView to load
+                                        scrollState.animateScrollTo(scrollState.maxValue)
+                                    }
                                 }
                             },
                             enabled = pnrNumber.length == 10,
@@ -226,8 +326,6 @@ fun PnrStatusScreen() {
 
                         if (loadWebView) {
                             var webViewRef by remember(reloadWebViewKey) { mutableStateOf<android.webkit.WebView?>(null) }
-                            val composableScope = rememberCoroutineScope()
-                            val context = androidx.compose.ui.platform.LocalContext.current
 
                             // Clear cookies and local storage before each load
                             DisposableEffect(reloadWebViewKey) {
@@ -253,6 +351,11 @@ fun PnrStatusScreen() {
                                             settings.setSupportZoom(true)
                                             settings.builtInZoomControls = true
                                             settings.displayZoomControls = false
+                                            // Disable all touch events
+                                            isClickable = false
+                                            isFocusable = false
+                                            isFocusableInTouchMode = false
+                                            setOnTouchListener { _, _ -> true } // Consume all touch events
                                             // Randomize User-Agent
                                             settings.userAgentString = settings.userAgentString + " " + UUID.randomUUID().toString()
                                             webViewRef = this
@@ -272,11 +375,23 @@ fun PnrStatusScreen() {
                                         webView.clearHistory()
                                         webView.loadUrl("https://www.confirmtkt.com/pnr-status/$pnrNumber")
                                         
+                                        // Disable touch events on update as well
+                                        webView.isClickable = false
+                                        webView.isFocusable = false
+                                        webView.isFocusableInTouchMode = false
+                                        webView.setOnTouchListener { _, _ -> true }
+                                        
                                         // Always set the WebViewClient to ensure onPageFinished is called
                                         webView.webViewClient = object : android.webkit.WebViewClient() {
                                             override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
                                                 // Stop loading animation after page load
                                                 isLoading = false
+                                                
+                                                // Auto-scroll to show the WebView content
+                                                coroutineScope.launch {
+                                                    delay(300) // Small delay for WebView to render
+                                                    scrollState.animateScrollTo(scrollState.maxValue)
+                                                }
                                                 
                                                 // Inject JavaScript to continuously search for and click the popup close button
                                                 val js = """
