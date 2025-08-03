@@ -1,15 +1,22 @@
 package com.amigo.ticketbooker.services.manualBookingUi
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.net.http.SslError
 import android.os.Handler
 import android.os.Looper
-import android.webkit.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.GeckoRuntime
+import org.mozilla.geckoview.GeckoRuntimeSettings
+import org.mozilla.geckoview.GeckoResult
+import org.mozilla.geckoview.GeckoSession.NavigationDelegate
+import org.mozilla.geckoview.GeckoSession.ProgressDelegate
+import org.mozilla.geckoview.GeckoSession.ContentDelegate
+import org.mozilla.geckoview.AllowOrDeny
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -19,94 +26,79 @@ fun OptimizedWebViewForManualBooking(url: String) {
     var hasError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showRefreshButton by remember { mutableStateOf(false) }
-    var webView by remember { mutableStateOf<WebView?>(null) }
-    
+    var geckoSession by remember { mutableStateOf<GeckoSession?>(null) }
+    var geckoView by remember { mutableStateOf<GeckoView?>(null) }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // WebView
         AndroidView(
             factory = { context ->
-                WebView(context).apply {
-                    settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        loadsImagesAutomatically = true
-                        useWideViewPort = true
-                        loadWithOverviewMode = true
-                        builtInZoomControls = false
-                        displayZoomControls = false
-                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        cacheMode = WebSettings.LOAD_DEFAULT
-                        setGeolocationEnabled(true)
-                        setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
-                    }
-
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                            super.onPageStarted(view, url, favicon)
-                            isLoading = true
-                            hasError = false
-                            showRefreshButton = false
-                        }
+                GeckoView(context).apply {
+                    val runtime = GeckoRuntime.create(
+                        context,
+                        GeckoRuntimeSettings.Builder()
+                            .javaScriptEnabled(true)
+                            .build()
+                    )
+                    
+                    val session = GeckoSession(
+                        GeckoSessionSettings.Builder()
+                            .usePrivateMode(true)
+                            .useTrackingProtection(true)
+                            .build()
+                    ).apply {
+                        open(runtime)
                         
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            super.onPageFinished(view, url)
-                            view?.evaluateJavascript("(function() { return {bodyLength: document.body.innerHTML.trim().length, hasContent: document.body.querySelector('div, p, img, form') !== null}; })();") { result ->
-                                try {
-                                    val bodyLength = result.substringAfter("bodyLength").substringAfter(":").substringBefore(",").trim().toIntOrNull() ?: 0
-                                    val hasContent = result.contains("hasContent:true")
-                                    showRefreshButton = bodyLength <= 10 && !hasContent
-                                    Handler(Looper.getMainLooper()).postDelayed({ isLoading = false }, 300)
-                                } catch (e: Exception) {
-                                    isLoading = false
+                        setContentDelegate(object : ContentDelegate {})
+                        setNavigationDelegate(object : NavigationDelegate {
+                            override fun onLoadRequest(
+                                session: GeckoSession,
+                                request: GeckoSession.NavigationDelegate.LoadRequest
+                            ): GeckoResult<AllowOrDeny>? {
+                                isLoading = true
+                                hasError = false
+                                showRefreshButton = false
+                                return GeckoResult.fromValue(AllowOrDeny.ALLOW)
+                            }
+                        })
+                        setProgressDelegate(object : ProgressDelegate {
+                            override fun onPageStart(session: GeckoSession, url: String) {
+                                isLoading = true
+                                hasError = false
+                                showRefreshButton = false
+                            }
+                            override fun onPageStop(session: GeckoSession, success: Boolean) {
+                                Handler(Looper.getMainLooper()).postDelayed({ isLoading = false }, 300)
+                                if (!success) {
+                                    hasError = true
+                                    errorMessage = "Failed to load IRCTC Booking. Please check your internet connection and try again."
                                 }
                             }
-                        }
-                        
-                        override fun onPageCommitVisible(view: WebView?, url: String?) {
-                            super.onPageCommitVisible(view, url)
-                            loadingProgress = 100
-                        }
-                        
-                        override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                            super.onReceivedError(view, request, error)
-                            if (request?.isForMainFrame == true) {
-                                hasError = true
-                                isLoading = false
-                                errorMessage = "Failed to load IRCTC Booking. Please check your internet connection and try again."
+                            override fun onProgressChange(session: GeckoSession, progress: Int) {
+                                loadingProgress = progress
+                                if (progress >= 100) {
+                                    Handler(Looper.getMainLooper()).postDelayed({ isLoading = false }, 500)
+                                }
                             }
-                        }
-                        
-                        override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                            handler?.proceed()
-                        }
+                        })
                     }
-                    
-                    webChromeClient = object : WebChromeClient() {
-                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                            super.onProgressChanged(view, newProgress)
-                            loadingProgress = newProgress
-                            if (newProgress >= 100) {
-                                Handler(Looper.getMainLooper()).postDelayed({ isLoading = false }, 500)
-                            }
-                        }
-                    }
-                    
-                    loadUrl(url)
-                }.also { webView = it }
+                    geckoSession = session
+                    setSession(session)
+                    session.loadUri(url)
+                }.also { geckoView = it }
             },
             modifier = Modifier.fillMaxSize()
         )
-        
+
         if (isLoading) {
             LoadingIndicator(loadingProgress)
         }
-        
+
         if (showRefreshButton && !isLoading && !hasError) {
-            RefreshButton(webView)
+            RefreshButton(geckoSession)
         }
-        
+
         if (hasError) {
-            ErrorMessage(errorMessage, webView)
+            ErrorMessage(errorMessage, geckoSession)
         }
     }
 }

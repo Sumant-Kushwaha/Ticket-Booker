@@ -88,4 +88,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1") // ✅ Latest as of 2025
 
     implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // https://mvnrepository.com/artifact/org.mozilla.geckoview/geckoview
+    implementation("org.mozilla.geckoview:geckoview:141.0.20250714153642")
 }
